@@ -1,9 +1,24 @@
 using UnityEngine;
 
-public static class Voxel
+public static class Block
 {
-    public static readonly int ChunkWidth = 16;
+    // chunk data
+    public static readonly int ChunkWidth = 8;
     public static readonly int ChunkHeight = 16;
+
+    // view distance
+    public static readonly int ViewDistance = 2;
+
+    // world size in chunks
+    public static readonly int WorldSizeInChunks = 32;
+
+    // world size in blocks
+    public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
+
+    // texture
+    public static readonly int TextureAtlasSize = 4;
+    public static float NormalizedTextureSize => 1f / TextureAtlasSize;
+
 
     /// <summary>
     /// Stores all 8 corners (vertices) of a 1x1 cube.
