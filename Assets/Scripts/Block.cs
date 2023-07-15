@@ -3,14 +3,14 @@ using UnityEngine;
 public static class Block
 {
     // chunk data
-    public static readonly int ChunkWidth = 8;
-    public static readonly int ChunkHeight = 16;
+    public static readonly int ChunkWidth = 16;
+    public static readonly int ChunkHeight = 128;
 
     // view distance
-    public static readonly int ViewDistance = 2;
+    public static readonly int ViewDistance = 8;
 
     // world size in chunks
-    public static readonly int WorldSizeInChunks = 32;
+    public static readonly int WorldSizeInChunks = 16;
 
     // world size in blocks
     public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;

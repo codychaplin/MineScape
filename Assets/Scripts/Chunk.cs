@@ -71,7 +71,8 @@ public class Chunk
             {
                 for (int y = 0; y < Block.ChunkHeight; y++)
                 {
-                    AddBlockToChunk(new Vector3(x, y, z));
+                    if (world.BlockTypes[Map[x, y, z]].isSolid)
+                        AddBlockToChunk(new Vector3(x, y, z));
                 }
             }
         }

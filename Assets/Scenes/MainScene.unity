@@ -504,6 +504,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 527f4d6addf0c7e44b9e0a583bd851f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  seed: 69
+  biome: {fileID: 11400000, guid: 9644f945bb049f144b196bfe44905849, type: 2}
   player: {fileID: 330585546}
   material: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}
   BlockTypes:

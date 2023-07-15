@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+    public int seed;
+    public BiomeAttribute biome;
+
     public Transform player;
     [NonSerialized]
     public Vector3 spawnpoint;
@@ -18,6 +21,7 @@ public class World : MonoBehaviour
 
     void Start()
     {
+        UnityEngine.Random.InitState(seed);
         GenerateWorld();
 
         spawnpoint = new Vector3(Block.WorldSizeInBlocks / 2, Block.ChunkHeight + 2, Block.WorldSizeInBlocks / 2);
@@ -45,40 +49,13 @@ public class World : MonoBehaviour
         activeChunks.Add(new ChunkCoord(x, z));
     }
 
-    public byte GetBlock(Vector3 pos)
-    {
-        if (!IsBlockInWorld(pos))
-            return 0;
-
-        if (pos.y == 0)
-            return 1; // bedrock
-        else if (pos.y == Block.ChunkHeight - 1)
-            return 4; // grass
-        else if (pos.y == Block.ChunkHeight - 2)
-            return 3; // dirt
-        else
-            return 2; // stone
-    }
-
-    bool IsBlockInWorld(Vector3 pos)
-    {
-        return pos.x >= 0 && pos.x < Block.WorldSizeInBlocks &&
-               pos.y >= 0 && pos.y < Block.ChunkHeight &&
-               pos.z >= 0 && pos.z < Block.WorldSizeInBlocks;
-    }
-
-    bool IsChunkInWorld(int x, int z)
-    {
-        return x >= 0 && x < Block.WorldSizeInChunks &&
-               z >= 0 && z < Block.WorldSizeInChunks;
-    }
-
     void CheckViewDistance()
     {
         ChunkCoord coord = GetChunkCoord(player.position);
 
-        // cache activeChunks
+        // cache then clear activeChunks
         List<ChunkCoord> previouslyActiveChunks = new(activeChunks);
+        //activeChunks.Clear();
 
         for (int x = coord.x - Block.ViewDistance; x <= coord.x + Block.ViewDistance; x++)
             for (int z = coord.z - Block.ViewDistance; z <= coord.z + Block.ViewDistance; z++)
@@ -86,12 +63,12 @@ public class World : MonoBehaviour
                 // if chunk is out of bounds, skip
                 if (!IsChunkInWorld(x, z))
                     continue;
-                
+
                 if (chunks[x, z] == null) // if doesn't exist, create one
                 {
                     CreateChunk(x, z);
                 }
-                else if (!chunks[x,z].IsActive) // if not active, activate and add to activeChunks
+                else if (!chunks[x, z].IsActive) // if not active, activate and add to activeChunks
                 {
                     chunks[x, z].IsActive = true;
                     activeChunks.Add(new ChunkCoord(x, z));
@@ -108,6 +85,40 @@ public class World : MonoBehaviour
         // disable leftover chunks in previouslyActiveChunks
         foreach (var chunk in previouslyActiveChunks)
             chunks[chunk.x, chunk.z].IsActive = false;
+    }
+
+    public byte GetBlock(Vector3 pos)
+    {
+        int y = Mathf.FloorToInt(pos.y);
+
+        if (!IsBlockInWorld(pos))
+            return 0; // air
+
+        if (y == 0)
+            return 1; // bedrock
+
+        int terrainHeight = Mathf.FloorToInt(biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.scale)) + biome.minTerrainHeight;
+        if (y == terrainHeight)
+            return 4; // grass
+        else if (y < terrainHeight && y >= terrainHeight - 4)
+            return 3; // dirt
+        else if (y < terrainHeight)
+            return 2; // stone
+        else
+            return 0; // air
+    }
+
+    bool IsBlockInWorld(Vector3 pos)
+    {
+        return pos.x >= 0 && pos.x < Block.WorldSizeInBlocks &&
+               pos.y >= 0 && pos.y < Block.ChunkHeight &&
+               pos.z >= 0 && pos.z < Block.WorldSizeInBlocks;
+    }
+
+    bool IsChunkInWorld(int x, int z)
+    {
+        return x >= 0 && x < Block.WorldSizeInChunks &&
+               z >= 0 && z < Block.WorldSizeInChunks;
     }
 
     ChunkCoord GetChunkCoord(Vector3 pos)
