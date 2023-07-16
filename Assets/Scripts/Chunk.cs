@@ -4,43 +4,19 @@ using UnityEngine;
 public class Chunk
 {
     public ChunkCoord coord;
-
-    GameObject chunkObject;
-    MeshRenderer meshRenderer;
-    MeshFilter meshFilter;
-
     World world;
-    int vertexIndex = 0;
-    List<Vector3> vertices = new();
-    List<int> triangles = new();
-    List<Vector2> uvs = new();
+    public BlockData[,] Map = new BlockData[Block.ChunkWidth, Block.ChunkWidth];
 
-    byte[,,] Map = new byte[Block.ChunkWidth, Block.ChunkHeight, Block.ChunkWidth];
-
-    public bool IsActive
-    {
-        get { return chunkObject.activeSelf; }
-        set { chunkObject.SetActive(value); }
-    }
-
-    public Vector3 position { get { return chunkObject.transform.position; } }
+    public Vector3 position;
 
     public Chunk(World _world, ChunkCoord _coord)
     {
         world = _world;
         coord = _coord;
-        chunkObject = new();
-        meshFilter = chunkObject.AddComponent<MeshFilter>();
-        meshRenderer = chunkObject.AddComponent<MeshRenderer>();
 
-        meshRenderer.material = world.material;
-        chunkObject.transform.SetParent(world.transform);
-        chunkObject.transform.position = new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth);
-        chunkObject.name = $"{coord.x},{coord.z}";
+        position = new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth);
 
         PopulateMap();
-        CreateChunk();
-        CreateMesh();
     }
 
     /// <summary>
@@ -49,21 +25,19 @@ public class Chunk
     void PopulateMap()
     {
         for (int x = 0; x < Block.ChunkWidth; x++)
-        {
             for (int z = 0; z < Block.ChunkWidth; z++)
-            {
                 for (int y = 0; y < Block.ChunkHeight; y++)
                 {
-                    Map[x, y, z] = world.GetBlock(new Vector3(x, y, z) + position);
+                    var type = world.GetBlock(new Vector3(x, y, z) + position);
+                    if (type != 0)
+                        Map[x, z] = new BlockData(type, (byte)y);
                 }
-            }
-        }
     }
 
     /// <summary>
     /// Adds voxels to chunk.
     /// </summary>
-    void CreateChunk()
+    /*void CreateChunk()
     {
         for (int x = 0; x < Block.ChunkWidth; x++)
         {
@@ -157,20 +131,17 @@ public class Chunk
         uvs.Add(new Vector2(x, y + Block.NormalizedTextureSize));
         uvs.Add(new Vector2(x + Block.NormalizedTextureSize, y));
         uvs.Add(new Vector2(x + Block.NormalizedTextureSize, y + Block.NormalizedTextureSize));
-    }
+    }*/
+}
 
-    /// <summary>
-    /// Uses voxel data to create mesh.
-    /// </summary>
-    void CreateMesh()
+public struct BlockData
+{
+    public byte type;
+    public byte height;
+
+    public BlockData(byte _type, byte _height)
     {
-        Mesh mesh = new()
-        {
-            vertices = vertices.ToArray(),
-            triangles = triangles.ToArray(),
-            uv = uvs.ToArray()
-        };
-        mesh.RecalculateNormals();
-        meshFilter.mesh = mesh;
+        type = _type;
+        height = _height;
     }
 }

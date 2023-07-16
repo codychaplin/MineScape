@@ -7,10 +7,10 @@ public static class Block
     public static readonly int ChunkHeight = 128;
 
     // view distance
-    public static readonly int ViewDistance = 8;
+    public static readonly int ViewDistance = 4;
 
     // world size in chunks
-    public static readonly int WorldSizeInChunks = 16;
+    public static readonly int WorldSizeInChunks = 8;
 
     // world size in blocks
     public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
