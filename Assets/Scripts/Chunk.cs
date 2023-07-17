@@ -9,8 +9,8 @@ public class Chunk
     World world;
 
     GameObject chunkObject = null;
-    MeshRenderer meshRenderer;
-    MeshFilter meshFilter;
+    MeshRenderer meshRenderer = null;
+    MeshFilter meshFilter = null;
     int vertexIndex = 0;
     List<Vector3> vertices = new();
     List<int> triangles = new();
@@ -54,15 +54,20 @@ public class Chunk
     /// </summary>
     void PopulateMap()
     {
+        int terrainHeight;
         for (int x = 0; x < Block.ChunkWidth; x++)
             for (int z = 0; z < Block.ChunkWidth; z++)
+            {
+                var pos = new Vector3(x, 0f, z) + position;
+                terrainHeight = Mathf.FloorToInt(world.biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, world.biome.scale)) + world.biome.minTerrainHeight;
                 for (int y = 0; y < Block.ChunkHeight; y++)
                 {
-                    var type = world.GetBlock(new Vector3(x, y, z) + position);
+                    var type = world.GetBlock(new Vector3(x, y, z) + position, terrainHeight);
                     Map[x, y, z] = type;
                     if (type != 0)
                         Map2D[x, z] = new BlockData(type, (byte)y);
                 }
+            }
     }
 
     /// <summary>

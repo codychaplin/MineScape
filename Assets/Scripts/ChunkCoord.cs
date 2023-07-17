@@ -1,5 +1,5 @@
 
-public class ChunkCoord
+public struct ChunkCoord
 {
     public int x;
     public int z;
@@ -12,11 +12,6 @@ public class ChunkCoord
 
     public bool Equals (ChunkCoord other)
     {
-        if (other == null)
-            return false;
-        else if (other.x == x && other.z == z)
-            return true;
-        else
-            return false;
+        return other.x == x && other.z == z;
     }
 }

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -42,19 +45,50 @@ public class World : MonoBehaviour
 
     void GenerateWorld()
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        float total = 0;
         for (int x = 0; x < Block.WorldSizeInChunks; x++)
             for (int z = 0; z < Block.WorldSizeInChunks; z++)
             {
-                CreateChunk(x, z);
+                long start = sw.ElapsedMilliseconds;
+                var chunkCoord = new ChunkCoord(x, z);
+                CreateChunk(chunkCoord);
+                total += sw.ElapsedMilliseconds - start;
             }
+        total /= Block.WorldSizeInChunks * Block.WorldSizeInChunks;
+        Debug.Log($"CreateChunk() took an average of: {Math.Round(total, 3)}ms");
+        Debug.Log($"GenerateWorld() took a total of:  {sw.ElapsedMilliseconds}ms");
     }
 
-    void CreateChunk(int x, int z)
+    void CreateChunk(ChunkCoord chunkCoord)
     {
-        chunks[x, z] = new(this, new ChunkCoord(x, z), renderWorld);
-        activeChunks.Add(new ChunkCoord(x, z));
+        chunks[chunkCoord.x, chunkCoord.z] = new Chunk(this, chunkCoord, renderWorld);
+        if (renderWorld)
+            activeChunks.Add(chunkCoord);
     }
 
+
+    public byte GetBlock(Vector3 pos, int terrainHeight)
+    {
+        int y = Mathf.FloorToInt(pos.y);
+
+        if (!IsBlockInWorld(pos))
+            return 0; // air
+
+        if (y == 0)
+            return 1; // bedrock
+
+        if (y == terrainHeight)
+            return 4; // grass
+        else if (y > terrainHeight && y <= 64)
+            return 5; // water
+        else if (y < terrainHeight && y >= terrainHeight - 4)
+            return 3; // dirt
+        else if (y < terrainHeight)
+            return 2; // stone
+        else
+            return 0; // air
+    }
     public byte GetBlock(Vector3 pos)
     {
         int y = Mathf.FloorToInt(pos.y);
@@ -137,20 +171,21 @@ public class World : MonoBehaviour
                 if (!IsChunkInWorld(x, z))
                     continue;
 
+                var chunkCoord = new ChunkCoord(x, z);
                 if (chunks[x, z] == null) // if doesn't exist, create one
                 {
-                    CreateChunk(x, z);
+                    CreateChunk(chunkCoord);
                 }
                 else if (!chunks[x, z].IsActive) // if not active, activate and add to activeChunks
                 {
                     chunks[x, z].IsActive = true;
-                    activeChunks.Add(new ChunkCoord(x, z));
+                    activeChunks.Add(chunkCoord);
                 }
 
                 // remove active chunks from previouslyActiveChunks
                 for (int i = 0; i < previouslyActiveChunks.Count; i++)
                 {
-                    if (previouslyActiveChunks[i].Equals(new ChunkCoord(x, z)))
+                    if (previouslyActiveChunks[i].Equals(chunkCoord))
                         previouslyActiveChunks.RemoveAt(i);
                 }
             }
