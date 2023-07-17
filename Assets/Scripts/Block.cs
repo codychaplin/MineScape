@@ -4,13 +4,13 @@ public static class Block
 {
     // chunk data
     public static readonly int ChunkWidth = 16;
-    public static readonly int ChunkHeight = 128;
+    public static readonly int ChunkHeight = 256;
 
     // view distance
     public static readonly int ViewDistance = 4;
 
     // world size in chunks
-    public static readonly int WorldSizeInChunks = 8;
+    public static readonly int WorldSizeInChunks = 16;
 
     // world size in blocks
     public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;

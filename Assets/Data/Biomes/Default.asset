@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Default
   m_EditorClassIdentifier: 
   biomeName: Default
-  minTerrainHeight: 0
-  maxTerrainHeight: 127
+  minTerrainHeight: 48
+  maxTerrainHeight: 96
   scale: 0.5

@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class World : MonoBehaviour
 {
     public int seed;
+    public bool renderWorld;
     public BiomeAttribute biome;
-
-    public GameObject Map;
+    public RawImage image;
 
     public Transform player;
     [NonSerialized]
@@ -25,11 +26,11 @@ public class World : MonoBehaviour
     {
         UnityEngine.Random.InitState(seed);
         GenerateWorld();
-        GenerateMap();
+        ConvertMapToPng();
 
-        /*spawnpoint = new Vector3(Block.WorldSizeInBlocks / 2, Block.ChunkHeight + 2, Block.WorldSizeInBlocks / 2);
+        spawnpoint = new Vector3(Block.WorldSizeInBlocks / 2, Block.ChunkHeight + 2, Block.WorldSizeInBlocks / 2);
         player.position = spawnpoint;
-        playerLastChunkCoord = GetChunkCoord(player.position);*/
+        playerLastChunkCoord = GetChunkCoord(player.position);
     }
 
     /*void Update()
@@ -43,24 +44,55 @@ public class World : MonoBehaviour
     {
         for (int x = 0; x < Block.WorldSizeInChunks; x++)
             for (int z = 0; z < Block.WorldSizeInChunks; z++)
+            {
                 CreateChunk(x, z);
+            }
     }
 
     void CreateChunk(int x, int z)
     {
-        chunks[x, z] = new(this, new ChunkCoord(x, z));
-        //activeChunks.Add(new ChunkCoord(x, z));
+        chunks[x, z] = new(this, new ChunkCoord(x, z), renderWorld);
+        activeChunks.Add(new ChunkCoord(x, z));
     }
 
-    void GenerateMap()
+    public byte GetBlock(Vector3 pos)
     {
-        Mesh mesh = new Mesh();
+        int y = Mathf.FloorToInt(pos.y);
 
-        List<Vector3> vertices = new();
-        List<int> triangles = new();
-        List<Vector2> uvs = new();
+        if (!IsBlockInWorld(pos))
+            return 0; // air
 
-        // for each chunk
+        if (y == 0)
+            return 1; // bedrock
+
+        int terrainHeight = Mathf.FloorToInt(biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.scale)) + biome.minTerrainHeight;
+        if (y == terrainHeight)
+            return 4; // grass
+        else if (y > terrainHeight && y <= 64)
+            return 5; // water
+        else if (y < terrainHeight && y >= terrainHeight - 4)
+            return 3; // dirt
+        else if (y < terrainHeight)
+            return 2; // stone
+        else
+            return 0; // air
+    }
+
+    void ConvertMapToPng()
+    {
+        Dictionary<byte, Color32> colours = new()
+        {
+            { 0, new Color32(255,255,255,255) }, // air
+            { 1, new Color32(41,41,41,255) }, // bedrock
+            { 2, new Color32(115,115,115,255) }, // stone
+            { 3, new Color32(108,83,47,255) }, // dirt
+            { 4, new Color32(66,104,47,255) }, // grass
+            { 5, new Color32(80,172,220,255) } // water
+        };
+
+        string path = "Assets/Textures/test.png";
+        Texture2D texture = new(Block.WorldSizeInBlocks, Block.WorldSizeInBlocks);
+
         for (int x = 0; x < Block.WorldSizeInChunks; x++)
         {
             for (int y = 0; y < Block.WorldSizeInChunks; y++)
@@ -71,58 +103,26 @@ public class World : MonoBehaviour
                 {
                     for (int chunkY = 0 + offsetY; chunkY < Block.ChunkWidth + offsetY; chunkY++)
                     {
-                        Vector3 pos = new(chunkX, 0f, chunkY);
-
-                        // Add vertices for the block's face
-                        vertices.Add(pos + new Vector3(0f, 0f, 0f));
-                        vertices.Add(pos + new Vector3(1f, 0f, 0f));
-                        vertices.Add(pos + new Vector3(1f, 0f, 1f));
-                        vertices.Add(pos + new Vector3(0f, 0f, 1f));
-
-                        AddTexture(chunks[x, y].Map[chunkX - offsetX, chunkY - offsetY].height, ref uvs);
-
-                        int startIndex = vertices.Count - 4;
-
-                        triangles.Add(startIndex);
-                        triangles.Add(startIndex + 3);
-                        triangles.Add(startIndex + 1);
-                        triangles.Add(startIndex + 1);
-                        triangles.Add(startIndex + 3);
-                        triangles.Add(startIndex + 2);
+                        var block = chunks[x, y].Map2D[chunkX - offsetX, chunkY - offsetY];
+                        Color32 tintedColour;
+                        if (block.type != 5)
+                            tintedColour = Color32.Lerp(colours[block.type], Color.white, (float)block.height / Block.ChunkHeight);
+                        else
+                            tintedColour = colours[block.type];
+                        texture.SetPixel(chunkX, chunkY, tintedColour);
                     }
                 }
             }
         }
 
-        mesh.vertices = vertices.ToArray();
-        mesh.uv = uvs.ToArray();
-        mesh.triangles = triangles.ToArray();
-
-        mesh.RecalculateNormals();
-
-        MeshFilter meshFilter = Map.GetComponent<MeshFilter>();
-        MeshRenderer meshRenderer = Map.GetComponent<MeshRenderer>();
-        meshFilter.mesh = mesh;
-    }
-
-    void AddTexture(int textureId, ref List<Vector2> uvs)
-    {
-        float y = textureId / 128;
-        float x = textureId - (y * 128);
-
-        float normalizedSize = 1f / 128;
-
-        x *= normalizedSize;
-        y *= normalizedSize;
-
-        uvs.Add(new Vector2(x, y));
-        uvs.Add(new Vector2(x, y + normalizedSize));
-        uvs.Add(new Vector2(x + normalizedSize, y));
-        uvs.Add(new Vector2(x + normalizedSize, y + normalizedSize));
+        texture.Apply();
+        image.texture = texture;
+        byte[] bytes = texture.EncodeToPNG();
+        System.IO.File.WriteAllBytes(path, bytes);
     }
 
 
-    /*void CheckViewDistance()
+    void CheckViewDistance()
     {
         ChunkCoord coord = GetChunkCoord(player.position);
 
@@ -158,27 +158,6 @@ public class World : MonoBehaviour
         // disable leftover chunks in previouslyActiveChunks
         foreach (var chunk in previouslyActiveChunks)
             chunks[chunk.x, chunk.z].IsActive = false;
-    }*/
-
-    public byte GetBlock(Vector3 pos)
-    {
-        int y = Mathf.FloorToInt(pos.y);
-
-        if (!IsBlockInWorld(pos))
-            return 0; // air
-
-        if (y == 0)
-            return 1; // bedrock
-
-        int terrainHeight = Mathf.FloorToInt(biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.scale)) + biome.minTerrainHeight;
-        if (y == terrainHeight)
-            return 4; // grass
-        /*else if (y < terrainHeight && y >= terrainHeight - 4)
-            return 3; // dirt
-        else if (y < terrainHeight)
-            return 2; // stone*/
-        else
-            return 0; // air
     }
 
     bool IsBlockInWorld(Vector3 pos)
