@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Unity.Collections;
-using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -62,7 +59,7 @@ public class World : MonoBehaviour
 
     void CreateChunk(ChunkCoord chunkCoord)
     {
-        chunks[chunkCoord.x, chunkCoord.z] = new Chunk(this, chunkCoord, renderWorld);
+        chunks[chunkCoord.x, chunkCoord.z] = new Chunk(this, chunkCoord);
         if (renderWorld)
             activeChunks.Add(chunkCoord);
     }
@@ -80,12 +77,12 @@ public class World : MonoBehaviour
 
         if (y == terrainHeight)
             return 4; // grass
-        else if (y > terrainHeight && y <= 64)
+        else if (y > terrainHeight && y <= 32)
             return 5; // water
-        else if (y < terrainHeight && y >= terrainHeight - 4)
+        /*else if (y < terrainHeight && y >= terrainHeight - 4)
             return 3; // dirt
         else if (y < terrainHeight)
-            return 2; // stone
+            return 2; // stone*/
         else
             return 0; // air
     }
@@ -124,7 +121,6 @@ public class World : MonoBehaviour
             { 5, new Color32(80,172,220,255) } // water
         };
 
-        string path = "Assets/Textures/test.png";
         Texture2D texture = new(Block.WorldSizeInBlocks, Block.WorldSizeInBlocks);
 
         for (int x = 0; x < Block.WorldSizeInChunks; x++)
@@ -151,8 +147,30 @@ public class World : MonoBehaviour
 
         texture.Apply();
         image.texture = texture;
+        SplitTexture(texture, 512);
+
+    }
+
+    void SplitTexture(Texture2D texture, int chunkSize)
+    {
+        string path = "Assets/Textures/Map/";
         byte[] bytes = texture.EncodeToPNG();
-        System.IO.File.WriteAllBytes(path, bytes);
+        System.IO.File.WriteAllBytes($"{path}full.png", bytes);
+
+        int count = (Block.WorldSizeInBlocks / chunkSize) * 2;
+        for (int i = 0; i < count; i++)
+        {
+            int offsetX = (i % 2) * chunkSize;
+            int offsetY = (i / 2) * chunkSize;
+
+            var pixels = texture.GetPixels(offsetX, offsetY, chunkSize, chunkSize);
+            Texture2D splitTexture = new(chunkSize, chunkSize);
+            splitTexture.SetPixels(pixels);
+            splitTexture.Apply();
+
+            byte[] splitBytes = splitTexture.EncodeToPNG();
+            System.IO.File.WriteAllBytes($"{path}{offsetX},{offsetY}.png", splitBytes);
+        }
     }
 
 

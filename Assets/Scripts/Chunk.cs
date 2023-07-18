@@ -16,10 +16,10 @@ public class Chunk
     List<int> triangles = new();
     List<Vector2> uvs = new();
 
-    // public Vector3 position;
-    public Vector3 position
+    Vector3 position;
+    public Vector3 Position
     {
-        get { return chunkObject == null ? new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth) : chunkObject.transform.position; }
+        get { return chunkObject == null ? position : chunkObject.transform.position; }
     }
 
     public bool IsActive
@@ -28,14 +28,15 @@ public class Chunk
         set { chunkObject.SetActive(value); }
     }
 
-    public Chunk(World _world, ChunkCoord _coord, bool render)
+    public Chunk(World _world, ChunkCoord _coord)
     {
         world = _world;
         coord = _coord;
+        position = new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth);
 
         PopulateMap();
 
-        if (render)
+        if (world.renderWorld)
         {
             CreateChunk();
             chunkObject = new();
@@ -55,14 +56,25 @@ public class Chunk
     void PopulateMap()
     {
         int terrainHeight;
+        var pos = Vector3.zero;
+        var pos2D = Vector2.zero;
+        var maxHeight = world.biome.maxTerrainHeight;
+        var minHeight = world.biome.minTerrainHeight;
+        var scale = world.biome.scale;
         for (int x = 0; x < Block.ChunkWidth; x++)
             for (int z = 0; z < Block.ChunkWidth; z++)
             {
-                var pos = new Vector3(x, 0f, z) + position;
-                terrainHeight = Mathf.FloorToInt(world.biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, world.biome.scale)) + world.biome.minTerrainHeight;
+                pos.x = x;
+                pos.z = z;
+                pos += Position;
+                pos2D.x = pos.x;
+                pos2D.y = pos.z;
+                float noise = Noise.Get2DPerlin(pos2D, 0, scale);
+                terrainHeight = Mathf.FloorToInt(maxHeight * noise) + minHeight;
                 for (int y = 0; y < Block.ChunkHeight; y++)
                 {
-                    var type = world.GetBlock(new Vector3(x, y, z) + position, terrainHeight);
+                    pos.y = y;
+                    var type = world.GetBlock(pos, terrainHeight);
                     Map[x, y, z] = type;
                     if (type != 0)
                         Map2D[x, z] = new BlockData(type, (byte)y);
@@ -119,7 +131,7 @@ public class Chunk
 
         // if out of bounds
         if (!IsBlockInChunk(x, y, z))
-            return world.BlockTypes[world.GetBlock(pos + position)].isSolid;
+            return world.BlockTypes[world.GetBlock(pos + Position)].isSolid;
 
         // return value in map
         return world.BlockTypes[Map[x, y, z]].isSolid;
