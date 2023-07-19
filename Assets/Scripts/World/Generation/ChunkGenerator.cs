@@ -1,5 +1,7 @@
-
-public class ChunkGenerator
+namespace world.generation
 {
-    
+    public class ChunkGenerator
+    {
+        
+    }
 }

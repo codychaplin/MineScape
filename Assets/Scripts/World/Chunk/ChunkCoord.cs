@@ -1,17 +1,19 @@
-
-public struct ChunkCoord
+namespace world.chunk
 {
-    public int x;
-    public int z;
-
-    public ChunkCoord(int _x, int _z)
+    public struct ChunkCoord
     {
-        x = _x;
-        z = _z;
-    }
+        public int x;
+        public int z;
 
-    public bool Equals (ChunkCoord other)
-    {
-        return other.x == x && other.z == z;
+        public ChunkCoord(int _x, int _z)
+        {
+            x = _x;
+            z = _z;
+        }
+
+        public bool Equals(ChunkCoord other)
+        {
+            return other.x == x && other.z == z;
+        }
     }
 }

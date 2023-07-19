@@ -1,5 +1,7 @@
-
-public class Block
+namespace block
 {
-    
+    public class Block
+    {
+
+    }
 }
