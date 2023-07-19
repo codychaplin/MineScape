@@ -15,4 +15,4 @@ MonoBehaviour:
   biomeName: Default
   minTerrainHeight: 16
   maxTerrainHeight: 96
-  scale: 0.5
+  scale: 0.25

@@ -744,14 +744,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1389480421}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 527f4d6addf0c7e44b9e0a583bd851f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   seed: 69
   renderWorld: 0
-  biome: {fileID: 11400000, guid: 9644f945bb049f144b196bfe44905849, type: 2}
   image: {fileID: 137415087}
   player: {fileID: 330585546}
   material: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}

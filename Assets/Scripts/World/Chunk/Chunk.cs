@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class Chunk
 {
-    public ChunkCoord coord;
-    public BlockData[,] Map2D = new BlockData[Block.ChunkWidth, Block.ChunkWidth];
-    byte[,,] Map = new byte[Block.ChunkWidth, Block.ChunkHeight, Block.ChunkWidth];
-    World world;
+    World world; // world object
+    ChunkCoord coord; // coordinates of chunk
+    byte[,,] Map = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z
+    byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // maps x,z coordinates to biomes
 
     GameObject chunkObject = null;
     MeshRenderer meshRenderer = null;
@@ -32,7 +32,7 @@ public class Chunk
     {
         world = _world;
         coord = _coord;
-        position = new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth);
+        position = new Vector3(coord.x * BlockData.ChunkWidth, 0f, coord.z * BlockData.ChunkWidth);
 
         PopulateMap();
 
@@ -44,7 +44,7 @@ public class Chunk
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
             meshRenderer.material = world.material;
             chunkObject.transform.SetParent(world.transform);
-            chunkObject.transform.position = new Vector3(coord.x * Block.ChunkWidth, 0f, coord.z * Block.ChunkWidth);
+            chunkObject.transform.position = new Vector3(coord.x * BlockData.ChunkWidth, 0f, coord.z * BlockData.ChunkWidth);
             chunkObject.name = $"{coord.x},{coord.z}";
             CreateMesh();
         }
@@ -58,11 +58,11 @@ public class Chunk
         int terrainHeight;
         var pos = Vector3.zero;
         var pos2D = Vector2.zero;
-        var maxHeight = world.biome.maxTerrainHeight;
-        var minHeight = world.biome.minTerrainHeight;
-        var scale = world.biome.scale;
-        for (int x = 0; x < Block.ChunkWidth; x++)
-            for (int z = 0; z < Block.ChunkWidth; z++)
+        var maxHeight = 128;
+        var minHeight = 32;
+        var scale = 0.25f;
+        for (int x = 0; x < BlockData.ChunkWidth; x++)
+            for (int z = 0; z < BlockData.ChunkWidth; z++)
             {
                 pos.x = x;
                 pos.z = z;
@@ -71,13 +71,11 @@ public class Chunk
                 pos2D.y = pos.z;
                 float noise = Noise.Get2DPerlin(pos2D, 0, scale);
                 terrainHeight = Mathf.FloorToInt(maxHeight * noise) + minHeight;
-                for (int y = 0; y < Block.ChunkHeight; y++)
+                for (int y = 0; y < BlockData.ChunkHeight; y++)
                 {
                     pos.y = y;
                     var type = world.GetBlock(pos, terrainHeight);
                     Map[x, y, z] = type;
-                    if (type != 0)
-                        Map2D[x, z] = new BlockData(type, (byte)y);
                 }
             }
     }
@@ -87,11 +85,11 @@ public class Chunk
     /// </summary>
     void CreateChunk()
     {
-        for (int x = 0; x < Block.ChunkWidth; x++)
+        for (int x = 0; x < BlockData.ChunkWidth; x++)
         {
-            for (int z = 0; z < Block.ChunkWidth; z++)
+            for (int z = 0; z < BlockData.ChunkWidth; z++)
             {
-                for (int y = 0; y < Block.ChunkHeight; y++)
+                for (int y = 0; y < BlockData.ChunkHeight; y++)
                 {
                     if (world.BlockTypes[Map[x, y, z]].isSolid)
                         AddBlockToChunk(new Vector3(x, y, z));
@@ -109,9 +107,9 @@ public class Chunk
     /// <returns>Whether voxel is within chunk.</returns>
     bool IsBlockInChunk(int x, int y, int z)
     {
-        if (x < 0 || x >= Block.ChunkWidth ||
-            y < 0 || y >= Block.ChunkHeight ||
-            z < 0 || z >= Block.ChunkWidth)
+        if (x < 0 || x >= BlockData.ChunkWidth ||
+            y < 0 || y >= BlockData.ChunkHeight ||
+            z < 0 || z >= BlockData.ChunkWidth)
             return false;
         else
             return true;
@@ -145,13 +143,13 @@ public class Chunk
     {
         for (int i = 0; i < 6; i++)
         {
-            if (CheckBlock(pos + Block.faceCheck[i]))
+            if (CheckBlock(pos + BlockData.faceCheck[i]))
                 continue;
 
-            vertices.Add(pos + Block.verts[Block.tris[i,0]]);
-            vertices.Add(pos + Block.verts[Block.tris[i,1]]);
-            vertices.Add(pos + Block.verts[Block.tris[i,2]]);
-            vertices.Add(pos + Block.verts[Block.tris[i,3]]);
+            vertices.Add(pos + BlockData.verts[BlockData.tris[i,0]]);
+            vertices.Add(pos + BlockData.verts[BlockData.tris[i,1]]);
+            vertices.Add(pos + BlockData.verts[BlockData.tris[i,2]]);
+            vertices.Add(pos + BlockData.verts[BlockData.tris[i,3]]);
 
             byte blockId = Map[(int)pos.x, (int)pos.y, (int)pos.z];
             AddTexture(world.BlockTypes[blockId].GetTextureId(i));
@@ -169,16 +167,16 @@ public class Chunk
 
     void AddTexture(int textureId)
     {
-        float y = textureId / Block.TextureAtlasSize;
-        float x = textureId - (y * Block.TextureAtlasSize);
+        float y = textureId / BlockData.TextureAtlasSize;
+        float x = textureId - (y * BlockData.TextureAtlasSize);
 
-        x *= Block.NormalizedTextureSize;
-        y *= Block.NormalizedTextureSize;
+        x *= BlockData.NormalizedTextureSize;
+        y *= BlockData.NormalizedTextureSize;
 
         uvs.Add(new Vector2(x, y));
-        uvs.Add(new Vector2(x, y + Block.NormalizedTextureSize));
-        uvs.Add(new Vector2(x + Block.NormalizedTextureSize, y));
-        uvs.Add(new Vector2(x + Block.NormalizedTextureSize, y + Block.NormalizedTextureSize));
+        uvs.Add(new Vector2(x, y + BlockData.NormalizedTextureSize));
+        uvs.Add(new Vector2(x + BlockData.NormalizedTextureSize, y));
+        uvs.Add(new Vector2(x + BlockData.NormalizedTextureSize, y + BlockData.NormalizedTextureSize));
     }
 
     /// <summary>
@@ -194,17 +192,5 @@ public class Chunk
         };
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
-    }
-}
-
-public struct BlockData
-{
-    public byte type;
-    public byte height;
-
-    public BlockData(byte _type, byte _height)
-    {
-        type = _type;
-        height = _height;
     }
 }

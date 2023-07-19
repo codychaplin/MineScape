@@ -7,7 +7,6 @@ public class World : MonoBehaviour
 {
     public int seed;
     public bool renderWorld;
-    public BiomeAttribute biome;
     public RawImage image;
 
     public Transform player;
@@ -16,7 +15,7 @@ public class World : MonoBehaviour
     public Material material;
     public BlockType[] BlockTypes;
 
-    Chunk[,] chunks = new Chunk[Block.WorldSizeInChunks, Block.WorldSizeInChunks];
+    Chunk[,] chunks = new Chunk[BlockData.WorldSizeInChunks, BlockData.WorldSizeInChunks];
 
     List<ChunkCoord> activeChunks = new();
     ChunkCoord playerChunkCoord;
@@ -28,7 +27,7 @@ public class World : MonoBehaviour
         GenerateWorld();
         ConvertMapToPng();
 
-        spawnpoint = new Vector3(Block.WorldSizeInBlocks / 2, Block.ChunkHeight + 2, Block.WorldSizeInBlocks / 2);
+        spawnpoint = new Vector3(BlockData.WorldSizeInBlocks / 2, BlockData.ChunkHeight + 2, BlockData.WorldSizeInBlocks / 2);
         player.position = spawnpoint;
         playerLastChunkCoord = GetChunkCoord(player.position);
     }
@@ -44,15 +43,15 @@ public class World : MonoBehaviour
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         float total = 0;
-        for (int x = 0; x < Block.WorldSizeInChunks; x++)
-            for (int z = 0; z < Block.WorldSizeInChunks; z++)
+        for (int x = 0; x < BlockData.WorldSizeInChunks; x++)
+            for (int z = 0; z < BlockData.WorldSizeInChunks; z++)
             {
                 long start = sw.ElapsedMilliseconds;
-                var chunkCoord = new ChunkCoord(x, z);
+                ChunkCoord chunkCoord = new(x, z);
                 CreateChunk(chunkCoord);
                 total += sw.ElapsedMilliseconds - start;
             }
-        total /= Block.WorldSizeInChunks * Block.WorldSizeInChunks;
+        total /= BlockData.WorldSizeInChunks * BlockData.WorldSizeInChunks;
         Debug.Log($"CreateChunk() took an average of: {Math.Round(total, 3)}ms");
         Debug.Log($"GenerateWorld() took a total of:  {sw.ElapsedMilliseconds}ms");
     }
@@ -79,10 +78,10 @@ public class World : MonoBehaviour
             return 4; // grass
         else if (y > terrainHeight && y <= 32)
             return 5; // water
-        /*else if (y < terrainHeight && y >= terrainHeight - 4)
+        else if (y < terrainHeight && y >= terrainHeight - 4)
             return 3; // dirt
         else if (y < terrainHeight)
-            return 2; // stone*/
+            return 2; // stone
         else
             return 0; // air
     }
@@ -96,7 +95,7 @@ public class World : MonoBehaviour
         if (y == 0)
             return 1; // bedrock
 
-        int terrainHeight = Mathf.FloorToInt(biome.maxTerrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.scale)) + biome.minTerrainHeight;
+        int terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, 0.25f)) + 32;
         if (y == terrainHeight)
             return 4; // grass
         else if (y > terrainHeight && y <= 64)
@@ -111,7 +110,7 @@ public class World : MonoBehaviour
 
     void ConvertMapToPng()
     {
-        Dictionary<byte, Color32> colours = new()
+        /*Dictionary<byte, Color32> colours = new()
         {
             { 0, new Color32(255,255,255,255) }, // air
             { 1, new Color32(41,41,41,255) }, // bedrock
@@ -147,7 +146,7 @@ public class World : MonoBehaviour
 
         texture.Apply();
         image.texture = texture;
-        SplitTexture(texture, 512);
+        SplitTexture(texture, 512);*/
 
     }
 
@@ -157,7 +156,7 @@ public class World : MonoBehaviour
         byte[] bytes = texture.EncodeToPNG();
         System.IO.File.WriteAllBytes($"{path}full.png", bytes);
 
-        int count = (Block.WorldSizeInBlocks / chunkSize) * 2;
+        int count = (BlockData.WorldSizeInBlocks / chunkSize) * 2;
         for (int i = 0; i < count; i++)
         {
             int offsetX = (i % 2) * chunkSize;
@@ -182,8 +181,8 @@ public class World : MonoBehaviour
         List<ChunkCoord> previouslyActiveChunks = new(activeChunks);
         //activeChunks.Clear();
 
-        for (int x = coord.x - Block.ViewDistance; x <= coord.x + Block.ViewDistance; x++)
-            for (int z = coord.z - Block.ViewDistance; z <= coord.z + Block.ViewDistance; z++)
+        for (int x = coord.x - BlockData.ViewDistance; x <= coord.x + BlockData.ViewDistance; x++)
+            for (int z = coord.z - BlockData.ViewDistance; z <= coord.z + BlockData.ViewDistance; z++)
             {
                 // if chunk is out of bounds, skip
                 if (!IsChunkInWorld(x, z))
@@ -215,21 +214,21 @@ public class World : MonoBehaviour
 
     bool IsBlockInWorld(Vector3 pos)
     {
-        return pos.x >= 0 && pos.x < Block.WorldSizeInBlocks &&
-               pos.y >= 0 && pos.y < Block.ChunkHeight &&
-               pos.z >= 0 && pos.z < Block.WorldSizeInBlocks;
+        return pos.x >= 0 && pos.x < BlockData.WorldSizeInBlocks &&
+               pos.y >= 0 && pos.y < BlockData.ChunkHeight &&
+               pos.z >= 0 && pos.z < BlockData.WorldSizeInBlocks;
     }
 
     bool IsChunkInWorld(int x, int z)
     {
-        return x >= 0 && x < Block.WorldSizeInChunks &&
-               z >= 0 && z < Block.WorldSizeInChunks;
+        return x >= 0 && x < BlockData.WorldSizeInChunks &&
+               z >= 0 && z < BlockData.WorldSizeInChunks;
     }
 
     ChunkCoord GetChunkCoord(Vector3 pos)
     {
-        int x = Mathf.FloorToInt(pos.x / Block.ChunkWidth);
-        int z = Mathf.FloorToInt(pos.z / Block.ChunkWidth);
+        int x = Mathf.FloorToInt(pos.x / BlockData.ChunkWidth);
+        int z = Mathf.FloorToInt(pos.z / BlockData.ChunkWidth);
         return new ChunkCoord(x, z);
     }
 }

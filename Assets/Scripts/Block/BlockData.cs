@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public static class Block
+public static class BlockData
 {
     // chunk data
     public static readonly int ChunkWidth = 16;
-    public static readonly int ChunkHeight = 128;
+    public static readonly int ChunkHeight = 256;
 
     // view distance
     public static readonly int ViewDistance = 4;
