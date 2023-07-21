@@ -41,7 +41,7 @@ namespace minescape.world.generation
                             continue;
                         }
 
-                        if (y > terrainHeight && y <= Constants.WaterLevel)
+                        if (y > terrainHeight && y == Constants.WaterLevel)
                             chunk.SetBlock(x, y, z, Blocks.list[6].ID);
                         else if (y <= terrainHeight)
                             chunk.SetBlock(x, y, z, Blocks.list[2].ID);

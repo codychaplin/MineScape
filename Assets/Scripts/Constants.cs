@@ -7,7 +7,7 @@ namespace minescape
         public static readonly int ChunkHeight = 256;
 
         // world data
-        public static readonly int WorldSizeInChunks = 8;
+        public static readonly int WorldSizeInChunks = 6;
         public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
 
         // misc

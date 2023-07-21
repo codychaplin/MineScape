@@ -120,17 +120,22 @@ namespace minescape.world.chunk
         /// <param name="pos"></param>
         void AddBlockToChunk(Vector3 pos)
         {
+            var blockID = BlockMap[(int)pos.x, (int)pos.y, (int)pos.z];
+
             for (int i = 0; i < 6; i++)
             {
-                if (GetBlock(pos + BlockData.faceCheck[i]).IsSolid)
+                if (blockID == 6 && i != 2)
+                    continue;
+
+                var block = GetBlock(pos + BlockData.faceCheck[i]);
+                if (block.IsSolid && !block.IsTransperent)
                     continue;
 
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 1]]);
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 2]]);
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 3]]);
-
-                var blockID = BlockMap[(int)pos.x, (int)pos.y, (int)pos.z];
+                
                 AddTexture(Blocks.list[blockID].Faces[i]);
 
                 triangles.Add(vertexIndex);
