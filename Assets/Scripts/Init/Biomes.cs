@@ -1,6 +1,6 @@
-using world.biome;
+using minescape.world.biome;
 
-namespace init
+namespace minescape.init
 {
     public static class Biomes
     {

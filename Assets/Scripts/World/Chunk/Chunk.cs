@@ -1,19 +1,21 @@
 using System.Collections.Generic;
 using UnityEngine;
-using block;
+using minescape.block;
+using minescape.init;
+using static UnityEditor.PlayerSettings;
 
-namespace world.chunk
+namespace minescape.world.chunk
 {
     public class Chunk
     {
         World world; // world object
-        ChunkCoord coord; // coordinates of chunk
-        byte[,,] Map = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z
-        byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // maps x,z coordinates to biomes
+        public ChunkCoord coord; // coordinates of chunk
+        byte[,,] BlockMap = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z coordinates for
+        byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
 
-        GameObject chunkObject = null;
-        MeshRenderer meshRenderer = null;
-        MeshFilter meshFilter = null;
+        GameObject chunkObject;
+        MeshFilter meshFilter;
+        MeshRenderer meshRenderer;
         int vertexIndex = 0;
         List<Vector3> vertices = new();
         List<int> triangles = new();
@@ -35,79 +37,56 @@ namespace world.chunk
         {
             world = _world;
             coord = _coord;
-            position = new Vector3(coord.x * BlockData.ChunkWidth, 0f, coord.z * BlockData.ChunkWidth);
-
-            PopulateMap();
-
-            if (world.renderWorld)
-            {
-                CreateChunk();
-                chunkObject = new();
-                meshFilter = chunkObject.AddComponent<MeshFilter>();
-                meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-                meshRenderer.material = world.material;
-                chunkObject.transform.SetParent(world.transform);
-                chunkObject.transform.position = new Vector3(coord.x * BlockData.ChunkWidth, 0f, coord.z * BlockData.ChunkWidth);
-                chunkObject.name = $"{coord.x},{coord.z}";
-                CreateMesh();
-            }
+            position = new Vector3(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth);
+            
+            chunkObject = new();
+            meshFilter = chunkObject.AddComponent<MeshFilter>();
+            meshRenderer = chunkObject.AddComponent<MeshRenderer>();
+            meshRenderer.material = world.textureMap;
+            chunkObject.transform.SetParent(world.transform);
+            chunkObject.transform.position = new Vector3(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth);
+            chunkObject.name = $"{coord.x},{coord.z}";
         }
 
         /// <summary>
-        /// Populates bool map with block types.
-        /// </summary>
-        void PopulateMap()
-        {
-            int terrainHeight;
-            var pos = Vector3.zero;
-            var pos2D = Vector2.zero;
-            var maxHeight = 128;
-            var minHeight = 32;
-            var scale = 0.25f;
-            for (int x = 0; x < BlockData.ChunkWidth; x++)
-                for (int z = 0; z < BlockData.ChunkWidth; z++)
-                {
-                    pos.x = x;
-                    pos.z = z;
-                    pos += Position;
-                    pos2D.x = pos.x;
-                    pos2D.y = pos.z;
-                    float noise = Noise.Get2DPerlin(pos2D, 0, scale);
-                    terrainHeight = Mathf.FloorToInt(maxHeight * noise) + minHeight;
-                    for (int y = 0; y < BlockData.ChunkHeight; y++)
-                    {
-                        pos.y = y;
-                        var type = world.GetBlock(pos, terrainHeight);
-                        Map[x, y, z] = type;
-                    }
-                }
-        }
-
-        /// <summary>
-        /// Adds blocks to chunk.
-        /// </summary>
-        void CreateChunk()
-        {
-            for (int x = 0; x < BlockData.ChunkWidth; x++)
-            {
-                for (int z = 0; z < BlockData.ChunkWidth; z++)
-                {
-                    for (int y = 0; y < BlockData.ChunkHeight; y++)
-                    {
-                        if (world.BlockTypes[Map[x, y, z]].isSolid)
-                            AddBlockToChunk(new Vector3(x, y, z));
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Checks if voxel is within the bounds of its chunk.
+        /// Sets block ID in chunk.
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="z"></param>
-        /// <returns>Whether voxel is within chunk.</returns>
+        /// <param name="block"></param>
+        public void SetBlock(int x, int y, int z, byte block)
+        {
+            BlockMap[x, y, z] = block;
+        }
+
+        /// <summary>
+        /// Gets Block at coordinates in Chunk.
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns>Block object at coordinates</returns>
+        public Block GetBlock(Vector3 pos)
+        {
+            // round coordinates down
+            int x = Mathf.FloorToInt(pos.x);
+            int y = Mathf.FloorToInt(pos.y);
+            int z = Mathf.FloorToInt(pos.z);
+
+            // if out of bounds
+            if (!IsBlockInChunk(x, y, z))
+                return world.GetBlock(pos + Position);
+
+            // return whether Block is solid
+            return Blocks.list[BlockMap[x, y, z]];
+        }
+
+        /// <summary>
+        /// Checks if block is within the bounds of its chunk.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns>Whether block is within chunk.</returns>
         bool IsBlockInChunk(int x, int y, int z)
         {
             if (x < 0 || x >= BlockData.ChunkWidth ||
@@ -118,24 +97,21 @@ namespace world.chunk
                 return true;
         }
 
-        /// <summary>
-        /// Gets value from map.
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <returns>Whether block face should be rendered</returns>
-        bool CheckBlock(Vector3 pos)
+        public void RenderChunk()
         {
-            // round coordinates down
-            int x = Mathf.FloorToInt(pos.x);
-            int y = Mathf.FloorToInt(pos.y);
-            int z = Mathf.FloorToInt(pos.z);
+            for (int x = 0; x < Constants.ChunkWidth; x++)
+            {
+                for (int z = 0; z < Constants.ChunkWidth; z++)
+                {
+                    for (int y = 0; y < Constants.ChunkHeight; y++)
+                    {
+                        if (Blocks.list[BlockMap[x, y, z]].IsSolid)
+                            AddBlockToChunk(new Vector3(x, y, z));
+                    }
+                }
+            }
 
-            // if out of bounds
-            if (!IsBlockInChunk(x, y, z))
-                return world.BlockTypes[world.GetBlock(pos + Position)].isSolid;
-
-            // return value in map
-            return world.BlockTypes[Map[x, y, z]].isSolid;
+            CreateMesh();
         }
 
         /// <summary>
@@ -146,7 +122,7 @@ namespace world.chunk
         {
             for (int i = 0; i < 6; i++)
             {
-                if (CheckBlock(pos + BlockData.faceCheck[i]))
+                if (GetBlock(pos + BlockData.faceCheck[i]).IsSolid)
                     continue;
 
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);
@@ -154,8 +130,8 @@ namespace world.chunk
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 2]]);
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 3]]);
 
-                byte blockId = Map[(int)pos.x, (int)pos.y, (int)pos.z];
-                AddTexture(world.BlockTypes[blockId].GetTextureId(i));
+                var blockID = BlockMap[(int)pos.x, (int)pos.y, (int)pos.z];
+                AddTexture(Blocks.list[blockID].Faces[i]);
 
                 triangles.Add(vertexIndex);
                 triangles.Add(vertexIndex + 1);

@@ -1,5 +1,5 @@
 using UnityEngine;
-using block;
+using minescape.block;
 
 public class Noise
 {

@@ -1,7 +1,7 @@
-using Init;
-using block;
+using minescape.init;
+using minescape.block;
 
-namespace world.biome
+namespace minescape.world.biome
 {
     public abstract class Biome
     {
@@ -10,8 +10,8 @@ namespace world.biome
         public float MaxTerrainHeight { get; set; }
         public float Variation { get; set; }
         public float Temperature { get; set; }
-        public Block SurfaceBlock { get; set; } = Blocks.GRASS;
-        public Block FillBlock { get; set; } = Blocks.DIRT;
+        public Block SurfaceBlock { get; set; } = Blocks.list[4];
+        public Block FillBlock { get; set; } = Blocks.list[3];
 
         public Biome(string name, float minTerrainHeight, float maxTerrainHeight, float variation, float temperature, Block surfaceBlock, Block fillBlock)
         {

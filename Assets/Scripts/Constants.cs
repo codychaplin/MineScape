@@ -1,13 +1,16 @@
-public static class Constants
+namespace minescape
 {
-    // chunk data
-    public static readonly int ChunkWidth = 16;
-    public static readonly int ChunkHeight = 256;
+    public static class Constants
+    {
+        // chunk data
+        public static readonly int ChunkWidth = 16;
+        public static readonly int ChunkHeight = 256;
 
-    // world data
-    public static readonly int WorldSizeInChunks = 1024;
-    public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
+        // world data
+        public static readonly int WorldSizeInChunks = 8;
+        public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
 
-    // misc
-    public static int WaterLevel = 64;
+        // misc
+        public static int WaterLevel = 64;
+    }
 }

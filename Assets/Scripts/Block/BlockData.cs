@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace block
+namespace minescape.block
 {
     public static class BlockData
     {

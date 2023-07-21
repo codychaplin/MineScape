@@ -1,6 +1,6 @@
-namespace world.chunk
+namespace minescape.world.chunk
 {
-    public struct ChunkCoord
+    public class ChunkCoord
     {
         public int x;
         public int z;
