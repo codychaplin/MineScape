@@ -1,9 +1,10 @@
-using minescape.block;
+using UnityEngine;
+using UnityEngine.UI;
 using minescape.init;
+using minescape.block;
 using minescape.world.biome;
 using minescape.world.chunk;
 using minescape.world.generation;
-using UnityEngine;
 
 namespace minescape.world
 {
@@ -11,6 +12,9 @@ namespace minescape.world
     {
         public int Seed { get; set; }
         public Material textureMap;
+        public RawImage image;
+        public bool renderMap;
+        public bool renderChunks;
 
         public BiomeManager biomeManager;
         public ChunkManager chunkManager;
@@ -49,7 +53,7 @@ namespace minescape.world
             return chunkManager.GetChunk(chunkCoord);
         }
 
-        bool IsBlockInWorld(Vector3 pos)
+        public bool IsBlockInWorld(Vector3 pos)
         {
             return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
                    pos.y >= 0 && pos.y < Constants.ChunkHeight &&

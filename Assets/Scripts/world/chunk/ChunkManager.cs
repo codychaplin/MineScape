@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace minescape.world.chunk
 {
@@ -9,6 +8,7 @@ namespace minescape.world.chunk
     {
         World world;
         public List<Chunk> Chunks = new();
+        public List<MapChunk> MapChunks = new();
 
         public ChunkManager(World _world)
         {
@@ -19,6 +19,11 @@ namespace minescape.world.chunk
         {
             var chunk = Chunks.FirstOrDefault(c => c.coord.Equals(chunkCoord));
             return chunk ?? throw new Exception("Empty Chunk");
+        }
+
+        public MapChunk GetMapChunk(ChunkCoord chunkCoord)
+        {
+            return MapChunks.FirstOrDefault(c => c.coord.Equals(chunkCoord));
         }
     }
 }

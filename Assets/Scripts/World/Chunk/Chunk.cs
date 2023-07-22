@@ -100,16 +100,10 @@ namespace minescape.world.chunk
         public void RenderChunk()
         {
             for (int x = 0; x < Constants.ChunkWidth; x++)
-            {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
-                {
                     for (int y = 0; y < Constants.ChunkHeight; y++)
-                    {
                         if (Blocks.list[BlockMap[x, y, z]].IsSolid)
                             AddBlockToChunk(new Vector3(x, y, z));
-                    }
-                }
-            }
 
             CreateMesh();
         }
@@ -121,14 +115,16 @@ namespace minescape.world.chunk
         void AddBlockToChunk(Vector3 pos)
         {
             var blockID = BlockMap[(int)pos.x, (int)pos.y, (int)pos.z];
-
             for (int i = 0; i < 6; i++)
             {
-                if (blockID == 6 && i != 2)
+                if (blockID == 6 && i != 2) // only render top of water
                     continue;
 
-                var block = GetBlock(pos + BlockData.faceCheck[i]);
-                if (block.IsSolid && !block.IsTransperent)
+                var adjacentBlock = pos + BlockData.faceCheck[i];
+                if (!world.IsBlockInWorld(adjacentBlock + position)) // if out of world, skip
+                    continue;
+
+                if (!GetBlock(adjacentBlock).IsTransparent) // if adjacent block is not transparent, skip
                     continue;
 
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);
