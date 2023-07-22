@@ -77,7 +77,7 @@ namespace minescape.world.chunk
                 return world.GetBlock(pos + Position);
 
             // return whether Block is solid
-            return Blocks.list[BlockMap[x, y, z]];
+            return Blocks.blocks[BlockMap[x, y, z]];
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace minescape.world.chunk
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
-                        if (Blocks.list[BlockMap[x, y, z]].IsSolid)
+                        if (Blocks.blocks[BlockMap[x, y, z]].IsSolid)
                             AddBlockToChunk(new Vector3(x, y, z));
 
             CreateMesh();
@@ -132,7 +132,7 @@ namespace minescape.world.chunk
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 2]]);
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 3]]);
                 
-                AddTexture(Blocks.list[blockID].Faces[i]);
+                AddTexture(Blocks.blocks[blockID].Faces[i]);
 
                 triangles.Add(vertexIndex);
                 triangles.Add(vertexIndex + 1);

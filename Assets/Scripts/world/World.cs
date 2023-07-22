@@ -10,7 +10,7 @@ namespace minescape.world
 {
     public class World : MonoBehaviour
     {
-        public int Seed { get; set; }
+        public int Seed => 696969;
         public Material textureMap;
         public RawImage image;
         public bool renderMap;
@@ -31,7 +31,7 @@ namespace minescape.world
         public Block GetBlock(Vector3 pos)
         {
             if (!IsBlockInWorld(pos))
-                return Blocks.list[0];
+                return Blocks.blocks[0];
 
             int x = Mathf.FloorToInt(pos.x);
             int y = Mathf.FloorToInt(pos.y);

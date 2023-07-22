@@ -37,7 +37,7 @@ namespace minescape.world.chunk
         /// <returns>Block object at coordinates</returns>
         public Block GetBlock(int x, int z)
         {
-            return Blocks.list[BlockMap[x, z]];
+            return Blocks.blocks[BlockMap[x, z]];
         }
     }
 }

@@ -37,11 +37,11 @@ namespace minescape.world.generation
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
-                    var terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.y + z), 0, 0.25f)) + 16;
+                    var terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.y + z), 0, 0.5f)) + 16;
                     if (terrainHeight > Constants.WaterLevel)
-                        chunk.SetBlock(x, z, Blocks.list[2].ID); // stone
+                        chunk.SetBlock(x, z, Blocks.STONE.ID);
                     else
-                        chunk.SetBlock(x, z, Blocks.list[6].ID); // water
+                        chunk.SetBlock(x, z, Blocks.WATER.ID);
                 }
             }
         }
@@ -109,11 +109,11 @@ namespace minescape.world.generation
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
                         if (y == 0)
-                            chunk.SetBlock(x, y, z, Blocks.list[1].ID); // bedrock
+                            chunk.SetBlock(x, y, z, Blocks.BEDROCK.ID);
                         else if (y <= terrainHeight)
-                            chunk.SetBlock(x, y, z, Blocks.list[2].ID); // stone
+                            chunk.SetBlock(x, y, z, Blocks.STONE.ID);
                         else if (y > terrainHeight && y == Constants.WaterLevel)
-                            chunk.SetBlock(x, y, z, Blocks.list[6].ID); // water
+                            chunk.SetBlock(x, y, z, Blocks.WATER.ID);
                         else if (y > terrainHeight && y > Constants.WaterLevel)
                             break;
                     }
