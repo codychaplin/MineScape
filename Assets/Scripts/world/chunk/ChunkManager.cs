@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -7,7 +6,9 @@ namespace minescape.world.chunk
     public class ChunkManager
     {
         World world;
+        public List<ChunkCoord> activeChunks = new();
         public List<Chunk> Chunks = new();
+
         public List<MapChunk> MapChunks = new();
 
         public ChunkManager(World _world)
@@ -17,8 +18,7 @@ namespace minescape.world.chunk
 
         public Chunk GetChunk(ChunkCoord chunkCoord)
         {
-            var chunk = Chunks.FirstOrDefault(c => c.coord.Equals(chunkCoord));
-            return chunk ?? throw new Exception("Empty Chunk");
+            return Chunks.FirstOrDefault(c => c.coord.Equals(chunkCoord));
         }
 
         public MapChunk GetMapChunk(ChunkCoord chunkCoord)

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using minescape.block;
 using minescape.init;
-using static UnityEditor.PlayerSettings;
 
 namespace minescape.world.chunk
 {
@@ -10,8 +9,9 @@ namespace minescape.world.chunk
     {
         World world; // world object
         public ChunkCoord coord; // coordinates of chunk
-        byte[,,] BlockMap = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z coordinates for
+        byte[,,] BlockMap = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z coordinates for block IDs
         byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
+        public bool isRenderd = false;
 
         GameObject chunkObject;
         MeshFilter meshFilter;
@@ -21,11 +21,7 @@ namespace minescape.world.chunk
         List<int> triangles = new();
         List<Vector2> uvs = new();
 
-        Vector3 position;
-        public Vector3 Position
-        {
-            get { return chunkObject == null ? position : chunkObject.transform.position; }
-        }
+        public Vector3Int position;
 
         public bool IsActive
         {
@@ -37,15 +33,7 @@ namespace minescape.world.chunk
         {
             world = _world;
             coord = _coord;
-            position = new Vector3(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth);
-            
-            chunkObject = new();
-            meshFilter = chunkObject.AddComponent<MeshFilter>();
-            meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-            meshRenderer.material = world.textureMap;
-            chunkObject.transform.SetParent(world.transform);
-            chunkObject.transform.position = new Vector3(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth);
-            chunkObject.name = $"{coord.x},{coord.z}";
+            position = new Vector3Int(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
         }
 
         /// <summary>
@@ -65,19 +53,14 @@ namespace minescape.world.chunk
         /// </summary>
         /// <param name="pos"></param>
         /// <returns>Block object at coordinates</returns>
-        public Block GetBlock(Vector3 pos)
+        public Block GetBlock(Vector3Int pos)
         {
-            // round coordinates down
-            int x = Mathf.FloorToInt(pos.x);
-            int y = Mathf.FloorToInt(pos.y);
-            int z = Mathf.FloorToInt(pos.z);
-
             // if out of bounds
-            if (!IsBlockInChunk(x, y, z))
-                return world.GetBlock(pos + Position);
+            if (!IsBlockInChunk(pos.x, pos.y, pos.z))
+                return world.GetBlock(pos + position);
 
             // return whether Block is solid
-            return Blocks.blocks[BlockMap[x, y, z]];
+            return Blocks.blocks[BlockMap[pos.x, pos.y, pos.z]];
         }
 
         /// <summary>
@@ -99,22 +82,31 @@ namespace minescape.world.chunk
 
         public void RenderChunk()
         {
+            chunkObject = new();
+            meshFilter = chunkObject.AddComponent<MeshFilter>();
+            meshRenderer = chunkObject.AddComponent<MeshRenderer>();
+            meshRenderer.material = world.textureMap;
+            chunkObject.transform.SetParent(world.transform);
+            chunkObject.transform.position = position;
+            chunkObject.name = $"{coord.x},{coord.z}";
+
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                         if (Blocks.blocks[BlockMap[x, y, z]].IsSolid)
-                            AddBlockToChunk(new Vector3(x, y, z));
+                            AddBlockToChunk(new Vector3Int(x, y, z));
 
             CreateMesh();
+            isRenderd = true;
         }
 
         /// <summary>
         /// Generates exposed block faces.
         /// </summary>
         /// <param name="pos"></param>
-        void AddBlockToChunk(Vector3 pos)
+        void AddBlockToChunk(Vector3Int pos)
         {
-            var blockID = BlockMap[(int)pos.x, (int)pos.y, (int)pos.z];
+            var blockID = BlockMap[pos.x, pos.y, pos.z];
             for (int i = 0; i < 6; i++)
             {
                 if (blockID == 6 && i != 2) // only render top of water
@@ -124,7 +116,8 @@ namespace minescape.world.chunk
                 if (!world.IsBlockInWorld(adjacentBlock + position)) // if out of world, skip
                     continue;
 
-                if (!GetBlock(adjacentBlock).IsTransparent) // if adjacent block is not transparent, skip
+                var clonk = GetBlock(adjacentBlock);
+                if (!clonk.IsTransparent) // if adjacent block is not transparent, skip
                     continue;
 
                 vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);

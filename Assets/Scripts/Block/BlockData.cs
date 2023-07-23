@@ -66,14 +66,14 @@ namespace minescape.block
         /// <summary>
         /// Used to get surrounding voxel coordinates.
         /// </summary>
-        public static readonly Vector3[] faceCheck = new Vector3[6]
+        public static readonly Vector3Int[] faceCheck = new Vector3Int[6]
         {
-        new Vector3(0.0f, 0.0f, -1.0f), // back
-        new Vector3(0.0f, 0.0f, 1.0f), // front
-        new Vector3(0.0f, 1.0f, 0.0f), // top
-        new Vector3(0.0f, -1.0f, 0.0f), // bottom
-        new Vector3(-1.0f, 0.0f, 0.0f), // left
-        new Vector3(1.0f, 0.0f, 0.0f), // right
+        new Vector3Int(0, 0, -1), // back
+        new Vector3Int(0, 0, 1), // front
+        new Vector3Int(0, 1, 0), // top
+        new Vector3Int(0, -1, 0), // bottom
+        new Vector3Int(-1, 0, 0), // left
+        new Vector3Int(1, 0, 0), // right
         };
     }
 }
