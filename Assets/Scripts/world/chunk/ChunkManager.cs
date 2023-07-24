@@ -5,16 +5,10 @@ namespace minescape.world.chunk
 {
     public class ChunkManager
     {
-        World world;
-        public List<ChunkCoord> activeChunks = new();
         public List<Chunk> Chunks = new();
+        public List<ChunkCoord> activeChunks = new();
 
         public List<MapChunk> MapChunks = new();
-
-        public ChunkManager(World _world)
-        {
-            world = _world;
-        }
 
         public Chunk GetChunk(ChunkCoord chunkCoord)
         {

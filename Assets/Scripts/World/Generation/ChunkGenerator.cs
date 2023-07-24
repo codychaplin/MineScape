@@ -83,9 +83,8 @@ namespace minescape.world.generation
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
-                    var noise1 = Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.z + z), 0, 0.25f);
-                    var noise2 = Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.z + z), 10000, 0.05f);
-                    var terrainHeight = Mathf.FloorToInt(128 * (noise1 + noise2) + 16);
+                    var noise = Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.z + z), 0, 0.2f);
+                    var terrainHeight = Mathf.FloorToInt(128 * noise + 16);
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
                         if (y == 0)

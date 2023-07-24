@@ -166,5 +166,10 @@ namespace minescape.world.chunk
             mesh.RecalculateNormals();
             meshFilter.mesh = mesh;
         }
+
+        public override string ToString()
+        {
+            return $"{coord.x},{coord.z}";
+        }
     }
 }

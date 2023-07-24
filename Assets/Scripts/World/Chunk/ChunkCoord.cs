@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace minescape.world.chunk
 {
     public class ChunkCoord
@@ -14,6 +16,22 @@ namespace minescape.world.chunk
         public bool Equals(ChunkCoord other)
         {
             return other.x == x && other.z == z;
+        }
+    }
+
+    class ChunkCoordComparer : IEqualityComparer<ChunkCoord>
+    {
+        public bool Equals(ChunkCoord x, ChunkCoord y)
+        {
+            return x.Equals(y);
+        }
+
+        public int GetHashCode(ChunkCoord obj)
+        {
+            int hash = 17;
+            hash = hash * 31 + obj.x.GetHashCode();
+            hash = hash * 31 + obj.z.GetHashCode();
+            return hash;
         }
     }
 }

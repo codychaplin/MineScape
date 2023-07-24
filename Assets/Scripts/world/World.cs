@@ -7,6 +7,7 @@ using minescape.world.biome;
 using minescape.world.chunk;
 using minescape.world.generation;
 using System.Drawing;
+using System.Linq;
 
 namespace minescape.world
 {
@@ -22,8 +23,8 @@ namespace minescape.world
         public ChunkManager chunkManager;
         public ChunkGenerator chunkGenerator;
         
-        ChunkCoord playerChunkCoord;
-        ChunkCoord playerLastChunkCoord;
+        public ChunkCoord playerChunkCoord;
+        public ChunkCoord playerLastChunkCoord;
 
         public Transform player;
         [System.NonSerialized]
@@ -31,17 +32,20 @@ namespace minescape.world
 
         void Start()
         {
+            // initialize seed, player position, and classes
             Random.InitState(Seed);
             playerLastChunkCoord = GetChunkCoord(player.position);
             biomeManager = new(Seed);
-            chunkManager = new(this);
+            chunkManager = new();
             chunkGenerator = new(this);
 
+            // generate chunks
             if (renderChunks)
                 chunkGenerator.GenerateChunks();
             if (renderMap)
                 chunkGenerator.GenerateMap();
 
+            // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
             player.position = spawnpoint;
         }
@@ -108,11 +112,10 @@ namespace minescape.world
             playerLastChunkCoord = playerChunkCoord;
 
             // cache activeChunks
-            List<ChunkCoord> previouslyActiveChunks = new(chunkManager.activeChunks);
-            chunkManager.activeChunks.Clear();
+            List<ChunkCoord> newActiveChunks = new();
 
-            for (int x = playerChunkCoord.x - Constants.ViewDistance; x <= playerChunkCoord.x + Constants.ViewDistance; x++)
-                for (int z = playerChunkCoord.z - Constants.ViewDistance; z <= playerChunkCoord.z + Constants.ViewDistance; z++)
+            for (int x = playerChunkCoord.x - Constants.ViewDistance; x < playerChunkCoord.x + Constants.ViewDistance; x++)
+                for (int z = playerChunkCoord.z - Constants.ViewDistance; z < playerChunkCoord.z + Constants.ViewDistance; z++)
                 {
                     // if chunk is out of bounds, skip
                     if (!IsChunkInWorld(x, z))
@@ -120,9 +123,14 @@ namespace minescape.world
 
                     var chunkCoord = new ChunkCoord(x, z);
                     Chunk chunk = chunkManager.GetChunk(chunkCoord);
-                    if (chunk == null || !chunk.isRenderd) // if doesn't exist, generate one
+                    //Debug.Log($"{chunkCoord.x},{chunkCoord.z}");
+                    if (chunk == null) // if doesn't exist, generate one
                     {
                         chunkGenerator.CreateChunk(chunkCoord);
+                        chunkGenerator.chunksToCreate.Add(chunkCoord);
+                    }
+                    else if (!chunk.isRenderd) // if not yet rendered, add to queue
+                    {
                         chunkGenerator.chunksToCreate.Add(chunkCoord);
                     }
                     else if (!chunk.IsActive) // if not active, activate
@@ -130,19 +138,18 @@ namespace minescape.world
                         chunk.IsActive = true;
                     }
 
-                    chunkManager.activeChunks.Add(chunkCoord);
-
-                    // remove active chunks from previouslyActiveChunks
-                    for (int i = 0; i < previouslyActiveChunks.Count; i++)
-                    {
-                        if (previouslyActiveChunks[i].Equals(chunkCoord))
-                            previouslyActiveChunks.RemoveAt(i);
-                    }
+                    newActiveChunks.Add(chunkCoord);
                 }
 
-            // disable leftover chunks in previouslyActiveChunks
-            foreach (var chunk in previouslyActiveChunks)
-                chunkManager.GetChunk(chunk).IsActive = false;
+            // disable leftover chunks
+            chunkManager.activeChunks = newActiveChunks;
+            var comparer = new ChunkCoordComparer();
+            foreach (var chunk in chunkManager.Chunks)
+                if (!chunkManager.activeChunks.Contains(chunk.coord, comparer))
+                    if (chunk.isRenderd)
+                        chunk.IsActive = false;
+
+            // theres doubles somehow??
         }
     }
 }
