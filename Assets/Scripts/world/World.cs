@@ -141,15 +141,13 @@ namespace minescape.world
                     newActiveChunks.Add(chunkCoord);
                 }
 
-            // disable leftover chunks
+            // deactivate leftover chunks
             chunkManager.activeChunks = newActiveChunks;
             var comparer = new ChunkCoordComparer();
             foreach (var chunk in chunkManager.Chunks)
                 if (!chunkManager.activeChunks.Contains(chunk.coord, comparer))
                     if (chunk.isRenderd)
                         chunk.IsActive = false;
-
-            // theres doubles somehow??
         }
     }
 }

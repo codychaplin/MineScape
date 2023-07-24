@@ -84,6 +84,7 @@ namespace minescape.world.chunk
         {
             if (isRenderd)
                 return;
+
             chunkObject = new();
             meshFilter = chunkObject.AddComponent<MeshFilter>();
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
