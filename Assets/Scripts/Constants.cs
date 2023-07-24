@@ -12,7 +12,7 @@ namespace minescape
         public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
 
         // view distance
-        public static readonly int ViewDistance = 3;
+        public static readonly int ViewDistance = 2;
 
         // misc
         public static int WaterLevel = 64;

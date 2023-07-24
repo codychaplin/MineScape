@@ -17,6 +17,11 @@ namespace minescape.world.chunk
         {
             return other.x == x && other.z == z;
         }
+
+        public override string ToString()
+        {
+            return $"Coord: {x},{z}";
+        }
     }
 
     class ChunkCoordComparer : IEqualityComparer<ChunkCoord>

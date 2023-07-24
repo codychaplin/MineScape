@@ -1,9 +1,10 @@
+using System.Linq;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using minescape.init;
 using minescape.world.chunk;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Collections;
 
 namespace minescape.world.generation
 {
@@ -27,11 +28,6 @@ namespace minescape.world.generation
             return chunk;
         }
 
-        public void GenerateChunk(Chunk chunk)
-        {
-            chunk.RenderChunk();
-        }
-
         public IEnumerator CreateChunks()
         {
             isCreatingChunks = true;
@@ -39,8 +35,13 @@ namespace minescape.world.generation
             while (chunksToCreate.Count > 0)
             {
                 Chunk chunk = world.chunkManager.GetChunk(chunksToCreate[0]);
-                GenerateChunk(chunk);
+                chunk.RenderChunk();
                 chunksToCreate.RemoveAt(0);
+                if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance ||
+                    chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
+                {
+                    chunk.IsActive = false;
+                }
                 yield return null;
 
             }

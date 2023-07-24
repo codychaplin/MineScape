@@ -82,6 +82,8 @@ namespace minescape.world.chunk
 
         public void RenderChunk()
         {
+            if (isRenderd)
+                return;
             chunkObject = new();
             meshFilter = chunkObject.AddComponent<MeshFilter>();
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
@@ -169,7 +171,7 @@ namespace minescape.world.chunk
 
         public override string ToString()
         {
-            return $"{coord.x},{coord.z}";
+            return $"Chunk: {coord.x},{coord.z}";
         }
     }
 }
