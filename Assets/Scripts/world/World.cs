@@ -6,7 +6,6 @@ using minescape.block;
 using minescape.world.biome;
 using minescape.world.chunk;
 using minescape.world.generation;
-using System.Drawing;
 using System.Linq;
 
 namespace minescape.world
@@ -127,11 +126,11 @@ namespace minescape.world
                     if (chunk == null) // if doesn't exist, generate one
                     {
                         chunkGenerator.CreateChunk(chunkCoord);
-                        chunkGenerator.chunksToCreate.Add(chunkCoord);
+                        chunkGenerator.chunksToCreate.Enqueue(chunkCoord);
                     }
                     else if (!chunk.isRenderd) // if not yet rendered, add to queue
                     {
-                        chunkGenerator.chunksToCreate.Add(chunkCoord);
+                        chunkGenerator.chunksToCreate.Enqueue(chunkCoord);
                     }
                     else if (!chunk.IsActive) // if not active, activate
                     {

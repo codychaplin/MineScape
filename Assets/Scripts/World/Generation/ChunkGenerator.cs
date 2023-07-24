@@ -11,7 +11,7 @@ namespace minescape.world.generation
     {
         World world;
 
-        public List<ChunkCoord> chunksToCreate = new();
+        public Queue<ChunkCoord> chunksToCreate = new();
         public bool isCreatingChunks;
 
         public ChunkGenerator(World _world)
@@ -33,9 +33,9 @@ namespace minescape.world.generation
 
             while (chunksToCreate.Count > 0)
             {
-                Chunk chunk = world.chunkManager.GetChunk(chunksToCreate[0]);
+                Chunk chunk = world.chunkManager.GetChunk(chunksToCreate.Peek());
                 chunk.RenderChunk();
-                chunksToCreate.RemoveAt(0);
+                chunksToCreate.Dequeue();
                 if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance ||
                     chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
                 {
