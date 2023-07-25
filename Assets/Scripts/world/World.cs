@@ -6,7 +6,6 @@ using minescape.block;
 using minescape.world.biome;
 using minescape.world.chunk;
 using minescape.world.generation;
-using System.Drawing;
 using System.Linq;
 
 namespace minescape.world
