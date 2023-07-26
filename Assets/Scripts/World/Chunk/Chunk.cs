@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
-using minescape.block;
+using Unity.Collections;
 using minescape.init;
+using minescape.block;
 
 namespace minescape.world.chunk
 {
@@ -9,8 +10,8 @@ namespace minescape.world.chunk
     {
         World world; // world object
         public ChunkCoord coord; // coordinates of chunk
-        byte[,,] BlockMap = new byte[Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkWidth]; // x,y,z coordinates for block IDs
-        byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
+        public NativeArray<byte> BlockMap;
+        //byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
         public bool isRenderd = false;
 
         GameObject chunkObject;
@@ -18,6 +19,7 @@ namespace minescape.world.chunk
         MeshRenderer meshRenderer;
         int vertexIndex = 0;
         List<Vector3> vertices = new();
+        //NativeList<Vector3> vertices1 = new();
         List<int> triangles = new();
         List<Vector2> uvs = new();
 
@@ -34,6 +36,29 @@ namespace minescape.world.chunk
             world = _world;
             coord = _coord;
             position = new Vector3Int(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
+            BlockMap = new NativeArray<byte>(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
+        }
+
+        /// <summary>
+        /// Convert 3D coordinates to 1D.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns>Index</returns>
+        int ConvertXYZToIndex(int x, int y, int z)
+        {
+            return x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
+        }
+
+        /// <summary>
+        /// Converts Vector3Int to 1D.
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns>Index</returns>
+        int ConvertVector3ToIndex(Vector3Int pos)
+        {
+            return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
         }
 
         /// <summary>
@@ -45,7 +70,8 @@ namespace minescape.world.chunk
         /// <param name="block"></param>
         public void SetBlock(int x, int y, int z, byte block)
         {
-            BlockMap[x, y, z] = block;
+            int index = ConvertXYZToIndex(x, y, z);
+            BlockMap[index] = block;
         }
 
         /// <summary>
@@ -55,12 +81,11 @@ namespace minescape.world.chunk
         /// <returns>Block object at coordinates</returns>
         public Block GetBlock(Vector3Int pos)
         {
-            // if out of bounds
             if (!IsBlockInChunk(pos.x, pos.y, pos.z))
                 return world.GetBlock(pos + position);
 
-            // return whether Block is solid
-            return Blocks.blocks[BlockMap[pos.x, pos.y, pos.z]];
+            int index = ConvertVector3ToIndex(pos);
+            return Blocks.blocks[BlockMap[index]];
         }
 
         /// <summary>
@@ -80,6 +105,9 @@ namespace minescape.world.chunk
                 return true;
         }
 
+        /// <summary>
+        /// Renders chunk using block data.
+        /// </summary>
         public void RenderChunk()
         {
             if (isRenderd)
@@ -96,8 +124,11 @@ namespace minescape.world.chunk
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
-                        if (Blocks.blocks[BlockMap[x, y, z]].IsSolid)
+                    {
+                        int index = ConvertXYZToIndex(x, y, z);
+                        if (Blocks.blocks[BlockMap[index]].IsSolid)
                             AddBlockToChunk(new Vector3Int(x, y, z));
+                    }
 
             CreateMesh();
             isRenderd = true;
@@ -109,7 +140,8 @@ namespace minescape.world.chunk
         /// <param name="pos"></param>
         void AddBlockToChunk(Vector3Int pos)
         {
-            var blockID = BlockMap[pos.x, pos.y, pos.z];
+            int index = ConvertVector3ToIndex(pos);
+            var blockID = BlockMap[index];
             for (int i = 0; i < 6; i++)
             {
                 if (blockID == 6 && i != 2) // only render top of water
@@ -141,6 +173,10 @@ namespace minescape.world.chunk
             }
         }
 
+        /// <summary>
+        /// Adds texture data to uvs.
+        /// </summary>
+        /// <param name="textureId"></param>
         void AddTexture(int textureId)
         {
             float y = textureId / BlockData.TextureAtlasSize;

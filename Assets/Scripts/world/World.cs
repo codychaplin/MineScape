@@ -15,8 +15,6 @@ namespace minescape.world
         public int Seed => 696969;
         public Material textureMap;
         public RawImage image;
-        public bool renderMap;
-        public bool renderChunks;
 
         public BiomeManager biomeManager;
         public ChunkManager chunkManager;
@@ -36,13 +34,6 @@ namespace minescape.world
             playerLastChunkCoord = GetChunkCoord(player.position);
             biomeManager = new(Seed);
             chunkManager = new();
-            chunkGenerator = new(this);
-
-            // generate chunks
-            if (renderChunks)
-                chunkGenerator.GenerateChunks();
-            if (renderMap)
-                chunkGenerator.GenerateMap();
 
             // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
@@ -51,12 +42,17 @@ namespace minescape.world
 
         void Update()
         {
-            playerChunkCoord = GetChunkCoord(player.position);
+            /*playerChunkCoord = GetChunkCoord(player.position);
             if (!playerChunkCoord.Equals(playerLastChunkCoord))
-                CheckViewDistance();
+                CheckViewDistance();*/
+        }
 
-            if (chunkGenerator.chunksToCreate.Count > 0 && !chunkGenerator.isCreatingChunks)
-                StartCoroutine(chunkGenerator.CreateChunks());
+        void OnApplicationQuit()
+        {
+            // release BlockMaps from memory
+            if (chunkManager != null && chunkManager.Chunks != null && chunkManager.Chunks.Count > 0)
+                foreach (var chunk in chunkManager.Chunks)
+                    chunk.BlockMap.Dispose();
         }
 
         public Block GetBlock(Vector3Int pos)
@@ -68,7 +64,7 @@ namespace minescape.world
             if (chunk == null)
             {
                 var coord = new ChunkCoord(pos.x / Constants.ChunkWidth, pos.z / Constants.ChunkWidth);
-                chunk = chunkGenerator.CreateChunk(coord);
+                chunk = chunkGenerator.CreateChunkNow(coord);
             }
 
             Vector3Int localPos = new(pos.x - (chunk.coord.x * Constants.ChunkWidth), pos.y, pos.z - (chunk.coord.z * Constants.ChunkWidth));

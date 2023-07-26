@@ -1,22 +1,36 @@
 using System.Diagnostics;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
+using Unity.Jobs;
+using Unity.Collections;
+using Unity.Mathematics;
 using minescape.init;
 using minescape.world.chunk;
 
 namespace minescape.world.generation
 {
-    public class ChunkGenerator
+    public class ChunkGenerator : MonoBehaviour
     {
-        World world;
+        public World world;
+        public bool renderMap;
+        public bool renderChunks;
 
         public Queue<ChunkCoord> chunksToCreate = new();
-        public bool isCreatingChunks;
 
-        public ChunkGenerator(World _world)
+        private void Start()
         {
-            world = _world;
+            // generate chunks
+            if (renderChunks)
+                GenerateChunks();
+            if (renderMap)
+                GenerateMap();
+        }
+
+        void Update()
+        {
+            /*if (chunksToCreate.Count > 0)
+                CreateChunks();*/
         }
 
         public Chunk CreateChunk(ChunkCoord coord)
@@ -27,10 +41,17 @@ namespace minescape.world.generation
             return chunk;
         }
 
-        public IEnumerator CreateChunks()
+        public Chunk CreateChunkNow(ChunkCoord coord)
         {
-            isCreatingChunks = true;
+            Chunk chunk = new(world, coord);
+            var handle = SetBlocksInChunk(chunk);
+            handle.Complete();
+            world.chunkManager.Chunks.Add(chunk);
+            return chunk;
+        }
 
+        void CreateChunks()
+        {
             while (chunksToCreate.Count > 0)
             {
                 Chunk chunk = world.chunkManager.GetChunk(chunksToCreate.Peek());
@@ -41,11 +62,8 @@ namespace minescape.world.generation
                 {
                     chunk.IsActive = false;
                 }
-                yield return null;
 
             }
-
-            isCreatingChunks = false;
         }
 
         public void GenerateChunks()
@@ -53,16 +71,30 @@ namespace minescape.world.generation
             var sw = Stopwatch.StartNew();
             long generateTotal = 0;
             long renderTotal = 0;
+
+            // set up jobs
+            int index = 0;
+            int chunkCount = (Constants.ViewDistance * 2) * (Constants.ViewDistance * 2);
+            NativeArray<JobHandle> handles = new(chunkCount, Allocator.TempJob);
+
             for (int x = Constants.HalfWorldSizeInChunks - Constants.ViewDistance; x < Constants.HalfWorldSizeInChunks + Constants.ViewDistance; x++)
                 for (int z = Constants.HalfWorldSizeInChunks - Constants.ViewDistance; z < Constants.HalfWorldSizeInChunks + Constants.ViewDistance; z++)
                 {
                     var start = sw.ElapsedMilliseconds;
+
                     Chunk chunk = new(world, new ChunkCoord(x, z));
-                    SetBlocksInChunk(chunk);
+                    var handle = SetBlocksInChunk(chunk);
+                    handles[index++] = handle;
+
                     world.chunkManager.Chunks.Add(chunk);
                     world.chunkManager.activeChunks.Add(chunk.coord);
+
                     generateTotal += sw.ElapsedMilliseconds - start;
                 }
+
+            // complete jobs
+            JobHandle.CompleteAll(handles);
+            handles.Dispose();
 
             var chunks = world.chunkManager.Chunks.ToArray();
             foreach (var chunk in chunks)
@@ -73,28 +105,48 @@ namespace minescape.world.generation
                 renderTotal += total;
             }
 
-            UnityEngine.Debug.Log($"Chunks generated on average: {generateTotal / world.chunkManager.Chunks.Count}ms");
-            UnityEngine.Debug.Log($"Chunks rendered on average: {renderTotal / world.chunkManager.Chunks.Count}ms");
+            Debug.Log($"Chunks generated on average: {generateTotal / world.chunkManager.Chunks.Count}ms");
+            Debug.Log($"Chunks rendered on average: {renderTotal / world.chunkManager.Chunks.Count}ms");
         }
 
-        void SetBlocksInChunk(Chunk chunk)
+        JobHandle SetBlocksInChunk(Chunk chunk)
         {
-            for (int x = 0; x < Constants.ChunkWidth; x++)
+            SetBlockDataJob jobData = new()
             {
-                for (int z = 0; z < Constants.ChunkWidth; z++)
+                position = new int3(chunk.position.x, 0, chunk.position.z),
+                map = chunk.BlockMap
+            };
+            
+            return jobData.Schedule();
+        }
+
+        public struct SetBlockDataJob : IJob
+        {
+            [ReadOnly]
+            public int3 position;
+            [WriteOnly]
+            public NativeArray<byte> map;
+
+            public void Execute()
+            {
+                for (int x = 0; x < Constants.ChunkWidth; x++)
                 {
-                    var noise = Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.z + z), 0, 0.2f);
-                    var terrainHeight = Mathf.FloorToInt(128 * noise + 16);
-                    for (int y = 0; y < Constants.ChunkHeight; y++)
+                    for (int z = 0; z < Constants.ChunkWidth; z++)
                     {
-                        if (y == 0)
-                            chunk.SetBlock(x, y, z, Blocks.BEDROCK.ID);
-                        else if (y <= terrainHeight)
-                            chunk.SetBlock(x, y, z, Blocks.STONE.ID);
-                        else if (y > terrainHeight && y == Constants.WaterLevel)
-                            chunk.SetBlock(x, y, z, Blocks.WATER.ID);
-                        else if (y > terrainHeight && y > Constants.WaterLevel)
-                            break;
+                        var noise = Noise.Get2DPerlin(new float2(position.x + x, position.z + z), 0, 0.15f);
+                        var terrainHeight = Mathf.FloorToInt(128 * noise + 32);
+                        for (int y = 0; y < Constants.ChunkHeight; y++)
+                        {
+                            int index = x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
+                            if (y == 0)
+                                map[index] = Blocks.BEDROCK.ID;
+                            else if (y <= terrainHeight)
+                                map[index] = Blocks.STONE.ID;
+                            else if (y > terrainHeight && y == Constants.WaterLevel)
+                                map[index] = Blocks.WATER.ID;
+                            else if (y > terrainHeight && y > Constants.WaterLevel)
+                                break;
+                        }
                     }
                 }
             }
@@ -125,7 +177,7 @@ namespace minescape.world.generation
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
-                    var terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new Vector2(chunk.position.x + x, chunk.position.y + z), 0, 0.5f)) + 16;
+                    var terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new float2(chunk.position.x + x, chunk.position.y + z), 0, 0.5f)) + 16;
                     if (terrainHeight > Constants.WaterLevel)
                         chunk.SetBlock(x, z, Blocks.STONE.ID);
                     else
