@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace minescape.world.chunk
 {
-    public class ChunkCoord
+    public struct ChunkCoord : IEquatable<ChunkCoord>
     {
         public int x;
         public int z;

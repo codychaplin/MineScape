@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,8 +6,7 @@ using minescape.init;
 using minescape.block;
 using minescape.world.biome;
 using minescape.world.chunk;
-using minescape.world.generation;
-using System.Linq;
+using Unity.Mathematics;
 
 namespace minescape.world
 {
@@ -18,7 +18,6 @@ namespace minescape.world
 
         public BiomeManager biomeManager;
         public ChunkManager chunkManager;
-        public ChunkGenerator chunkGenerator;
         
         public ChunkCoord playerChunkCoord;
         public ChunkCoord playerLastChunkCoord;
@@ -30,10 +29,9 @@ namespace minescape.world
         void Start()
         {
             // initialize seed, player position, and classes
-            Random.InitState(Seed);
+            UnityEngine.Random.InitState(Seed);
             playerLastChunkCoord = GetChunkCoord(player.position);
             biomeManager = new(Seed);
-            chunkManager = new();
 
             // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
@@ -49,10 +47,12 @@ namespace minescape.world
 
         void OnApplicationQuit()
         {
-            // release BlockMaps from memory
+            // release native collections from memory
             if (chunkManager != null && chunkManager.Chunks != null && chunkManager.Chunks.Count > 0)
-                foreach (var chunk in chunkManager.Chunks)
-                    chunk.BlockMap.Dispose();
+                foreach (var chunk in chunkManager.Chunks.Values)
+                {
+                    chunk.Dispose();
+                }
         }
 
         public Block GetBlock(Vector3Int pos)
@@ -64,7 +64,7 @@ namespace minescape.world
             if (chunk == null)
             {
                 var coord = new ChunkCoord(pos.x / Constants.ChunkWidth, pos.z / Constants.ChunkWidth);
-                chunk = chunkGenerator.CreateChunkNow(coord);
+                chunk = chunkManager.CreateChunkNow(coord);
             }
 
             Vector3Int localPos = new(pos.x - (chunk.coord.x * Constants.ChunkWidth), pos.y, pos.z - (chunk.coord.z * Constants.ChunkWidth));
@@ -82,7 +82,14 @@ namespace minescape.world
             return chunkManager.GetChunk(chunkCoord);
         }
 
-        public bool IsBlockInWorld(Vector3Int pos)
+        public static bool IsBlockInWorld(Vector3Int pos)
+        {
+            return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
+                   pos.y >= 0 && pos.y < Constants.ChunkHeight &&
+                   pos.z >= 0 && pos.z < Constants.WorldSizeInBlocks;
+        }
+
+        public static bool IsBlockInWorld(int3 pos)
         {
             return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
                    pos.y >= 0 && pos.y < Constants.ChunkHeight &&
@@ -118,20 +125,11 @@ namespace minescape.world
 
                     var chunkCoord = new ChunkCoord(x, z);
                     Chunk chunk = chunkManager.GetChunk(chunkCoord);
-                    //Debug.Log($"{chunkCoord.x},{chunkCoord.z}");
-                    if (chunk == null) // if doesn't exist, generate one
-                    {
-                        chunkGenerator.CreateChunk(chunkCoord);
-                        chunkGenerator.chunksToCreate.Enqueue(chunkCoord);
-                    }
-                    else if (!chunk.isRenderd) // if not yet rendered, add to queue
-                    {
-                        chunkGenerator.chunksToCreate.Enqueue(chunkCoord);
-                    }
+
+                    if (chunk == null || !chunk.isRenderd) // if doesn't exist, add to queue
+                        chunkManager.chunksToCreate.Enqueue(chunkCoord);
                     else if (!chunk.IsActive) // if not active, activate
-                    {
                         chunk.IsActive = true;
-                    }
 
                     newActiveChunks.Add(chunkCoord);
                 }
@@ -139,7 +137,7 @@ namespace minescape.world
             // deactivate leftover chunks
             chunkManager.activeChunks = newActiveChunks;
             var comparer = new ChunkCoordComparer();
-            foreach (var chunk in chunkManager.Chunks)
+            foreach (var chunk in chunkManager.Chunks.Values)
                 if (!chunkManager.activeChunks.Contains(chunk.coord, comparer))
                     if (chunk.isRenderd)
                         chunk.IsActive = false;

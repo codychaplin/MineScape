@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Collections;
 using minescape.init;
 using minescape.block;
+using Unity.Mathematics;
 
 namespace minescape.world.chunk
 {
@@ -17,11 +17,12 @@ namespace minescape.world.chunk
         GameObject chunkObject;
         MeshFilter meshFilter;
         MeshRenderer meshRenderer;
-        int vertexIndex = 0;
-        List<Vector3> vertices = new();
-        //NativeList<Vector3> vertices1 = new();
-        List<int> triangles = new();
-        List<Vector2> uvs = new();
+        //int vertexIndex = 0;
+        public NativeList<float3> vertices;
+        public NativeList<int> triangles;
+        public NativeList<float2> uvs;
+
+
 
         public Vector3Int position;
 
@@ -35,28 +36,24 @@ namespace minescape.world.chunk
         {
             world = _world;
             coord = _coord;
-            position = new Vector3Int(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
-            BlockMap = new NativeArray<byte>(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
+            position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
+            BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
+            vertices = new(4096, Allocator.Persistent);
+            triangles = new(4096, Allocator.Persistent);
+            uvs = new(4096, Allocator.Persistent);
         }
 
-        /// <summary>
-        /// Convert 3D coordinates to 1D.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <returns>Index</returns>
-        int ConvertXYZToIndex(int x, int y, int z)
+        public static int ConvertToIndex(int x, int y, int z)
         {
             return x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
         }
 
-        /// <summary>
-        /// Converts Vector3Int to 1D.
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <returns>Index</returns>
-        int ConvertVector3ToIndex(Vector3Int pos)
+        public static int ConvertToIndex(Vector3Int pos)
+        {
+            return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
+        }
+
+        public static int ConvertToIndex(int3 pos)
         {
             return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
         }
@@ -70,7 +67,7 @@ namespace minescape.world.chunk
         /// <param name="block"></param>
         public void SetBlock(int x, int y, int z, byte block)
         {
-            int index = ConvertXYZToIndex(x, y, z);
+            int index = ConvertToIndex(x, y, z);
             BlockMap[index] = block;
         }
 
@@ -84,7 +81,7 @@ namespace minescape.world.chunk
             if (!IsBlockInChunk(pos.x, pos.y, pos.z))
                 return world.GetBlock(pos + position);
 
-            int index = ConvertVector3ToIndex(pos);
+            int index = ConvertToIndex(pos);
             return Blocks.blocks[BlockMap[index]];
         }
 
@@ -95,7 +92,7 @@ namespace minescape.world.chunk
         /// <param name="y"></param>
         /// <param name="z"></param>
         /// <returns>Whether block is within chunk.</returns>
-        bool IsBlockInChunk(int x, int y, int z)
+        public static bool IsBlockInChunk(int x, int y, int z)
         {
             if (x < 0 || x >= BlockData.ChunkWidth ||
                 y < 0 || y >= BlockData.ChunkHeight ||
@@ -121,74 +118,8 @@ namespace minescape.world.chunk
             chunkObject.transform.position = position;
             chunkObject.name = $"{coord.x},{coord.z}";
 
-            for (int x = 0; x < Constants.ChunkWidth; x++)
-                for (int z = 0; z < Constants.ChunkWidth; z++)
-                    for (int y = 0; y < Constants.ChunkHeight; y++)
-                    {
-                        int index = ConvertXYZToIndex(x, y, z);
-                        if (Blocks.blocks[BlockMap[index]].IsSolid)
-                            AddBlockToChunk(new Vector3Int(x, y, z));
-                    }
-
             CreateMesh();
             isRenderd = true;
-        }
-
-        /// <summary>
-        /// Generates exposed block faces.
-        /// </summary>
-        /// <param name="pos"></param>
-        void AddBlockToChunk(Vector3Int pos)
-        {
-            int index = ConvertVector3ToIndex(pos);
-            var blockID = BlockMap[index];
-            for (int i = 0; i < 6; i++)
-            {
-                if (blockID == 6 && i != 2) // only render top of water
-                    continue;
-
-                var adjacentBlock = pos + BlockData.faceCheck[i];
-                if (!world.IsBlockInWorld(adjacentBlock + position)) // if out of world, skip
-                    continue;
-
-                var clonk = GetBlock(adjacentBlock);
-                if (!clonk.IsTransparent) // if adjacent block is not transparent, skip
-                    continue;
-
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 1]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 2]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 3]]);
-                
-                AddTexture(Blocks.blocks[blockID].Faces[i]);
-
-                triangles.Add(vertexIndex);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 3);
-
-                vertexIndex += 4;
-            }
-        }
-
-        /// <summary>
-        /// Adds texture data to uvs.
-        /// </summary>
-        /// <param name="textureId"></param>
-        void AddTexture(int textureId)
-        {
-            float y = textureId / BlockData.TextureAtlasSize;
-            float x = textureId - (y * BlockData.TextureAtlasSize);
-
-            x *= BlockData.NormalizedTextureSize;
-            y *= BlockData.NormalizedTextureSize;
-
-            uvs.Add(new Vector2(x, y));
-            uvs.Add(new Vector2(x, y + BlockData.NormalizedTextureSize));
-            uvs.Add(new Vector2(x + BlockData.NormalizedTextureSize, y));
-            uvs.Add(new Vector2(x + BlockData.NormalizedTextureSize, y + BlockData.NormalizedTextureSize));
         }
 
         /// <summary>
@@ -196,14 +127,32 @@ namespace minescape.world.chunk
         /// </summary>
         void CreateMesh()
         {
+            Vector3[] verts = new Vector3[vertices.Length];
+            NativeArray<float3> vertArray = new(vertices.Length, Allocator.Temp);
+            vertArray.CopyFrom(vertices);
+            vertArray.Reinterpret<Vector3>().CopyTo(verts);
+
+            Vector2[] uvsArr = new Vector2[uvs.Length];
+            NativeArray<float2> uvsArray = new(uvs.Length, Allocator.Temp);
+            uvsArray.CopyFrom(uvs);
+            uvsArray.Reinterpret<Vector2>().CopyTo(uvsArr);
+
             Mesh mesh = new()
             {
-                vertices = vertices.ToArray(),
+                vertices = verts,
                 triangles = triangles.ToArray(),
-                uv = uvs.ToArray()
+                uv = uvsArr
             };
             mesh.RecalculateNormals();
             meshFilter.mesh = mesh;
+        }
+
+        public void Dispose()
+        {
+            BlockMap.Dispose();
+            vertices.Dispose();
+            triangles.Dispose();
+            uvs.Dispose();
         }
 
         public override string ToString()
