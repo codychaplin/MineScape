@@ -1,60 +1,70 @@
 ﻿using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
-using Unity.Collections; 
 using minescape.ESC.components;
+using Unity.Rendering;
+using UnityEngine;
 
 namespace minescape.ESC.systems
 {
-    public partial class CreateChunkSystem : SystemBase
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    public partial struct CreateChunkSystem : ISystem
     {
-        bool isCreated;
-        BeginInitializationEntityCommandBufferSystem cbs;
-        EntityQuery Query;
+        bool isInitialized;
 
-        protected override void OnCreate()
+        public void OnCreate(ref SystemState state)
         {
-            cbs = World.GetOrCreateSystemManaged<BeginInitializationEntityCommandBufferSystem>();
-            Query = GetEntityQuery(ComponentType.ReadWrite<Chunk>());
+            isInitialized = false;
         }
 
-        protected override void OnUpdate()
+        public void OnUpdate(ref SystemState state)
         {
-            if (!isCreated)
+            if(!isInitialized)
+                CreateChunk(0, 0, ref state);
+        }
+
+
+        public void OnDestroy(ref SystemState state)
+        {
+            foreach (var (chunk, meshData) in SystemAPI.Query<RefRW<Chunk>, RefRW<MeshData>>())
             {
-                for (int x = 0; x < 2; x++)
-                    for (int z = 0; z < 2; z++)
-                        CreateChunk(x, z);
+                chunk.ValueRW.Dispose();
+                meshData.ValueRW.Dispose();
             }
         }
 
-
-        protected override void OnDestroy()
+        void CreateChunk(int x, int z, ref SystemState state)
         {
-            NativeArray<Entity> entities = Query.ToEntityArray(Allocator.Temp);
-            foreach (var entity in entities)
-            {
-                var chunk = World.EntityManager.GetComponentData<Chunk>(entity);
-                chunk.BlockMap.Dispose();
-            }
-        }
-
-        void CreateChunk(int x, int z)
-        {
+            // create command buffer
+            var cbs = state.World.GetOrCreateSystemManaged<BeginInitializationEntityCommandBufferSystem>();
             var cb = cbs.CreateCommandBuffer();
-            Entity entity = cb.CreateEntity();
+
+            // create entity
+            EntityArchetype archetype = state.World.EntityManager.CreateArchetype(
+                typeof(Chunk),
+                typeof(MeshData),
+                typeof(LocalTransform),
+                typeof(LocalToWorld),
+                typeof(RenderMesh)
+                );
+            Entity entity = cb.CreateEntity(archetype);
+
+            // add components
             ChunkCoord coord = new(x, z);
             Chunk chunk = new(coord);
+            float3 pos = new(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth);
+            MeshData meshData = new(0);
+            LocalTransform transform = new() { Position = pos, Scale = 1 };
+            LocalToWorld transformWorld = new() { Value = float4x4.Translate(pos) };
+
             cb.SetName(entity, chunk.ToString());
-            var transform = new LocalTransform()
-            {
-                Position = new float3(coord.x * Constants.ChunkWidth, 0f, coord.z * Constants.ChunkWidth)
-            };
-            cb.AddComponent(entity, chunk);
-            cb.AddComponent(entity, transform);
+            cb.SetComponent(entity, chunk);
+            cb.SetComponent(entity, meshData);
+            cb.SetComponent(entity, transform);
+            cb.SetComponent(entity, transformWorld);
             cb.AddComponent<NeedsBlockMap>(entity);
 
-            isCreated = true;
+            isInitialized = true;
         }
     }
 }

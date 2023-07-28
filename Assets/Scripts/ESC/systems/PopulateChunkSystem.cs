@@ -1,17 +1,24 @@
-﻿using UnityEngine;
-using Unity.Entities;
+﻿using Unity.Entities;
+using Unity.Mathematics;
 using minescape.init;
 using minescape.ESC.components;
 
 namespace minescape.ESC.systems
 {
-    [UpdateAfter(typeof(CreateChunkSystem))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial struct PopulateChunkSystem : ISystem
     {
+        public void OnCreate(ref SystemState state)
+        {
+            
+        }
+
         public void OnUpdate(ref SystemState state)
         {
-            var cb = state.World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
-            foreach (var (blockMap, _chunk, entity) in SystemAPI.Query<RefRO<NeedsBlockMap>, RefRW<Chunk>>().WithEntityAccess())
+            var cbs = state.World.GetOrCreateSystemManaged<BeginSimulationEntityCommandBufferSystem>();
+            var cb = cbs.CreateCommandBuffer();
+
+            foreach (var (_, _chunk, entity) in SystemAPI.Query<RefRO<NeedsBlockMap>, RefRW<Chunk>>().WithEntityAccess())
             {
                 var job = new PopulateChunkJob()
                 {
@@ -19,8 +26,13 @@ namespace minescape.ESC.systems
                 };
                 job.Schedule();
                 cb.RemoveComponent<NeedsBlockMap>(entity);
-                cb.AddComponent<NeedsRendering>(entity);
+                cb.AddComponent<NeedsMeshData>(entity);
             }
+        }
+
+        public void OnDestroy(ref SystemState state)
+        {
+
         }
     }
 
@@ -34,8 +46,8 @@ namespace minescape.ESC.systems
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
-                    var noise = Noise.Get2DPerlin(new Vector2(chunk.coord.x + x, chunk.coord.z + z), 0, 0.2f);
-                    var terrainHeight = Mathf.FloorToInt(128 * noise + 16);
+                    var noise = Noise.Get2DPerlin(new float2(chunk.coord.x + x, chunk.coord.z + z), 0, 0.2f);
+                    var terrainHeight = (int)math.floor(128 * noise + 32);
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
                         if (y == 0)

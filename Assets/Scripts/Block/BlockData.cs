@@ -1,4 +1,4 @@
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace minescape.block
 {
@@ -25,16 +25,16 @@ namespace minescape.block
         /// <summary>
         /// Stores all 8 corners (vertices) of a 1x1 cube.
         /// </summary>
-        public static readonly Vector3[] verts = new Vector3[8]
+        public static readonly float3[] verts = new float3[8]
         {
-        new Vector3(0.0f, 0.0f, 0.0f), // 0
-        new Vector3(1.0f, 0.0f, 0.0f), // 1
-        new Vector3(1.0f, 1.0f, 0.0f), // 2
-        new Vector3(0.0f, 1.0f, 0.0f), // 3
-        new Vector3(0.0f, 0.0f, 1.0f), // 4
-        new Vector3(1.0f, 0.0f, 1.0f), // 5
-        new Vector3(1.0f, 1.0f, 1.0f), // 6
-        new Vector3(0.0f, 1.0f, 1.0f)  // 7
+        new float3(0.0f, 0.0f, 0.0f), // 0
+        new float3(1.0f, 0.0f, 0.0f), // 1
+        new float3(1.0f, 1.0f, 0.0f), // 2
+        new float3(0.0f, 1.0f, 0.0f), // 3
+        new float3(0.0f, 0.0f, 1.0f), // 4
+        new float3(1.0f, 0.0f, 1.0f), // 5
+        new float3(1.0f, 1.0f, 1.0f), // 6
+        new float3(0.0f, 1.0f, 1.0f)  // 7
         };
 
         /// <summary>
@@ -54,26 +54,26 @@ namespace minescape.block
         /// <summary>
         /// Stores array representing the direction UVs are created on a block face.
         /// </summary>
-        public static readonly Vector2[] uvs = new Vector2[4]
+        public static readonly float2[] uvs = new float2[4]
         {
         // bottom-left -> top-left -> bottom-right
-        new Vector2 (0.0f, 0.0f),
-        new Vector2 (0.0f, 1.0f),
-        new Vector2 (1.0f, 0.0f),
-        new Vector2 (1.0f, 1.0f)
+        new float2(0.0f, 0.0f),
+        new float2(0.0f, 1.0f),
+        new float2(1.0f, 0.0f),
+        new float2(1.0f, 1.0f)
         };
 
         /// <summary>
         /// Used to get surrounding voxel coordinates.
         /// </summary>
-        public static readonly Vector3Int[] faceCheck = new Vector3Int[6]
+        public static readonly int3[] faceCheck = new int3[6]
         {
-        new Vector3Int(0, 0, -1), // back
-        new Vector3Int(0, 0, 1), // front
-        new Vector3Int(0, 1, 0), // top
-        new Vector3Int(0, -1, 0), // bottom
-        new Vector3Int(-1, 0, 0), // left
-        new Vector3Int(1, 0, 0), // right
+        new int3(0, 0, -1), // back
+        new int3(0, 0, 1), // front
+        new int3(0, 1, 0), // top
+        new int3(0, -1, 0), // bottom
+        new int3(-1, 0, 0), // left
+        new int3(1, 0, 0), // right
         };
     }
 }

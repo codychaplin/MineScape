@@ -16,7 +16,7 @@ namespace minescape.world.chunk
         GameObject chunkObject;
         MeshFilter meshFilter;
         MeshRenderer meshRenderer;
-        int vertexIndex = 0;
+        //int vertexIndex = 0;
         List<Vector3> vertices = new();
         List<int> triangles = new();
         List<Vector2> uvs = new();
@@ -109,7 +109,7 @@ namespace minescape.world.chunk
         /// <param name="pos"></param>
         void AddBlockToChunk(Vector3Int pos)
         {
-            var blockID = BlockMap[pos.x, pos.y, pos.z];
+            /*var blockID = BlockMap[pos.x, pos.y, pos.z];
             for (int i = 0; i < 6; i++)
             {
                 if (blockID == 6 && i != 2) // only render top of water
@@ -138,7 +138,7 @@ namespace minescape.world.chunk
                 triangles.Add(vertexIndex + 3);
 
                 vertexIndex += 4;
-            }
+            }*/
         }
 
         void AddTexture(int textureId)
