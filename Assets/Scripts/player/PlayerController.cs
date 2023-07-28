@@ -8,9 +8,9 @@ namespace minescape.player
         public float mouseSensitivityY = 200f;
 
         // Sensitivity values for keyboard movement
-        public float moveSensitivityX = 20f;
-        public float moveSensitivityY = 20f;
-        public float moveSensitivityZ = 20f;
+        public float moveSensitivityX = 40f;
+        public float moveSensitivityY = 60f;
+        public float moveSensitivityZ = 40f;
 
         // The current rotation of the camera
         private float xRotation = 0f;

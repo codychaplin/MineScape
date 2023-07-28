@@ -46,7 +46,7 @@ namespace minescape.ESC.systems
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
-                    var noise = Noise.Get2DPerlin(new float2(chunk.coord.x + x, chunk.coord.z + z), 0, 0.2f);
+                    var noise = Noise.Get2DPerlin(new float2(chunk.position.x + x, chunk.position.z + z), 0, 0.2f);
                     var terrainHeight = (int)math.floor(128 * noise + 32);
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
