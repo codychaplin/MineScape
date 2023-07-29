@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Jobs;
+using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
@@ -8,12 +9,15 @@ using minescape.ESC.components;
 namespace minescape.ESC.systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(PopulateChunkSystem))]
+    [RequireMatchingQueriesForUpdate]
     public partial struct GenerateChunkMeshDataSystem : ISystem
     {
+        EntityQuery GenerateChunkMeshDataQuery;
+
         public void OnCreate(ref SystemState state)
         {
-            
+            GenerateChunkMeshDataQuery = state.GetEntityQuery(ComponentType.ReadOnly<NeedsMeshData>());
+            state.RequireForUpdate(GenerateChunkMeshDataQuery);
         }
 
         public void OnUpdate(ref SystemState state)
@@ -27,7 +31,7 @@ namespace minescape.ESC.systems
                 var southChunk = GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z - 1));
                 var eastChunk = GetChunk(new ChunkCoord(chunk.coord.x + 1, chunk.coord.z));
                 var westChunk = GetChunk(new ChunkCoord(chunk.coord.x - 1, chunk.coord.z));*/
-                GenerateChunkMeshDataJob job = new()
+                new GenerateChunkMeshDataJob()
                 {
                     coord = chunk.ValueRO.coord,
                     position = new int3(chunk.ValueRO.position.x, 0, chunk.ValueRO.position.z),
@@ -40,8 +44,7 @@ namespace minescape.ESC.systems
                     triangles = meshData.ValueRW.triangles,
                     uvs = meshData.ValueRW.uvs,
                     vertexIndex = 0
-                };
-                job.Schedule();
+                }.Schedule();
                 cb.RemoveComponent<NeedsMeshData>(entity);
                 cb.AddComponent<NeedsRendering>(entity);
             }

@@ -2,29 +2,30 @@
 using Unity.Mathematics;
 using minescape.init;
 using minescape.ESC.components;
+using Unity.Jobs;
 
 namespace minescape.ESC.systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [RequireMatchingQueriesForUpdate]
     public partial struct PopulateChunkSystem : ISystem
     {
+        EntityQuery PopulateChunkQuery;
+
         public void OnCreate(ref SystemState state)
         {
-            
+            PopulateChunkQuery = state.GetEntityQuery(ComponentType.ReadOnly<NeedsBlockMap>());
+            state.RequireForUpdate(PopulateChunkQuery);
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            var cbs = state.World.GetOrCreateSystemManaged<BeginSimulationEntityCommandBufferSystem>();
+            var cbs = state.World.GetOrCreateSystemManaged<BeginInitializationEntityCommandBufferSystem>();
             var cb = cbs.CreateCommandBuffer();
 
             foreach (var (_, _chunk, entity) in SystemAPI.Query<RefRO<NeedsBlockMap>, RefRW<Chunk>>().WithEntityAccess())
             {
-                var job = new PopulateChunkJob()
-                {
-                    chunk = _chunk.ValueRW
-                };
-                job.Schedule();
+                new PopulateChunkJob() { chunk = _chunk.ValueRW }.Schedule();
                 cb.RemoveComponent<NeedsBlockMap>(entity);
                 cb.AddComponent<NeedsMeshData>(entity);
             }

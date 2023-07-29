@@ -7,11 +7,15 @@ using Unity.Collections;
 namespace minescape.ESC.systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [RequireMatchingQueriesForUpdate]
     public partial struct RenderChunkSystem : ISystem
     {
+        EntityQuery RenderChunkQuery;
+
         public void OnCreate(ref SystemState state)
         {
-            
+            RenderChunkQuery = state.GetEntityQuery(ComponentType.ReadOnly<NeedsRendering>());
+            state.RequireForUpdate(RenderChunkQuery);
         }
 
         public void OnUpdate(ref SystemState state)
@@ -33,13 +37,6 @@ namespace minescape.ESC.systems
 
                 var renderMeshArray = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
                 renderMeshArray.Meshes[0] = mesh;
-
-                /*float4x4 matrix = state.EntityManager.GetComponentData<LocalToWorld>(entity).Value;
-                Bounds bounds = mesh.bounds;
-                AABB aabb = new();
-                aabb.Center = math.transform(matrix, bounds.center);
-                aabb.Extents = bounds.extents * math.cmax(matrix.c0.xyz, matrix.c1.xyz, matrix.c2.xyz);
-                RenderBounds renderBounds = new() { Value = aabb };*/
 
                 cb.SetSharedComponentManaged(entity, renderMeshArray);
                 cb.RemoveComponent<NeedsRendering>(entity);

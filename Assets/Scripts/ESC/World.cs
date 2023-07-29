@@ -1,10 +1,10 @@
-using minescape.ESC.components;
+using UnityEngine;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
+using Unity.Mathematics;
 using UnityEngine.Rendering;
+using minescape.ESC.components;
 
 namespace minescape.ECS
 {
@@ -30,8 +30,6 @@ namespace minescape.ECS
 
         void CreateChunk(int x, int z, EntityManager entityManager)
         {
-            // create command buffer
-
             EntityArchetype archetype = entityManager.CreateArchetype(
                 typeof(Chunk),
                 typeof(MeshData),
