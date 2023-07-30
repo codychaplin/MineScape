@@ -124,7 +124,7 @@ namespace minescape.world
                         continue;
 
                     var chunkCoord = new ChunkCoord(x, z);
-                    Chunk chunk = chunkManager.GetChunk(chunkCoord);
+                    Chunk chunk = chunkManager.TryGetChunk(chunkCoord);
 
                     if (chunk == null || !chunk.isRenderd) // if doesn't exist, add to queue
                         chunkManager.chunksToCreate.Enqueue(chunkCoord);

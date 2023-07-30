@@ -30,9 +30,17 @@ namespace minescape.world.chunk
 
         void Update()
         {
-            
+            if (chunksToCreate.Count > 0)
+            {
+                CreateChunks();
+            }
         }
 
+        /// <summary>
+        /// Gets chunk if it exists, otherwise it makes one.
+        /// </summary>
+        /// <param name="chunkCoord"></param>
+        /// <returns>Chunk</returns>
         public Chunk GetChunk(ChunkCoord chunkCoord)
         {
             if (Chunks.TryGetValue(chunkCoord, out var chunk))
@@ -41,14 +49,34 @@ namespace minescape.world.chunk
                 return CreateChunkNow(chunkCoord);
         }
 
-        public Chunk CreateChunk(ChunkCoord coord)
+        /// <summary>
+        /// Tries to get chunk if it exists, otherwise returns null.
+        /// </summary>
+        /// <param name="chunkCoord"></param>
+        /// <returns>Chunk or null</returns>
+        public Chunk TryGetChunk(ChunkCoord chunkCoord)
         {
-            Chunk chunk = new(world, coord);
-            SetBlocksInChunk(chunk);
-            Chunks.Add(coord, chunk);
-            return chunk;
+            return Chunks.GetValueOrDefault(chunkCoord);
         }
 
+        /// <summary>
+        /// Creates a chunk and schedules a job to set the blocks.
+        /// </summary>
+        /// <param name="coord"></param>
+        /// <returns>Chunk</returns>
+        public (JobHandle, Chunk) CreateChunk(ChunkCoord coord)
+        {
+            Chunk chunk = new(world, coord);
+            var handle = SetBlocksInChunk(chunk);
+            Chunks.Add(coord, chunk);
+            return (handle, chunk);
+        }
+
+        /// <summary>
+        /// Creates a chunk and schedules/completes a job to the set the blocks.
+        /// </summary>
+        /// <param name="coord"></param>
+        /// <returns>Chunk</returns>
         public Chunk CreateChunkNow(ChunkCoord coord)
         {
             Chunk chunk = new(world, coord);
@@ -68,21 +96,65 @@ namespace minescape.world.chunk
             return job.Schedule();
         }
 
-        /*void CreateChunks()
+        void CreateChunks()
         {
             while (chunksToCreate.Count > 0)
             {
-                Chunk chunk = GetChunk(chunksToCreate.Peek());
-                chunk.RenderChunk();
+                // create chunk
+                ChunkCoord coord = chunksToCreate.Peek();
+                Chunk chunk = TryGetChunk(coord);
+                JobHandle CreateChunkHandle = new();
+                if (chunk == null)
+                {
+                    var handleAndChunk = CreateChunk(coord);
+                    CreateChunkHandle = handleAndChunk.Item1;
+                    chunk = handleAndChunk.Item2;
+                }
+
+                // generate mesh data
+                var northChunk = GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z + 1));
+                var southChunk = GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z - 1));
+                var eastChunk = GetChunk(new ChunkCoord(chunk.coord.x + 1, chunk.coord.z));
+                var westChunk = GetChunk(new ChunkCoord(chunk.coord.x - 1, chunk.coord.z));
+                GenerateMeshDataJob generateMeshDataJob = new()
+                {
+                    coord = chunk.coord,
+                    position = new int3(chunk.position.x, 0, chunk.position.z),
+                    map = chunk.BlockMap,
+                    north = northChunk.BlockMap,
+                    south = southChunk.BlockMap,
+                    east = eastChunk.BlockMap,
+                    west = westChunk.BlockMap,
+                    vertices = chunk.vertices,
+                    triangles = chunk.triangles,
+                    uvs = chunk.uvs,
+                    vertexIndex = 0
+                };
+
+                // render chunk
+                var generateMeshDataHandle = generateMeshDataJob.Schedule(CreateChunkHandle);
+                StartCoroutine(RenderChunk(generateMeshDataHandle, chunk));
+
                 chunksToCreate.Dequeue();
+
                 if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance ||
                     chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
                 {
                     chunk.IsActive = false;
                 }
-
             }
-        }*/
+        }
+
+        IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)
+        {
+            while (!dependency.IsCompleted)
+            {
+                yield return null;
+            }
+
+            dependency.Complete();
+            chunk.RenderChunk();
+        }
 
         public void GenerateChunksOnStart()
         {
