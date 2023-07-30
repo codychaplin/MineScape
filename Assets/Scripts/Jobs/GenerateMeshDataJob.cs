@@ -1,14 +1,14 @@
 ﻿using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
-using minescape.init;
 using minescape.block;
 using minescape.world;
 using minescape.world.chunk;
+using minescape.init;
 
 namespace minescape.jobs
 {
-    public struct RenderChunkJob : IJob
+    public struct GenerateMeshDataJob : IJob
     {
         [ReadOnly]
         public ChunkCoord coord;
@@ -39,6 +39,7 @@ namespace minescape.jobs
 
         public void Execute()
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
@@ -48,6 +49,7 @@ namespace minescape.jobs
                         if (map[index] != 0)
                             AddBlockToChunk(index3);
                     }
+            UnityEngine.Debug.Log($"mesh generated for chunk({coord.x},{coord.z}) in {sw.ElapsedMilliseconds}ms");
         }
 
         void AddBlockToChunk(int3 pos)
@@ -67,10 +69,10 @@ namespace minescape.jobs
                 if (adjacentBlock != 0 && adjacentBlock != 6) // if adjacent block is not transparent, skip
                     continue;
 
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 0]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 1]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 2]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i, 3]]);
+                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 0]]);
+                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 1]]);
+                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 2]]);
+                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 3]]);
 
                 AddTexture(Blocks.blocks[blockID].Faces[i]);
 

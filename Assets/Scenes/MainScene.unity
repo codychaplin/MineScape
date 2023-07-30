@@ -344,9 +344,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mouseSensitivityX: 200
   mouseSensitivityY: 200
-  moveSensitivityX: 20
-  moveSensitivityY: 20
-  moveSensitivityZ: 20
+  moveSensitivityX: 40
+  moveSensitivityY: 40
+  moveSensitivityZ: 40
 --- !u!1 &371005842
 GameObject:
   m_ObjectHideFlags: 0

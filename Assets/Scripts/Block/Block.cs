@@ -1,12 +1,12 @@
 namespace minescape.block
 {
-    public class Block
+    public struct Block
     {
         public byte ID { get; }
         public string Name { get; }
         public bool IsSolid { get; }
         public bool IsTransparent { get; }
-        public byte[] Faces = new byte[6];
+        public byte[] Faces { get; }
 
         public Block(byte _ID, string name, byte[] faces, bool isTransparent = false, bool isSolid = true)
         {
@@ -15,6 +15,7 @@ namespace minescape.block
             Faces = faces;
             IsTransparent = isTransparent;
             IsSolid = isSolid;
+            Faces = new byte[6];
         }
     }
 }

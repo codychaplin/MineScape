@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using Unity.Jobs;
+﻿using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
@@ -15,12 +14,13 @@ namespace minescape.jobs
 
         public void Execute()
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             for (int x = 0; x < Constants.ChunkWidth; x++)
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
                     var noise = Noise.Get2DPerlin(new float2(position.x + x, position.z + z), 0, 0.15f);
-                    var terrainHeight = Mathf.FloorToInt(128 * noise + 32);
+                    var terrainHeight = (int)math.floor(128 * noise + 32);
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
                         int index = x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
@@ -35,6 +35,7 @@ namespace minescape.jobs
                     }
                 }
             }
+            UnityEngine.Debug.Log($"setblockdata for chunk({position.x / 16},{position.z / 16}) in {sw.ElapsedMilliseconds}ms");
         }
     }
 }

@@ -15,9 +15,8 @@ namespace minescape.world.chunk
         public bool isRenderd = false;
 
         GameObject chunkObject;
-        MeshFilter meshFilter;
+        public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
-        //int vertexIndex = 0;
         public NativeList<float3> vertices;
         public NativeList<int> triangles;
         public NativeList<float2> uvs;
@@ -127,24 +126,19 @@ namespace minescape.world.chunk
         /// </summary>
         void CreateMesh()
         {
-            Vector3[] verts = new Vector3[vertices.Length];
-            NativeArray<float3> vertArray = new(vertices.Length, Allocator.Temp);
-            vertArray.CopyFrom(vertices);
-            vertArray.Reinterpret<Vector3>().CopyTo(verts);
+            var vertArray = vertices.ToArray(Allocator.TempJob);
+            var uvsArray = uvs.ToArray(Allocator.TempJob);
 
-            Vector2[] uvsArr = new Vector2[uvs.Length];
-            NativeArray<float2> uvsArray = new(uvs.Length, Allocator.Temp);
-            uvsArray.CopyFrom(uvs);
-            uvsArray.Reinterpret<Vector2>().CopyTo(uvsArr);
-
-            Mesh mesh = new()
-            {
-                vertices = verts,
-                triangles = triangles.ToArray(),
-                uv = uvsArr
-            };
+            Mesh mesh = new();
+            mesh.SetVertices(vertArray);
+            mesh.SetTriangles(triangles.ToArray(), 0);
+            mesh.SetUVs(0, uvsArray);
             mesh.RecalculateNormals();
+
             meshFilter.mesh = mesh;
+
+            vertArray.Dispose();
+            uvsArray.Dispose();
         }
 
         public void Dispose()
