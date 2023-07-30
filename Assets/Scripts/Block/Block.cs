@@ -15,7 +15,6 @@ namespace minescape.block
             Faces = faces;
             IsTransparent = isTransparent;
             IsSolid = isSolid;
-            Faces = new byte[6];
         }
     }
 }

@@ -14,7 +14,6 @@ namespace minescape.jobs
 
         public void Execute()
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
             for (int x = 0; x < Constants.ChunkWidth; x++)
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
@@ -35,7 +34,6 @@ namespace minescape.jobs
                     }
                 }
             }
-            UnityEngine.Debug.Log($"setblockdata for chunk({position.x / 16},{position.z / 16}) in {sw.ElapsedMilliseconds}ms");
         }
     }
 }

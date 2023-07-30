@@ -1,8 +1,8 @@
 using UnityEngine;
 using Unity.Collections;
+using Unity.Mathematics;
 using minescape.init;
 using minescape.block;
-using Unity.Mathematics;
 
 namespace minescape.world.chunk
 {

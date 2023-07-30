@@ -7,7 +7,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
 using minescape.jobs;
-using minescape.block;
 
 namespace minescape.world.chunk
 {
@@ -94,8 +93,6 @@ namespace minescape.world.chunk
 
         JobHandle SetBlocksInChunksOnStart()
         {
-            
-
             int index = 0;
             int count = (Constants.ViewDistance * 2) * (Constants.ViewDistance * 2);
             NativeArray<JobHandle> SetBlocksInChunkHandles = new(count, Allocator.TempJob);
