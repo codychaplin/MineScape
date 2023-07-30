@@ -39,7 +39,7 @@ namespace minescape.jobs
 
         public void Execute()
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+            //var sw = System.Diagnostics.Stopwatch.StartNew();
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
@@ -49,7 +49,7 @@ namespace minescape.jobs
                         if (map[index] != 0)
                             AddBlockToChunk(index3);
                     }
-            UnityEngine.Debug.Log($"mesh generated for chunk({coord.x},{coord.z}) in {sw.ElapsedMilliseconds}ms");
+            //UnityEngine.Debug.Log($"mesh generated for chunk({coord.x},{coord.z}) in {sw.ElapsedMilliseconds}ms");
         }
 
         void AddBlockToChunk(int3 pos)

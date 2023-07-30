@@ -79,7 +79,7 @@ namespace minescape.world
 
         public Chunk GetChunkFromChunkCoord(ChunkCoord chunkCoord)
         {
-            return chunkManager.GetChunk(chunkCoord);
+            return chunkManager.GetChunkNow(chunkCoord);
         }
 
         public static bool IsBlockInWorld(Vector3Int pos)
@@ -127,7 +127,7 @@ namespace minescape.world
                     Chunk chunk = chunkManager.TryGetChunk(chunkCoord);
 
                     if (chunk == null || !chunk.isRenderd) // if doesn't exist, add to queue
-                        chunkManager.chunksToCreate.Enqueue(chunkCoord);
+                        chunkManager.ChunksToCreate.Enqueue(chunkCoord);
                     else if (!chunk.IsActive) // if not active, activate
                         chunk.IsActive = true;
 
