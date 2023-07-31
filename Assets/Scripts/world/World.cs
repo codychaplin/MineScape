@@ -40,9 +40,12 @@ namespace minescape.world
 
         void Update()
         {
-            /*playerChunkCoord = GetChunkCoord(player.position);
+            if (chunkManager.renderMap)
+                return;
+
+            playerChunkCoord = GetChunkCoord(player.position);
             if (!playerChunkCoord.Equals(playerLastChunkCoord))
-                CheckViewDistance();*/
+                CheckViewDistance();
         }
 
         void OnApplicationQuit()

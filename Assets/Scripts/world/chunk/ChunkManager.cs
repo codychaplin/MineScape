@@ -5,7 +5,6 @@ using UnityEngine;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
-using minescape.init;
 using minescape.jobs;
 
 namespace minescape.world.chunk
@@ -15,6 +14,8 @@ namespace minescape.world.chunk
         public World world;
         public bool renderMap;
         public bool renderChunks;
+
+        public NoiseParameters noiseParameters;
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
@@ -34,17 +35,23 @@ namespace minescape.world.chunk
                 GenerateMap();
         }
 
-        /*void Update()
+        void Update()
         {
+            if (renderMap)
+                return;
+
             if (canRender)
                 GenerateMeshDataAndRenderChunks();
         }
 
         void LateUpdate()
         {
+            if (renderMap)
+                return;
+
             if (ChunksToCreate.Count > 0)
                 CreateChunks();
-        }*/
+        }
 
         public Chunk GetChunkNow(ChunkCoord chunkCoord)
         {
@@ -72,8 +79,8 @@ namespace minescape.world.chunk
         public JobHandle CreateChunk(ChunkCoord coord)
         {
             Chunk chunk = new(world, coord);
-            var handle = SetBlocksInChunk(chunk);
             Chunks.Add(coord, chunk);
+            var handle = SetBlocksInChunk(chunk);
             return handle;
         }
 
@@ -89,45 +96,6 @@ namespace minescape.world.chunk
             handle.Complete();
             Chunks.Add(coord, chunk);
             return chunk;
-        }
-
-        JobHandle SetBlocksInChunk(Chunk chunk)
-        {
-            SetBlockDataJob job = new()
-            {
-                position = new int3(chunk.position.x, 0, chunk.position.z),
-                map = chunk.BlockMap
-            };
-            return job.Schedule();
-        }
-
-        JobHandle GenerateMeshData(Chunk chunk, JobHandle dependency)
-        {
-            // generate mesh data
-            var northChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z + 1)];
-            var southChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z - 1)];
-            var eastChunk = Chunks[new ChunkCoord(chunk.coord.x + 1, chunk.coord.z)];
-            var westChunk = Chunks[new ChunkCoord(chunk.coord.x - 1, chunk.coord.z)];
-
-            GenerateMeshDataJob generateMeshDataJob = new()
-            {
-                coord = chunk.coord,
-                position = new int3(chunk.position.x, 0, chunk.position.z),
-                map = chunk.BlockMap,
-                north = northChunk.BlockMap,
-                south = southChunk.BlockMap,
-                east = eastChunk.BlockMap,
-                west = westChunk.BlockMap,
-                vertices = chunk.vertices,
-                normals = chunk.normals,
-                triangles = chunk.triangles,
-                uvs = chunk.uvs,
-                vertexIndex = 0
-            };
-
-            // render chunk
-            var generateMeshDataHandle = generateMeshDataJob.Schedule(dependency);
-            return generateMeshDataHandle;
         }
 
         void CreateChunks()
@@ -163,6 +131,49 @@ namespace minescape.world.chunk
             handles.Dispose();
 
             canRender = true;
+        }
+
+        JobHandle SetBlocksInChunk(Chunk chunk)
+        {
+            SetBlockDataJob job = new()
+            {
+                offset = noiseParameters.offset,
+                scale = noiseParameters.scale,
+                minTerrainheight = noiseParameters.minTerrainheight,
+                maxTerrainheight = noiseParameters.maxTerrainheight,
+                position = new int3(chunk.position.x, 0, chunk.position.z),
+                map = chunk.BlockMap
+            };
+            return job.Schedule();
+        }
+
+        JobHandle GenerateMeshData(Chunk chunk, JobHandle dependency)
+        {
+            // generate mesh data
+            var northChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z + 1)];
+            var southChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z - 1)];
+            var eastChunk = Chunks[new ChunkCoord(chunk.coord.x + 1, chunk.coord.z)];
+            var westChunk = Chunks[new ChunkCoord(chunk.coord.x - 1, chunk.coord.z)];
+
+            GenerateMeshDataJob generateMeshDataJob = new()
+            {
+                coord = chunk.coord,
+                position = new int3(chunk.position.x, 0, chunk.position.z),
+                map = chunk.BlockMap,
+                north = northChunk.BlockMap,
+                south = southChunk.BlockMap,
+                east = eastChunk.BlockMap,
+                west = westChunk.BlockMap,
+                vertices = chunk.vertices,
+                normals = chunk.normals,
+                triangles = chunk.triangles,
+                uvs = chunk.uvs,
+                vertexIndex = 0
+            };
+
+            // render chunk
+            var generateMeshDataHandle = generateMeshDataJob.Schedule(dependency);
+            return generateMeshDataHandle;
         }
 
         void GenerateMeshDataAndRenderChunks()
@@ -228,6 +239,10 @@ namespace minescape.world.chunk
                     Chunk chunk = new(world, coord);
                     SetBlockDataJob job = new()
                     {
+                        offset = noiseParameters.offset,
+                        scale = noiseParameters.scale,
+                        minTerrainheight = noiseParameters.minTerrainheight,
+                        maxTerrainheight = noiseParameters.maxTerrainheight,
                         position = new int3(chunk.position.x, 0, chunk.position.z),
                         map = chunk.BlockMap
                     };
