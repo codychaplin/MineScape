@@ -119,6 +119,7 @@ namespace minescape.world.chunk
                 east = eastChunk.BlockMap,
                 west = westChunk.BlockMap,
                 vertices = chunk.vertices,
+                normals = chunk.normals,
                 triangles = chunk.triangles,
                 uvs = chunk.uvs,
                 vertexIndex = 0
@@ -264,6 +265,7 @@ namespace minescape.world.chunk
                     east = eastChunk.BlockMap,
                     west = westChunk.BlockMap,
                     vertices = chunk.vertices,
+                    normals = chunk.normals,
                     triangles = chunk.triangles,
                     uvs = chunk.uvs,
                     vertexIndex = 0

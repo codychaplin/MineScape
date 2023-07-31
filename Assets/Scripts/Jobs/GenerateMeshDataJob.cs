@@ -5,6 +5,7 @@ using minescape.init;
 using minescape.block;
 using minescape.world;
 using minescape.world.chunk;
+using UnityEngine;
 
 namespace minescape.jobs
 {
@@ -34,6 +35,8 @@ namespace minescape.jobs
         public NativeList<int> triangles;
         [WriteOnly]
         public NativeList<float2> uvs;
+        [WriteOnly]
+        public NativeList<float3> normals;
 
         public int vertexIndex;
 
@@ -64,13 +67,23 @@ namespace minescape.jobs
                     continue;
 
                 var adjacentBlock = GetBlock(adjacentIndex);
-                if (adjacentBlock != 0 && adjacentBlock != 6) // if adjacent block is not transparent, skip
+                if (adjacentBlock != 0 && adjacentBlock != 6) // if adjacent block is not air or water, skip
                     continue;
 
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 0]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 1]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 2]]);
-                vertices.Add(pos + BlockData.verts[BlockData.tris[i * 4 + 3]]);
+                float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];
+                float3 v1 = pos + BlockData.verts[BlockData.tris[i * 4 + 1]];
+                float3 v2 = pos + BlockData.verts[BlockData.tris[i * 4 + 2]];
+                float3 v3 = pos + BlockData.verts[BlockData.tris[i * 4 + 3]];
+                vertices.Add(v0);
+                vertices.Add(v1);
+                vertices.Add(v2);
+                vertices.Add(v3);
+
+                float3 faceNormal = CalculateFaceNormal(v0, v1, v2);
+                normals.Add(faceNormal);
+                normals.Add(faceNormal);
+                normals.Add(faceNormal);
+                normals.Add(faceNormal);
 
                 AddTexture(Blocks.blocks[blockID].Faces[i]);
 
@@ -83,6 +96,13 @@ namespace minescape.jobs
 
                 vertexIndex += 4;
             }
+        }
+
+        float3 CalculateFaceNormal(float3 v0, float3 v1, float3 v2)
+        {
+            float3 side1 = v1 - v0;
+            float3 side2 = v2 - v0;
+            return Vector3.Cross(side1, side2).normalized;
         }
 
         byte GetBlock(int3 pos)

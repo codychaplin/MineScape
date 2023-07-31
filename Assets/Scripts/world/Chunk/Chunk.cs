@@ -19,6 +19,7 @@ namespace minescape.world.chunk
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
         public NativeList<float3> vertices;
+        public NativeList<float3> normals;
         public NativeList<int> triangles;
         public NativeList<float2> uvs;
         
@@ -37,6 +38,7 @@ namespace minescape.world.chunk
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
             vertices = new(4096, Allocator.Persistent);
+            normals = new(4096, Allocator.Persistent);
             triangles = new(4096, Allocator.Persistent);
             uvs = new(4096, Allocator.Persistent);
         }
@@ -126,25 +128,24 @@ namespace minescape.world.chunk
         /// </summary>
         void CreateMesh()
         {
-            var vertArray = vertices.ToArray(Allocator.TempJob);
-            var uvsArray = uvs.ToArray(Allocator.TempJob);
+            var vertArray = vertices.ToArray(Allocator.Temp);
+            var normArray = normals.ToArray(Allocator.Temp);
+            var uvsArray = uvs.ToArray(Allocator.Temp);
 
             Mesh mesh = new();
             mesh.SetVertices(vertArray);
             mesh.SetTriangles(triangles.ToArray(), 0);
             mesh.SetUVs(0, uvsArray);
-            //mesh.RecalculateNormals();
+            mesh.SetNormals(normArray);
 
             meshFilter.mesh = mesh;
-
-            vertArray.Dispose();
-            uvsArray.Dispose();
         }
 
         public void Dispose()
         {
             BlockMap.Dispose();
             vertices.Dispose();
+            normals.Dispose();
             triangles.Dispose();
             uvs.Dispose();
         }
