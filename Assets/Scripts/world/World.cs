@@ -40,9 +40,9 @@ namespace minescape.world
 
         void Update()
         {
-            playerChunkCoord = GetChunkCoord(player.position);
+            /*playerChunkCoord = GetChunkCoord(player.position);
             if (!playerChunkCoord.Equals(playerLastChunkCoord))
-                CheckViewDistance();
+                CheckViewDistance();*/
         }
 
         void OnApplicationQuit()
@@ -52,6 +52,12 @@ namespace minescape.world
                 foreach (var chunk in chunkManager.Chunks.Values)
                 {
                     chunk.Dispose();
+                }
+
+            if (chunkManager != null && chunkManager.MapChunks != null && chunkManager.MapChunks.Count > 0)
+                foreach (var mapChunk in chunkManager.MapChunks)
+                {
+                    mapChunk.Dispose();
                 }
         }
 

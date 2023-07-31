@@ -28,10 +28,13 @@ namespace minescape.world.chunk
 
         private void Start()
         {
-            GenerateChunksOnStart();
+            if (renderChunks)
+                GenerateChunksOnStart();
+            if (renderMap)
+                GenerateMap();
         }
 
-        void Update()
+        /*void Update()
         {
             if (canRender)
                 GenerateMeshDataAndRenderChunks();
@@ -41,7 +44,7 @@ namespace minescape.world.chunk
         {
             if (ChunksToCreate.Count > 0)
                 CreateChunks();
-        }
+        }*/
 
         public Chunk GetChunkNow(ChunkCoord chunkCoord)
         {
@@ -301,30 +304,35 @@ namespace minescape.world.chunk
 
         public void GenerateMap()
         {
-            for (int x = 0; x < Constants.WorldSizeInChunks; x++)
-                for (int z = 0; z < Constants.WorldSizeInChunks; z++)
+            int index = 0;
+            int length = Constants.WorldSizeInMapChunks * Constants.WorldSizeInMapChunks;
+            NativeArray<JobHandle> handles = new(length, Allocator.TempJob);
+            for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)
+                for (int z = 0; z < Constants.WorldSizeInMapChunks; z++)
                 {
-                    MapChunk chunk = new(new ChunkCoord(x, z));
-                    SetBlocksInMapChunk(ref chunk);
-                    MapChunks.Add(chunk);
+                    MapChunk mapChunk = new(new ChunkCoord(x, z));
+                    SetMapBlockDataJob job = new()
+                    {
+                        position = new int2(mapChunk.position.x, mapChunk.position.y),
+                        map = mapChunk.BlockMap
+                    };
+                    handles[index++] = job.Schedule();
+                    MapChunks.Add(mapChunk);
                 }
-
-            ConvertMapToPng();
+            var dependency = JobHandle.CombineDependencies(handles);
+            handles.Dispose();
+            StartCoroutine(ConvertMapToPng(dependency));
         }
 
-        void SetBlocksInMapChunk(ref MapChunk chunk)
+        IEnumerator ConvertMapToPng(JobHandle dependency)
         {
-            for (int x = 0; x < Constants.ChunkWidth; x++)
+            while (!dependency.IsCompleted)
             {
-                for (int z = 0; z < Constants.ChunkWidth; z++)
-                {
-                    var terrainHeight = Mathf.FloorToInt(128 * Noise.Get2DPerlin(new float2(chunk.position.x + x, chunk.position.y + z), 0, 0.5f)) + 16;
-                    if (terrainHeight > Constants.WaterLevel)
-                        chunk.SetBlock(x, z, Blocks.STONE.ID);
-                    else
-                        chunk.SetBlock(x, z, Blocks.WATER.ID);
-                }
+                yield return null;
             }
+
+            dependency.Complete();
+            ConvertMapToPng();
         }
 
         void ConvertMapToPng()
@@ -340,19 +348,20 @@ namespace minescape.world.chunk
                 { 6, new Color32(80,172,220,255) } // water
             };
 
-            Texture2D texture = new(Constants.WorldSizeInBlocks, Constants.WorldSizeInBlocks);
+            Texture2D texture = new(Constants.WorldSizeInMapBlocks, Constants.WorldSizeInMapBlocks);
 
-            for (int x = 0; x < Constants.WorldSizeInChunks; x++)
+            for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)
             {
-                for (int y = 0; y < Constants.WorldSizeInChunks; y++)
+                for (int y = 0; y < Constants.WorldSizeInMapChunks; y++)
                 {
                     MapChunk mapChunk = GetMapChunk(new ChunkCoord(x, y));
-                    int offsetX = x * Constants.ChunkWidth;
-                    int offsetY = y * Constants.ChunkWidth;
-                    for (int chunkX = 0; chunkX < Constants.ChunkWidth; chunkX++)
-                        for (int chunkY = 0; chunkY < Constants.ChunkWidth; chunkY++)
+                    int offsetX = x * Constants.MapChunkWidth;
+                    int offsetY = y * Constants.MapChunkWidth;
+                    for (int chunkX = 0; chunkX < Constants.MapChunkWidth; chunkX++)
+                        for (int chunkY = 0; chunkY < Constants.MapChunkWidth; chunkY++)
                         {
-                            var block = mapChunk.BlockMap[chunkX, chunkY];
+                            int index = MapChunk.ConvertToIndex(chunkX, chunkY);
+                            var block = mapChunk.BlockMap[index];
                             texture.SetPixel(chunkX + offsetX, chunkY + offsetY, colours[block]);
                         }
                 }

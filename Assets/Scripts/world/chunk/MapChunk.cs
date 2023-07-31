@@ -1,21 +1,28 @@
-using UnityEngine;
+using Unity.Collections;
+using Unity.Mathematics;
 using minescape.init;
 using minescape.block;
 
 namespace minescape.world.chunk
 {
-    public class MapChunk
+    public struct MapChunk
     {
-        public ChunkCoord coord; // coordinates of chunk
-        public byte[,] BlockMap = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for
-        byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
+        public ChunkCoord coord;
+        public NativeArray<byte> BlockMap;
+        public int2 position;
+        //byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth];
 
-        public Vector2Int position;
 
         public MapChunk(ChunkCoord _coord)
         {
             coord = _coord;
-            position = new Vector2Int(coord.x * Constants.ChunkWidth, coord.z * Constants.ChunkWidth);
+            position = new int2(coord.x * Constants.MapChunkWidth, coord.z * Constants.MapChunkWidth);
+            BlockMap = new(262144, Allocator.Persistent);
+        }
+
+        public static int ConvertToIndex(int x, int z)
+        {
+            return x + z * Constants.MapChunkWidth;
         }
 
         /// <summary>
@@ -26,7 +33,8 @@ namespace minescape.world.chunk
         /// <param name="block"></param>
         public void SetBlock(int x, int z, byte block)
         {
-            BlockMap[x, z] = block;
+            int index = ConvertToIndex(x, z);
+            BlockMap[index] = block;
         }
 
         /// <summary>
@@ -37,7 +45,13 @@ namespace minescape.world.chunk
         /// <returns>Block object at coordinates</returns>
         public Block GetBlock(int x, int z)
         {
-            return Blocks.blocks[BlockMap[x, z]];
+            int index = ConvertToIndex(x, z);
+            return Blocks.blocks[BlockMap[index]];
+        }
+
+        public void Dispose()
+        {
+            BlockMap.Dispose();
         }
     }
 }
