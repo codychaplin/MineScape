@@ -23,6 +23,9 @@ namespace minescape.world.chunk
 
         public List<MapChunk> MapChunks = new();
 
+        JobHandle dependency;
+        bool canRender = false;
+
         private void Start()
         {
             GenerateChunksOnStart();
@@ -30,10 +33,14 @@ namespace minescape.world.chunk
 
         void Update()
         {
+            if (canRender)
+                GenerateMeshDataAndRenderChunks();
+        }
+
+        void LateUpdate()
+        {
             if (ChunksToCreate.Count > 0)
-            {
                 CreateChunks();
-            }
         }
 
         public Chunk GetChunkNow(ChunkCoord chunkCoord)
@@ -58,7 +65,7 @@ namespace minescape.world.chunk
         /// Creates a chunk and schedules a job to set the blocks.
         /// </summary>
         /// <param name="coord"></param>
-        /// <returns>Chunk</returns>
+        /// <returns>JobHandle</returns>
         public JobHandle CreateChunk(ChunkCoord coord)
         {
             Chunk chunk = new(world, coord);
@@ -121,12 +128,14 @@ namespace minescape.world.chunk
 
         void CreateChunks()
         {
-            NativeList<JobHandle> InitialChunks = new(ChunksToCreate.Count, Allocator.TempJob);
+            canRender = false;
+            NativeList<JobHandle> handles = new(ChunksToCreate.Count + 2, Allocator.TempJob);
             foreach (var coord in ChunksToCreate)
             {
                 // if chunk doesn't exist, schedule it to be created
                 if (!Chunks.ContainsKey(coord))
-                    InitialChunks.Add(CreateChunk(coord));
+                    handles.Add(CreateChunk(coord));
+                Chunks[coord].isProcessing = true;
 
                 // get adjacent chunks
                 var north = new ChunkCoord(coord.x, coord.z + 1);
@@ -136,17 +145,29 @@ namespace minescape.world.chunk
 
                 // if they don't already exist, schedule them to be created
                 if (!Chunks.ContainsKey(north))
-                    InitialChunks.Add(CreateChunk(north));
+                    handles.Add(CreateChunk(north));
                 if (!Chunks.ContainsKey(south))
-                    InitialChunks.Add(CreateChunk(south));
+                    handles.Add(CreateChunk(south));
                 if (!Chunks.ContainsKey(east))
-                    InitialChunks.Add(CreateChunk(east));
+                    handles.Add(CreateChunk(east));
                 if (!Chunks.ContainsKey(west))
-                    InitialChunks.Add(CreateChunk(west));
+                    handles.Add(CreateChunk(west));
+
             }
 
-            JobHandle dependency = JobHandle.CombineDependencies(InitialChunks);
-            InitialChunks.Dispose();
+            dependency = JobHandle.CombineDependencies(handles);
+            handles.Dispose();
+
+            canRender = true;
+        }
+
+        void GenerateMeshDataAndRenderChunks()
+        {
+            if (!dependency.IsCompleted)
+                return;
+            else
+                dependency.Complete();
+
             while (ChunksToCreate.Count > 0)
             {
                 // get chunk
@@ -164,10 +185,9 @@ namespace minescape.world.chunk
                 var generateMeshDataHandle = GenerateMeshData(chunk, dependency);
                 StartCoroutine(RenderChunk(generateMeshDataHandle, chunk));
                 ChunksToCreate.Dequeue();
-
-                if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance || chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
-                    chunk.IsActive = false;
             }
+
+            canRender = false;
         }
 
         IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)
@@ -179,6 +199,9 @@ namespace minescape.world.chunk
 
             dependency.Complete();
             chunk.RenderChunk();
+
+            if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance || chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
+                chunk.IsActive = false;
         }
 
         public void GenerateChunksOnStart()

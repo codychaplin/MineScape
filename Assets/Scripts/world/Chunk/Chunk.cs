@@ -13,6 +13,7 @@ namespace minescape.world.chunk
         public NativeArray<byte> BlockMap;
         //byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
         public bool isRenderd = false;
+        public bool isProcessing = false;
 
         GameObject chunkObject;
         public MeshFilter meshFilter;
@@ -20,9 +21,7 @@ namespace minescape.world.chunk
         public NativeList<float3> vertices;
         public NativeList<int> triangles;
         public NativeList<float2> uvs;
-
-
-
+        
         public Vector3Int position;
 
         public bool IsActive
@@ -118,6 +117,7 @@ namespace minescape.world.chunk
             chunkObject.name = $"{coord.x},{coord.z}";
 
             CreateMesh();
+            isProcessing = false;
             isRenderd = true;
         }
 
@@ -133,7 +133,7 @@ namespace minescape.world.chunk
             mesh.SetVertices(vertArray);
             mesh.SetTriangles(triangles.ToArray(), 0);
             mesh.SetUVs(0, uvsArray);
-            mesh.RecalculateNormals();
+            //mesh.RecalculateNormals();
 
             meshFilter.mesh = mesh;
 
