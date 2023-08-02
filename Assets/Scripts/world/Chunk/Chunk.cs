@@ -1,14 +1,13 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
-using minescape.init;
-using minescape.block;
 
 namespace minescape.world.chunk
 {
     public class Chunk
     {
-        World world; // world object
+        public Material textureMap;
+        public Transform worldTransform;
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
@@ -31,9 +30,10 @@ namespace minescape.world.chunk
             set { chunkObject.SetActive(value); }
         }
 
-        public Chunk(World _world, ChunkCoord _coord)
+        public Chunk(Material _textureMap, Transform _worldTransform, ChunkCoord _coord)
         {
-            world = _world;
+            textureMap = _textureMap;
+            worldTransform = _worldTransform;
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
@@ -73,20 +73,6 @@ namespace minescape.world.chunk
         }
 
         /// <summary>
-        /// Gets Block at coordinates in Chunk.
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <returns>Block object at coordinates</returns>
-        public Block GetBlock(Vector3Int pos)
-        {
-            if (!IsBlockInChunk(pos.x, pos.y, pos.z))
-                return world.GetBlock(pos + position);
-
-            int index = ConvertToIndex(pos);
-            return Blocks.blocks[BlockMap[index]];
-        }
-
-        /// <summary>
         /// Checks if block is within the bounds of its chunk.
         /// </summary>
         /// <param name="x"></param>
@@ -114,8 +100,8 @@ namespace minescape.world.chunk
             chunkObject = new();
             meshFilter = chunkObject.AddComponent<MeshFilter>();
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-            meshRenderer.material = world.textureMap;
-            chunkObject.transform.SetParent(world.transform);
+            meshRenderer.material = textureMap;
+            chunkObject.transform.SetParent(worldTransform);
             chunkObject.transform.position = position;
             chunkObject.name = $"{coord.x},{coord.z}";
 

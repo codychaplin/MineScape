@@ -1,11 +1,11 @@
-﻿using Unity.Jobs;
+﻿using UnityEngine;
+using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
 using minescape.block;
 using minescape.world;
 using minescape.world.chunk;
-using UnityEngine;
 
 namespace minescape.jobs
 {
@@ -59,7 +59,7 @@ namespace minescape.jobs
             var blockID = map[index];
             for (int i = 0; i < 6; i++)
             {
-                if (blockID == 6 && i != 2) // only render top of water
+                if (blockID == Blocks.WATER.ID && i != 2) // only render top of water
                     continue;
 
                 var adjacentIndex = pos + BlockData.faceCheck[i];
@@ -67,7 +67,7 @@ namespace minescape.jobs
                     continue;
 
                 var adjacentBlock = GetBlock(adjacentIndex);
-                if (adjacentBlock != 0 && adjacentBlock != 6) // if adjacent block is not air or water, skip
+                if (adjacentBlock != 0 && adjacentBlock != Blocks.WATER.ID) // if adjacent block is not air or water, skip
                     continue;
 
                 float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];

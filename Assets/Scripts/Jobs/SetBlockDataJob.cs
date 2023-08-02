@@ -52,7 +52,9 @@ namespace minescape.jobs
                     biomeMap[biomeIndex] = biomeID;
 
                     // get terrain height
-                    var terrainHeight = (int)math.floor(maxTerrainheight * land + minTerrainheight);
+                    //var terrainHeight = (int)math.floor(maxTerrainheight * land + minTerrainheight);
+                    var biome = Biomes.biomes[biomeID];
+                    var terrainHeight = biome.TerrainHeight;
 
                     // set blocks
                     for (int y = 0; y < Constants.ChunkHeight; y++)
@@ -61,9 +63,9 @@ namespace minescape.jobs
                         if (y == 0)
                             blockMap[index] = Blocks.BEDROCK.ID;
                         else if (y < terrainHeight)
-                            blockMap[index] = Blocks.STONE.ID;
+                            blockMap[index] = Blocks.STONE.ID; 
                         else if (y == terrainHeight)
-                            blockMap[index] = biomeID;
+                            blockMap[index] = biome.SurfaceBlock.ID;
                         else if (y > terrainHeight && y == Constants.WaterLevel)
                             blockMap[index] = Blocks.WATER.ID;
                         else if (y > terrainHeight && y > Constants.WaterLevel)
@@ -78,39 +80,39 @@ namespace minescape.jobs
             if (land < 0.3)
             {
                 if (temperature >= 0 && temperature < 0.33)
-                    return Biomes.COLD_OCEAN.SurfaceBlock.ID;
+                    return Biomes.COLD_OCEAN.ID;
                 if (temperature >= 0.33 && temperature < 0.66)
-                    return Biomes.OCEAN.SurfaceBlock.ID;
+                    return Biomes.OCEAN.ID;
                 if (temperature >= 0.66 && temperature <= 1)
-                    return Biomes.WARM_OCEAN.SurfaceBlock.ID;
+                    return Biomes.WARM_OCEAN.ID;
             }
             else if (land >= 0.3 && land < 0.32)
-                return Biomes.BEACH.SurfaceBlock.ID;
+                return Biomes.BEACH.ID;
 
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
-                return Biomes.TUNDRA.SurfaceBlock.ID;
+                return Biomes.TUNDRA.ID;
             if (temperature >= 0.2 && temperature < 0.6 && humidity >= 0 && humidity < 0.4)
-                return Biomes.PLAINS.SurfaceBlock.ID;
+                return Biomes.PLAINS.ID;
             if (temperature >= 0.6 && temperature < 0.8 && humidity >= 0 && humidity < 0.4)
-                return Biomes.SAVANNA.SurfaceBlock.ID;
+                return Biomes.SAVANNA.ID;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0 && humidity < 0.6)
-                return Biomes.DESERT.SurfaceBlock.ID;
+                return Biomes.DESERT.ID;
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0.6 && humidity <= 1)
-                return Biomes.BOREAL_FOREST.SurfaceBlock.ID;
+                return Biomes.BOREAL_FOREST.ID;
             if (temperature >= 0.2 && temperature < 0.4 && humidity >= 0.4 && humidity <= 1)
-                return Biomes.TAIGA.SurfaceBlock.ID;
+                return Biomes.TAIGA.ID;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.4 && humidity < 0.6)
-                return Biomes.SHRUBLAND.SurfaceBlock.ID;
+                return Biomes.SHRUBLAND.ID;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.TEMPERATE_FOREST.SurfaceBlock.ID;
+                return Biomes.TEMPERATE_FOREST.ID;
             if (temperature >= 0.4 && temperature < 0.6 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.SWAMP.SurfaceBlock.ID;
+                return Biomes.SWAMP.ID;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.SEASONAL_FOREST.SurfaceBlock.ID;
+                return Biomes.SEASONAL_FOREST.ID;
             if (temperature >= 0.6 && temperature <= 1 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.TROPICAL_FOREST.SurfaceBlock.ID;
+                return Biomes.TROPICAL_FOREST.ID;
 
-            return Biomes.PLAINS.SurfaceBlock.ID;
+            return Biomes.PLAINS.ID;
         }
     }
 }

@@ -12,6 +12,7 @@ namespace minescape.world.chunk
     public class ChunkManager : MonoBehaviour
     {
         public World world;
+        public Material textureMap;
         public bool renderMap;
         public bool renderChunks;
 
@@ -22,6 +23,7 @@ namespace minescape.world.chunk
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
         public List<ChunkCoord> activeChunks = new();
+        public List<ChunkCoord> newActiveChunks = new();
         public Queue<ChunkCoord> ChunksToCreate = new();
 
         public List<MapChunk> MapChunks = new();
@@ -80,7 +82,7 @@ namespace minescape.world.chunk
         /// <returns>JobHandle</returns>
         public JobHandle CreateChunk(ChunkCoord coord)
         {
-            Chunk chunk = new(world, coord);
+            Chunk chunk = new(textureMap, world.transform, coord);
             Chunks.Add(coord, chunk);
             var handle = SetBlocksInChunk(chunk);
             return handle;
@@ -93,7 +95,7 @@ namespace minescape.world.chunk
         /// <returns>Chunk</returns>
         public Chunk CreateChunkNow(ChunkCoord coord)
         {
-            Chunk chunk = new(world, coord);
+            Chunk chunk = new(textureMap, world.transform, coord);
             var handle = SetBlocksInChunk(chunk);
             handle.Complete();
             Chunks.Add(coord, chunk);
@@ -243,7 +245,7 @@ namespace minescape.world.chunk
                 for (int z = Constants.HalfWorldSizeInChunks - Constants.ViewDistance; z < Constants.HalfWorldSizeInChunks + Constants.ViewDistance; z++)
                 {
                     ChunkCoord coord = new(x, z);
-                    Chunk chunk = new(world, coord);
+                    Chunk chunk = new(textureMap, world.transform, coord);
                     SetBlockDataJob job = new()
                     {
                         temperatureScale = temperature.scale,
@@ -372,34 +374,38 @@ namespace minescape.world.chunk
 
         void ConvertMapToPng()
         {
-            /*Dictionary<byte, Color32> colours = new()
-            {
-                { 0, new Color32(255,255,255,255) }, // air
-                { 1, new Color32(41,41,41,255) }, // bedrock
-                { 2, new Color32(115,115,115,255) }, // stone
-                { 3, new Color32(108,83,47,255) }, // dirt
-                { 4, new Color32(66,104,47,255) }, // grass
-                { 5, new Color32(227,213,142,255) }, // sand
-                { 6, new Color32(80,172,220,255) } // water
-            };*/
-
+            ColorUtility.TryParseHtmlString("#80b497", out var tundra);
+            ColorUtility.TryParseHtmlString("#91bd59", out var plains);
+            ColorUtility.TryParseHtmlString("#bfb755", out var savanna);
+            ColorUtility.TryParseHtmlString("#f5b352", out var desert);
+            ColorUtility.TryParseHtmlString("#8ab689", out var borealForest);
+            ColorUtility.TryParseHtmlString("#86b783", out var taiga);
+            ColorUtility.TryParseHtmlString("#88bb67", out var shrubland);
+            ColorUtility.TryParseHtmlString("#79c05a", out var temperateForest);
+            ColorUtility.TryParseHtmlString("#6a7039", out var swamp);
+            ColorUtility.TryParseHtmlString("#507a32", out var seasonalForest);
+            ColorUtility.TryParseHtmlString("#59c93c", out var tropicalForest);
+            ColorUtility.TryParseHtmlString("#decea2", out var beach);
+            ColorUtility.TryParseHtmlString("#0a2d9b", out var coldOcean);
+            ColorUtility.TryParseHtmlString("#0a4f9b", out var ocean);
+            ColorUtility.TryParseHtmlString("#0a7a9b", out var warmOcean);
             Dictionary<byte, Color32> biomes = new()
             {
-                { 0, new Color32(223,255,251,255) }, // tundra
-                { 1, new Color32(147,196,125,255) }, // plains
-                { 2, new Color32(224,209,167,255) }, // savanna
-                { 3, new Color32(254,203,150,255) }, // desert
-                { 4, new Color32(162,239,211,255) }, // boreal forest
-                { 5, new Color32(70,189,198,255) }, // taiga
-                { 6, new Color32(209,232,179,255) }, // shrubland
-                { 7, new Color32(140,229,168,255) }, // temperate forest
-                { 8, new Color32(219,242,158,255) }, // swamp
-                { 9, new Color32(93,215,79,255) }, // seasonal forest
-                { 10, new Color32(52,168,83,255) }, // tropical forest
-                { 11, new Color32(250,248,112,255) }, // beach
-                { 12, new Color32(2,44,144,255) }, // cold ocean
-                { 13, new Color32(2,78,144,255) }, // ocean
-                { 14, new Color32(2,11,144,255) } // warm ocean
+                { 0, tundra },
+                { 1, plains },
+                { 2, savanna },
+                { 3, desert },
+                { 4, borealForest },
+                { 5, taiga },
+                { 6, shrubland },
+                { 7, temperateForest },
+                { 8, swamp },
+                { 9, seasonalForest },
+                { 10, tropicalForest },
+                { 11, beach },
+                { 12, coldOcean },
+                { 13, ocean },
+                { 14, warmOcean }
             };
 
             string path = "Assets/Resources/Textures/test.png";

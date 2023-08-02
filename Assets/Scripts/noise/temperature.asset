@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: temperature
   m_EditorClassIdentifier: 
   offset: -10000
-  scale: 0.04
+  scale: 0.03
   minTerrainheight: 32
   maxTerrainheight: 128

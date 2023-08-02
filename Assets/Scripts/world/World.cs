@@ -1,22 +1,19 @@
 using System.Linq;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using minescape.init;
-using minescape.block;
-using minescape.world.chunk;
 using Unity.Mathematics;
+using minescape.world.chunk;
 
 namespace minescape.world
 {
     public class World : MonoBehaviour
     {
         public int Seed => 69;
-        public Material textureMap;
         public RawImage image;
 
         public ChunkManager chunkManager;
-        
+        ChunkCoordComparer comparer = new();
+
         public ChunkCoord playerChunkCoord;
         public ChunkCoord playerLastChunkCoord;
 
@@ -61,40 +58,6 @@ namespace minescape.world
                 }
         }
 
-        public Block GetBlock(Vector3Int pos)
-        {
-            if (!IsBlockInWorld(pos))
-                return Blocks.AIR;
-
-            Chunk chunk = GetChunkFromBlockCoords(pos.x, pos.z);
-            if (chunk == null)
-            {
-                var coord = new ChunkCoord(pos.x / Constants.ChunkWidth, pos.z / Constants.ChunkWidth);
-                chunk = chunkManager.CreateChunkNow(coord);
-            }
-
-            Vector3Int localPos = new(pos.x - (chunk.coord.x * Constants.ChunkWidth), pos.y, pos.z - (chunk.coord.z * Constants.ChunkWidth));
-            return chunk.GetBlock(localPos);
-        }
-
-        public Chunk GetChunkFromBlockCoords(int x, int z)
-        {
-            ChunkCoord chunkCoord = new(x / Constants.ChunkWidth, z / Constants.ChunkWidth);
-            return GetChunkFromChunkCoord(chunkCoord);
-        }
-
-        public Chunk GetChunkFromChunkCoord(ChunkCoord chunkCoord)
-        {
-            return chunkManager.GetChunkNow(chunkCoord);
-        }
-
-        public static bool IsBlockInWorld(Vector3Int pos)
-        {
-            return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
-                   pos.y >= 0 && pos.y < Constants.ChunkHeight &&
-                   pos.z >= 0 && pos.z < Constants.WorldSizeInBlocks;
-        }
-
         public static bool IsBlockInWorld(int3 pos)
         {
             return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
@@ -102,7 +65,7 @@ namespace minescape.world
                    pos.z >= 0 && pos.z < Constants.WorldSizeInBlocks;
         }
 
-        bool IsChunkInWorld(int x, int z)
+        public static bool IsChunkInWorld(int x, int z)
         {
             return x >= 0 && x < Constants.WorldSizeInChunks &&
                    z >= 0 && z < Constants.WorldSizeInChunks;
@@ -120,7 +83,7 @@ namespace minescape.world
             playerLastChunkCoord = playerChunkCoord;
 
             // cache activeChunks
-            List<ChunkCoord> newActiveChunks = new();
+            chunkManager.newActiveChunks.Clear();
 
             for (int x = playerChunkCoord.x - Constants.ViewDistance; x < playerChunkCoord.x + Constants.ViewDistance; x++)
                 for (int z = playerChunkCoord.z - Constants.ViewDistance; z < playerChunkCoord.z + Constants.ViewDistance; z++)
@@ -139,12 +102,13 @@ namespace minescape.world
                     else if (chunk.isRenderd && !chunk.IsActive) // if not active, activate
                         chunk.IsActive = true;
 
-                    newActiveChunks.Add(chunkCoord);
+                    chunkManager.newActiveChunks.Add(chunkCoord);
                 }
 
             // deactivate leftover chunks
-            chunkManager.activeChunks = newActiveChunks;
-            var comparer = new ChunkCoordComparer();
+            chunkManager.activeChunks.Clear();
+            chunkManager.activeChunks.AddRange(chunkManager.newActiveChunks);
+
             foreach (var chunk in chunkManager.Chunks.Values)
                 if (!chunkManager.activeChunks.Contains(chunk.coord, comparer))
                     if (chunk.isRenderd)
