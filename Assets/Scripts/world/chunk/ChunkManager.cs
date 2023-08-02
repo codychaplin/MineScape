@@ -402,7 +402,7 @@ namespace minescape.world.chunk
                 { 14, new Color32(2,11,144,255) } // warm ocean
             };
 
-            string path = "Assets/Textures/test.png";
+            string path = "Assets/Resources/Textures/test.png";
             Texture2D texture = new(Constants.WorldSizeInMapBlocks, Constants.WorldSizeInMapBlocks);
 
             for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)

@@ -19,7 +19,7 @@ namespace minescape.init
         public static Block GRASS_SHRUBLAND = new(11, "Grass Shrubland", new byte[] { 14, 14, 14, 14, 14, 14 });
         public static Block GRASS_TEMPERATE_FOREST = new(12, "Grass Temperate Forest", new byte[] { 15, 15, 15, 15, 15, 15 });
         public static Block GRASS_SWAMP = new(13, "Grass Swamp", new byte[] { 16, 16, 16, 16, 16, 16 });
-        public static Block GRASS_SEASONAL_FOREST = new(14, "Grass Seasonal Forest", new byte[] {13, 13, 17, 17, 17, 17 });
+        public static Block GRASS_SEASONAL_FOREST = new(14, "Grass Seasonal Forest", new byte[] {17, 17, 17, 17, 17, 17 });
         public static Block GRASS_TROPICAL_FOREST = new(15, "Grass Tropical Forest", new byte[] { 18, 18, 18, 18, 18, 18 });
 
         public static Dictionary<byte, Block> blocks = new()
