@@ -1,25 +1,11 @@
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace minescape.block
 {
     public static class BlockData
     {
-        // chunk data
-        public static readonly int ChunkWidth = 16;
-        public static readonly int ChunkHeight = 256;
-
-        // view distance
-        public static readonly int ViewDistance = 4;
-
-        // world size in chunks
-        public static readonly int WorldSizeInChunks = 64;
-
-        // world size in blocks
-        public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
-
         // texture
-        public static readonly int TextureAtlasSize = 4;
+        public static readonly int TextureAtlasSize = 8;
         public static float NormalizedTextureSize => 1f / TextureAtlasSize;
 
 

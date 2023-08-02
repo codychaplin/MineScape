@@ -782,7 +782,9 @@ MonoBehaviour:
   world: {fileID: 1389480423}
   renderMap: 0
   renderChunks: 1
-  noiseParameters: {fileID: 11400000, guid: 5161ff43d242cff428a56395418a8d87, type: 2}
+  temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}
+  humidity: {fileID: 11400000, guid: edcb034472b8c6942b7bf21508f0e37d, type: 2}
+  land: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

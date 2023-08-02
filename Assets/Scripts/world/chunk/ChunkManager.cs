@@ -15,7 +15,9 @@ namespace minescape.world.chunk
         public bool renderMap;
         public bool renderChunks;
 
-        public NoiseParameters noiseParameters;
+        public NoiseParameters temperature;
+        public NoiseParameters humidity;
+        public NoiseParameters land;
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
@@ -137,12 +139,17 @@ namespace minescape.world.chunk
         {
             SetBlockDataJob job = new()
             {
-                offset = noiseParameters.offset,
-                scale = noiseParameters.scale,
-                minTerrainheight = noiseParameters.minTerrainheight,
-                maxTerrainheight = noiseParameters.maxTerrainheight,
+                temperatureScale = temperature.scale,
+                temperatureOffset = temperature.offset,
+                humidityScale = humidity.scale,
+                humidityOffset = humidity.offset,
+                landScale = land.scale,
+                landOffset = land.offset,
+                minTerrainheight = land.minTerrainheight,
+                maxTerrainheight = land.maxTerrainheight,
                 position = new int3(chunk.position.x, 0, chunk.position.z),
-                map = chunk.BlockMap
+                blockMap = chunk.BlockMap,
+                biomeMap = chunk.BiomeMap
             };
             return job.Schedule();
         }
@@ -239,12 +246,17 @@ namespace minescape.world.chunk
                     Chunk chunk = new(world, coord);
                     SetBlockDataJob job = new()
                     {
-                        offset = noiseParameters.offset,
-                        scale = noiseParameters.scale,
-                        minTerrainheight = noiseParameters.minTerrainheight,
-                        maxTerrainheight = noiseParameters.maxTerrainheight,
+                        temperatureScale = temperature.scale,
+                        temperatureOffset = temperature.offset,
+                        humidityScale = humidity.scale,
+                        humidityOffset = humidity.offset,
+                        landScale = land.scale,
+                        landOffset = land.offset,
+                        minTerrainheight = land.minTerrainheight,
+                        maxTerrainheight = land.maxTerrainheight,
                         position = new int3(chunk.position.x, 0, chunk.position.z),
-                        map = chunk.BlockMap
+                        blockMap = chunk.BlockMap,
+                        biomeMap = chunk.BiomeMap
                     };
                     var handle = job.Schedule();
                     SetBlocksInChunkHandles[index++] = handle;
@@ -330,8 +342,14 @@ namespace minescape.world.chunk
                     MapChunk mapChunk = new(new ChunkCoord(x, z));
                     SetMapBlockDataJob job = new()
                     {
+                        temperatureScale = temperature.scale,
+                        temperatureOffset = temperature.offset,
+                        humidityScale = humidity.scale,
+                        humidityOffset = humidity.offset,
+                        landScale = land.scale,
+                        landOffset = land.offset,
                         position = new int2(mapChunk.position.x, mapChunk.position.y),
-                        map = mapChunk.BlockMap
+                        biomeMap = mapChunk.BlockMap
                     };
                     handles[index++] = job.Schedule();
                     MapChunks.Add(mapChunk);
@@ -354,7 +372,7 @@ namespace minescape.world.chunk
 
         void ConvertMapToPng()
         {
-            Dictionary<byte, Color32> colours = new()
+            /*Dictionary<byte, Color32> colours = new()
             {
                 { 0, new Color32(255,255,255,255) }, // air
                 { 1, new Color32(41,41,41,255) }, // bedrock
@@ -363,8 +381,28 @@ namespace minescape.world.chunk
                 { 4, new Color32(66,104,47,255) }, // grass
                 { 5, new Color32(227,213,142,255) }, // sand
                 { 6, new Color32(80,172,220,255) } // water
+            };*/
+
+            Dictionary<byte, Color32> biomes = new()
+            {
+                { 0, new Color32(223,255,251,255) }, // tundra
+                { 1, new Color32(147,196,125,255) }, // plains
+                { 2, new Color32(224,209,167,255) }, // savanna
+                { 3, new Color32(254,203,150,255) }, // desert
+                { 4, new Color32(162,239,211,255) }, // boreal forest
+                { 5, new Color32(70,189,198,255) }, // taiga
+                { 6, new Color32(209,232,179,255) }, // shrubland
+                { 7, new Color32(140,229,168,255) }, // temperate forest
+                { 8, new Color32(219,242,158,255) }, // swamp
+                { 9, new Color32(93,215,79,255) }, // seasonal forest
+                { 10, new Color32(52,168,83,255) }, // tropical forest
+                { 11, new Color32(250,248,112,255) }, // beach
+                { 12, new Color32(2,44,144,255) }, // cold ocean
+                { 13, new Color32(2,78,144,255) }, // ocean
+                { 14, new Color32(2,11,144,255) } // warm ocean
             };
 
+            string path = "Assets/Textures/test.png";
             Texture2D texture = new(Constants.WorldSizeInMapBlocks, Constants.WorldSizeInMapBlocks);
 
             for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)
@@ -379,7 +417,7 @@ namespace minescape.world.chunk
                         {
                             int index = MapChunk.ConvertToIndex(chunkX, chunkY);
                             var block = mapChunk.BlockMap[index];
-                            texture.SetPixel(chunkX + offsetX, chunkY + offsetY, colours[block]);
+                            texture.SetPixel(chunkX + offsetX, chunkY + offsetY, biomes[block]);
                         }
                 }
             }
@@ -388,6 +426,8 @@ namespace minescape.world.chunk
             world.image.texture = texture;
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Point;
+            byte[] bytes = texture.EncodeToPNG();
+            System.IO.File.WriteAllBytes(path, bytes);
         }
     }
 }

@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using minescape.init;
 using minescape.block;
-using minescape.world.biome;
 using minescape.world.chunk;
 using Unity.Mathematics;
 
@@ -12,11 +11,10 @@ namespace minescape.world
 {
     public class World : MonoBehaviour
     {
-        public int Seed => 696969;
+        public int Seed => 69;
         public Material textureMap;
         public RawImage image;
 
-        public BiomeManager biomeManager;
         public ChunkManager chunkManager;
         
         public ChunkCoord playerChunkCoord;
@@ -30,7 +28,6 @@ namespace minescape.world
         {
             // initialize seed, player position, and classes
             UnityEngine.Random.InitState(Seed);
-            biomeManager = new(Seed);
 
             // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);

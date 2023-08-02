@@ -10,8 +10,8 @@ namespace minescape.world.chunk
     {
         World world; // world object
         public ChunkCoord coord; // coordinates of chunk
-        public NativeArray<byte> BlockMap;
-        //byte[,] Biomes = new byte[Constants.ChunkWidth, Constants.ChunkWidth]; // x,z coordinates for biomes
+        public NativeArray<byte> BlockMap; // blocks in chunk
+        public NativeArray<byte> BiomeMap; // biomes in chunk
         public bool isRenderd = false;
         public bool isProcessing = false;
 
@@ -37,6 +37,7 @@ namespace minescape.world.chunk
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
+            BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             vertices = new(4096, Allocator.Persistent);
             normals = new(4096, Allocator.Persistent);
             triangles = new(4096, Allocator.Persistent);
@@ -94,9 +95,9 @@ namespace minescape.world.chunk
         /// <returns>Whether block is within chunk.</returns>
         public static bool IsBlockInChunk(int x, int y, int z)
         {
-            if (x < 0 || x >= BlockData.ChunkWidth ||
-                y < 0 || y >= BlockData.ChunkHeight ||
-                z < 0 || z >= BlockData.ChunkWidth)
+            if (x < 0 || x >= Constants.ChunkWidth ||
+                y < 0 || y >= Constants.ChunkHeight ||
+                z < 0 || z >= Constants.ChunkWidth)
                 return false;
             else
                 return true;
@@ -144,6 +145,7 @@ namespace minescape.world.chunk
         public void Dispose()
         {
             BlockMap.Dispose();
+            BiomeMap.Dispose();
             vertices.Dispose();
             normals.Dispose();
             triangles.Dispose();
