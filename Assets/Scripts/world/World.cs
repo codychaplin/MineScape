@@ -29,7 +29,6 @@ namespace minescape.world
             // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
             player.position = spawnpoint;
-            playerLastChunkCoord = GetChunkCoord(player.position);
         }
 
         void Update()

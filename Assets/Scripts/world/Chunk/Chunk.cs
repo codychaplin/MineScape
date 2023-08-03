@@ -36,6 +36,7 @@ namespace minescape.world.chunk
             worldTransform = _worldTransform;
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
+
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             vertices = new(4096, Allocator.Persistent);

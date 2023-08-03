@@ -763,7 +763,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 527f4d6addf0c7e44b9e0a583bd851f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textureMap: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}
   image: {fileID: 137415087}
   chunkManager: {fileID: 1389480424}
   player: {fileID: 330585546}
@@ -780,6 +779,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   world: {fileID: 1389480423}
+  textureMap: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}
   renderMap: 0
   renderChunks: 1
   temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}

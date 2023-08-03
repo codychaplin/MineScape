@@ -28,13 +28,8 @@ namespace minescape.world.chunk
 
         public List<MapChunk> MapChunks = new();
 
-        JobHandle dependency;
-        bool canRender = false;
-
         private void Start()
         {
-            if (renderChunks)
-                GenerateChunksOnStart();
             if (renderMap)
                 GenerateMap();
         }
@@ -44,25 +39,8 @@ namespace minescape.world.chunk
             if (renderMap)
                 return;
 
-            if (canRender)
-                GenerateMeshDataAndRenderChunks();
-        }
-
-        void LateUpdate()
-        {
-            if (renderMap)
-                return;
-
             if (ChunksToCreate.Count > 0)
                 CreateChunks();
-        }
-
-        public Chunk GetChunkNow(ChunkCoord chunkCoord)
-        {
-            if (Chunks.TryGetValue(chunkCoord, out var chunk))
-                return chunk;
-            else
-                return CreateChunkNow(chunkCoord);
         }
 
         /// <summary>
@@ -84,61 +62,6 @@ namespace minescape.world.chunk
         {
             Chunk chunk = new(textureMap, world.transform, coord);
             Chunks.Add(coord, chunk);
-            var handle = SetBlocksInChunk(chunk);
-            return handle;
-        }
-
-        /// <summary>
-        /// Creates a chunk and schedules/completes a job to the set the blocks.
-        /// </summary>
-        /// <param name="coord"></param>
-        /// <returns>Chunk</returns>
-        public Chunk CreateChunkNow(ChunkCoord coord)
-        {
-            Chunk chunk = new(textureMap, world.transform, coord);
-            var handle = SetBlocksInChunk(chunk);
-            handle.Complete();
-            Chunks.Add(coord, chunk);
-            return chunk;
-        }
-
-        void CreateChunks()
-        {
-            canRender = false;
-            NativeList<JobHandle> handles = new(ChunksToCreate.Count + 2, Allocator.TempJob);
-            foreach (var coord in ChunksToCreate)
-            {
-                // if chunk doesn't exist, schedule it to be created
-                if (!Chunks.ContainsKey(coord))
-                    handles.Add(CreateChunk(coord));
-                Chunks[coord].isProcessing = true;
-
-                // get adjacent chunks
-                var north = new ChunkCoord(coord.x, coord.z + 1);
-                var south = new ChunkCoord(coord.x, coord.z - 1);
-                var east = new ChunkCoord(coord.x + 1, coord.z);
-                var west = new ChunkCoord(coord.x - 1, coord.z);
-
-                // if they don't already exist, schedule them to be created
-                if (!Chunks.ContainsKey(north))
-                    handles.Add(CreateChunk(north));
-                if (!Chunks.ContainsKey(south))
-                    handles.Add(CreateChunk(south));
-                if (!Chunks.ContainsKey(east))
-                    handles.Add(CreateChunk(east));
-                if (!Chunks.ContainsKey(west))
-                    handles.Add(CreateChunk(west));
-
-            }
-
-            dependency = JobHandle.CombineDependencies(handles);
-            handles.Dispose();
-
-            canRender = true;
-        }
-
-        JobHandle SetBlocksInChunk(Chunk chunk)
-        {
             SetBlockDataJob job = new()
             {
                 temperatureScale = temperature.scale,
@@ -156,62 +79,79 @@ namespace minescape.world.chunk
             return job.Schedule();
         }
 
-        JobHandle GenerateMeshData(Chunk chunk, JobHandle dependency)
+        void CreateChunks()
         {
-            // generate mesh data
-            var northChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z + 1)];
-            var southChunk = Chunks[new ChunkCoord(chunk.coord.x, chunk.coord.z - 1)];
-            var eastChunk = Chunks[new ChunkCoord(chunk.coord.x + 1, chunk.coord.z)];
-            var westChunk = Chunks[new ChunkCoord(chunk.coord.x - 1, chunk.coord.z)];
-
-            GenerateMeshDataJob generateMeshDataJob = new()
+            try
             {
-                coord = chunk.coord,
-                position = new int3(chunk.position.x, 0, chunk.position.z),
-                map = chunk.BlockMap,
-                north = northChunk.BlockMap,
-                south = southChunk.BlockMap,
-                east = eastChunk.BlockMap,
-                west = westChunk.BlockMap,
-                vertices = chunk.vertices,
-                normals = chunk.normals,
-                triangles = chunk.triangles,
-                uvs = chunk.uvs,
-                vertexIndex = 0
-            };
+                ChunkCoord north = new();
+                ChunkCoord south = new();
+                ChunkCoord east = new();
+                ChunkCoord west = new();
 
-            // render chunk
-            var generateMeshDataHandle = generateMeshDataJob.Schedule(dependency);
-            return generateMeshDataHandle;
-        }
-
-        void GenerateMeshDataAndRenderChunks()
-        {
-            if (!dependency.IsCompleted)
-                return;
-            else
-                dependency.Complete();
-
-            while (ChunksToCreate.Count > 0)
-            {
-                // get chunk
-                var coord = ChunksToCreate.Peek();
-                var chunk = Chunks[coord];
-
-                // if rendered, dequeue and skip
-                if (chunk.isRenderd)
+                JobHandle dependency = new();
+                while (ChunksToCreate.Count > 0)
                 {
+                    // initialize chunk
+                    var coord = ChunksToCreate.Peek();
+                    if (!Chunks.TryGetValue(coord, out var chunk))
+                    {
+                        dependency = CreateChunk(coord);
+                        continue;
+                    }
+
+                    chunk.isProcessing = true;
+
+                    // initialize adjacent chunks
+                    north.x = coord.x; north.z = coord.z + 1;
+                    south.x = coord.x; south.z = coord.z - 1;
+                    east.x = coord.x + 1; east.z = coord.z;
+                    west.x = coord.x - 1; west.z = coord.z;
+
+                    NativeList<JobHandle> chunkAndAdjacentChunks = new(5, Allocator.TempJob) { dependency };
+                    if (!Chunks.ContainsKey(north))
+                        chunkAndAdjacentChunks.Add(CreateChunk(north));
+                    if (!Chunks.ContainsKey(south))
+                        chunkAndAdjacentChunks.Add(CreateChunk(south));
+                    if (!Chunks.ContainsKey(east))
+                        chunkAndAdjacentChunks.Add(CreateChunk(east));
+                    if (!Chunks.ContainsKey(west))
+                        chunkAndAdjacentChunks.Add(CreateChunk(west));
+
+                    var SetBlockInChunkhandle = JobHandle.CombineDependencies(chunkAndAdjacentChunks);
+                    chunkAndAdjacentChunks.Dispose();
+
+                    // generate mesh data
+                    var northChunk = Chunks[north];
+                    var southChunk = Chunks[south];
+                    var eastChunk = Chunks[east];
+                    var westChunk = Chunks[west];
+
+                    GenerateMeshDataJob generateMeshDataJob = new()
+                    {
+                        coord = chunk.coord,
+                        position = new int3(chunk.position.x, 0, chunk.position.z),
+                        map = chunk.BlockMap,
+                        north = northChunk.BlockMap,
+                        south = southChunk.BlockMap,
+                        east = eastChunk.BlockMap,
+                        west = westChunk.BlockMap,
+                        vertices = chunk.vertices,
+                        normals = chunk.normals,
+                        triangles = chunk.triangles,
+                        uvs = chunk.uvs,
+                        vertexIndex = 0
+                    };
+
+                    // render chunk
+                    dependency = generateMeshDataJob.Schedule(SetBlockInChunkhandle);
+                    StartCoroutine(RenderChunk(dependency, chunk));
                     ChunksToCreate.Dequeue();
-                    continue;
                 }
-
-                // generate mesh and render chunk
-                var generateMeshDataHandle = GenerateMeshData(chunk, dependency);
-                StartCoroutine(RenderChunk(generateMeshDataHandle, chunk));
-                ChunksToCreate.Dequeue();
             }
-
-            canRender = false;
+            catch (System.InvalidOperationException)
+            {
+                return;
+            }
         }
 
         IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)
@@ -226,101 +166,6 @@ namespace minescape.world.chunk
 
             if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance || chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
                 chunk.IsActive = false;
-        }
-
-        public void GenerateChunksOnStart()
-        {
-            var SetBlocksInChunkHandle = SetBlocksInChunksOnStart();
-            var GenerateMeshDataHandle = GenerateMeshDataForChunksOnStart(SetBlocksInChunkHandle);
-            StartCoroutine(RenderChunksOnStart(GenerateMeshDataHandle));
-        }
-
-        JobHandle SetBlocksInChunksOnStart()
-        {
-            int index = 0;
-            int count = (Constants.ViewDistance * 2) * (Constants.ViewDistance * 2);
-            NativeArray<JobHandle> SetBlocksInChunkHandles = new(count, Allocator.TempJob);
-
-            for (int x = Constants.HalfWorldSizeInChunks - Constants.ViewDistance; x < Constants.HalfWorldSizeInChunks + Constants.ViewDistance; x++)
-                for (int z = Constants.HalfWorldSizeInChunks - Constants.ViewDistance; z < Constants.HalfWorldSizeInChunks + Constants.ViewDistance; z++)
-                {
-                    ChunkCoord coord = new(x, z);
-                    Chunk chunk = new(textureMap, world.transform, coord);
-                    SetBlockDataJob job = new()
-                    {
-                        temperatureScale = temperature.scale,
-                        temperatureOffset = temperature.offset,
-                        humidityScale = humidity.scale,
-                        humidityOffset = humidity.offset,
-                        landScale = land.scale,
-                        landOffset = land.offset,
-                        minTerrainheight = land.minTerrainheight,
-                        maxTerrainheight = land.maxTerrainheight,
-                        position = new int3(chunk.position.x, 0, chunk.position.z),
-                        blockMap = chunk.BlockMap,
-                        biomeMap = chunk.BiomeMap
-                    };
-                    var handle = job.Schedule();
-                    SetBlocksInChunkHandles[index++] = handle;
-
-                    Chunks.Add(coord, chunk);
-                    activeChunks.Add(coord);
-                }
-
-            var SetBlocksInChunkHandle = JobHandle.CombineDependencies(SetBlocksInChunkHandles);
-            SetBlocksInChunkHandles.Dispose();
-            return SetBlocksInChunkHandle;
-        }
-
-        JobHandle GenerateMeshDataForChunksOnStart(JobHandle dependency)
-        {
-            int index = 0;
-            NativeArray<JobHandle> GenerateMeshDataHandles = new(activeChunks.Count, Allocator.TempJob);
-            foreach (var coord in activeChunks)
-            {
-                var chunk = GetChunkNow(coord);
-                var northChunk = GetChunkNow(new ChunkCoord(chunk.coord.x, chunk.coord.z + 1));
-                var southChunk = GetChunkNow(new ChunkCoord(chunk.coord.x, chunk.coord.z - 1));
-                var eastChunk = GetChunkNow(new ChunkCoord(chunk.coord.x + 1, chunk.coord.z));
-                var westChunk = GetChunkNow(new ChunkCoord(chunk.coord.x - 1, chunk.coord.z));
-
-                GenerateMeshDataJob job = new()
-                {
-                    coord = chunk.coord,
-                    position = new int3(chunk.position.x, 0, chunk.position.z),
-                    map = chunk.BlockMap,
-                    north = northChunk.BlockMap,
-                    south = southChunk.BlockMap,
-                    east = eastChunk.BlockMap,
-                    west = westChunk.BlockMap,
-                    vertices = chunk.vertices,
-                    normals = chunk.normals,
-                    triangles = chunk.triangles,
-                    uvs = chunk.uvs,
-                    vertexIndex = 0
-                };
-                var handle = job.Schedule(dependency);
-                GenerateMeshDataHandles[index++] = handle;
-            }
-
-            var GenerateMeshDataHandle = JobHandle.CombineDependencies(GenerateMeshDataHandles);
-            GenerateMeshDataHandles.Dispose();
-            return GenerateMeshDataHandle;
-        }
-
-        IEnumerator RenderChunksOnStart(JobHandle dependency)
-        {
-            while (!dependency.IsCompleted)
-            {
-                yield return null;
-            }
-
-            dependency.Complete();
-            foreach (var coord in activeChunks)
-            {
-                var chunk = GetChunkNow(coord);
-                chunk.RenderChunk();
-            }
         }
 
         void ReplaceSurfaceBlocks(Chunk chunk)

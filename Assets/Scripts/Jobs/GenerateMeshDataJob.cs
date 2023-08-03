@@ -42,12 +42,16 @@ namespace minescape.jobs
 
         public void Execute()
         {
+            int index = 0;
+            int3 index3 = new(0, 0, 0);
             for (int x = 0; x < Constants.ChunkWidth; x++)
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
-                        int3 index3 = new(x, y, z);
-                        int index = Chunk.ConvertToIndex(index3);
+                        index3.x = x;
+                        index3.y = y;
+                        index3.z = z;
+                        index = Chunk.ConvertToIndex(index3);
                         if (map[index] != 0)
                             AddBlockToChunk(index3);
                     }
