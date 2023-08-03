@@ -14,5 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offset: 0
   scale: 0.03
+  borderWeight: 5
+  borderScale: 8
   minTerrainheight: 32
   maxTerrainheight: 74

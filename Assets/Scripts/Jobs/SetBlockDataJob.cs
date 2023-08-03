@@ -32,18 +32,18 @@ namespace minescape.jobs
                     var pos = new float2(position.x + x, position.z + z);
 
                     // land and sea
-                    float land1 = Noise.Get2DPerlin(pos, landOffset, landScale);
-                    float land2 = Noise.Get2DPerlin(pos, landOffset, landScale * 8);
+                    float land1 = Noise.GetPerlin(pos, landOffset, landScale);
+                    float land2 = Noise.GetPerlin(pos, landOffset, landScale * 8);
                     float land = (land1 + land2 / 5) / 1.2f;
 
                     // temperature
-                    float temperature1 = Noise.Get2DPerlin(pos, temperatureOffset, temperatureScale);
-                    float temperature2 = Noise.Get2DPerlin(pos, temperatureOffset, temperatureScale * 6);
+                    float temperature1 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale);
+                    float temperature2 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale * 6);
                     float temperature = (temperature1 + temperature2 / 4) / 1.25f;
 
                     // humidity
-                    float humidity1 = Noise.Get2DPerlin(pos, humidityOffset, humidityScale);
-                    float humidity2 = Noise.Get2DPerlin(pos, temperatureOffset, temperatureScale * 6);
+                    float humidity1 = Noise.GetPerlin(pos, humidityOffset, humidityScale);
+                    float humidity2 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale * 6);
                     float humidity = (humidity1 + humidity2 / 4) / 1.25f;
 
                     // set biome for x/z coordinates in chunk

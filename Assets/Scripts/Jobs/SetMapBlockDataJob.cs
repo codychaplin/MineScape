@@ -8,24 +8,23 @@ namespace minescape.jobs
 {
     public struct SetMapBlockDataJob : IJob
     {
-        [ReadOnly]
-        public float temperatureScale;
-        [ReadOnly]
-        public float temperatureOffset;
-        [ReadOnly]
-        public float humidityScale;
-        [ReadOnly]
-        public float humidityOffset;
+        [ReadOnly] public float temperatureScale;
+        [ReadOnly] public float temperatureOffset;
+        [ReadOnly] public float temperatureBorderWeight;
+        [ReadOnly] public float temperatureBorderScale;
 
-        [ReadOnly]
-        public float landOffset;
-        [ReadOnly]
-        public float landScale;
+        [ReadOnly] public float humidityScale;
+        [ReadOnly] public float humidityOffset;
+        [ReadOnly] public float humidityBorderWeight;
+        [ReadOnly] public float humidityBorderScale;
 
-        [ReadOnly]
-        public int2 position;
-        [WriteOnly]
-        public NativeArray<byte> biomeMap;
+        [ReadOnly] public float landOffset;
+        [ReadOnly] public float landScale;
+        [ReadOnly] public float landBorderWeight;
+        [ReadOnly] public float landBorderScale;
+
+        [ReadOnly] public int2 position;
+        [WriteOnly] public NativeArray<byte> biomeMap;
 
         public void Execute()
         {
@@ -33,18 +32,24 @@ namespace minescape.jobs
             {
                 for (int z = 0; z < Constants.MapChunkWidth; z++)
                 {
-                    float land1 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), landOffset, landScale);
-                    float land2 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), landOffset, landScale * 8);
-                    float land = (land1 + land2 / 5) / 1.2f;
+                    var pos = new float2(position.x + x, position.y + z);
 
-                    float temperature1 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), temperatureOffset, temperatureScale);
-                    float temperature2 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), temperatureOffset, temperatureScale * 6);
-                    float temperature = (temperature1 + temperature2 / 4) / 1.25f;
+                    // land and sea
+                    float land1 = Noise.GetPerlin(pos, landOffset, landScale);
+                    float land2 = Noise.GetPerlin(pos, landOffset, landScale * landBorderScale);
+                    float land = (land1 + land2 / landBorderWeight) / ((1 / landBorderWeight) + 1);
 
-                    float humidity1 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), humidityOffset, humidityScale);
-                    float humidity2 = Noise.Get2DPerlin(new float2(position.x + x, position.y + z), temperatureOffset, temperatureScale * 6);
-                    float humidity = (humidity1 + humidity2 / 4) / 1.25f;
+                    // temperature
+                    float temperature1 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale);
+                    float temperature2 = Noise.GetSimplex(pos, temperatureOffset, temperatureScale * temperatureBorderScale);
+                    float temperature = (temperature1 + temperature2 / temperatureBorderWeight) / ((1 / temperatureBorderWeight) + 1);
 
+                    // humidity
+                    float humidity1 = Noise.GetPerlin(pos, humidityOffset, humidityScale);
+                    float humidity2 = Noise.GetSimplex(pos, humidityOffset, humidityScale * humidityBorderScale);
+                    float humidity = (humidity1 + humidity2 / humidityBorderWeight) / ((1 / humidityBorderWeight) + 1);
+
+                    // set biome for x/z coordinates in chunk
                     byte biomeID = GetBiome(land, temperature, humidity);
                     var index = MapChunk.ConvertToIndex(x, z);
                     biomeMap[index] = biomeID;

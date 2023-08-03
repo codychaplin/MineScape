@@ -15,7 +15,6 @@ namespace minescape.world.chunk
         public Material textureMap;
         public bool renderMap;
         public bool renderChunks;
-        public bool flag;
 
         public NoiseParameters temperature;
         public NoiseParameters humidity;
@@ -37,7 +36,7 @@ namespace minescape.world.chunk
 
         void Update()
         {
-            if (renderMap || flag)
+            if (renderMap)
                 return;
 
             if (ChunksToCreate.Count > 0)
@@ -194,10 +193,16 @@ namespace minescape.world.chunk
                     {
                         temperatureScale = temperature.scale,
                         temperatureOffset = temperature.offset,
+                        temperatureBorderScale = temperature.borderScale,
+                        temperatureBorderWeight = temperature.borderWeight,
                         humidityScale = humidity.scale,
                         humidityOffset = humidity.offset,
+                        humidityBorderScale = humidity.borderScale,
+                        humidityBorderWeight = humidity.borderWeight,
                         landScale = land.scale,
                         landOffset = land.offset,
+                        landBorderScale = land.borderScale,
+                        landBorderWeight = land.borderWeight,
                         position = new int2(mapChunk.position.x, mapChunk.position.y),
                         biomeMap = mapChunk.BlockMap
                     };
@@ -222,7 +227,7 @@ namespace minescape.world.chunk
 
         void ConvertMapToPng()
         {
-            ColorUtility.TryParseHtmlString("#80b497", out var tundra);
+            /*ColorUtility.TryParseHtmlString("#80b497", out var tundra);
             ColorUtility.TryParseHtmlString("#91bd59", out var plains);
             ColorUtility.TryParseHtmlString("#bfb755", out var savanna);
             ColorUtility.TryParseHtmlString("#f5b352", out var desert);
@@ -233,6 +238,21 @@ namespace minescape.world.chunk
             ColorUtility.TryParseHtmlString("#6a7039", out var swamp);
             ColorUtility.TryParseHtmlString("#507a32", out var seasonalForest);
             ColorUtility.TryParseHtmlString("#59c93c", out var tropicalForest);
+            ColorUtility.TryParseHtmlString("#decea2", out var beach);
+            ColorUtility.TryParseHtmlString("#0a2d9b", out var coldOcean);
+            ColorUtility.TryParseHtmlString("#0a4f9b", out var ocean);
+            ColorUtility.TryParseHtmlString("#0a7a9b", out var warmOcean);*/
+            ColorUtility.TryParseHtmlString("#c6def1", out var tundra);
+            ColorUtility.TryParseHtmlString("#83e377", out var plains);
+            ColorUtility.TryParseHtmlString("#f1c453", out var savanna);
+            ColorUtility.TryParseHtmlString("#f29e4c", out var desert);
+            ColorUtility.TryParseHtmlString("#2c699a", out var borealForest);
+            ColorUtility.TryParseHtmlString("#048ba8", out var taiga);
+            ColorUtility.TryParseHtmlString("#0db39e", out var shrubland);
+            ColorUtility.TryParseHtmlString("#b9e769", out var temperateForest);
+            ColorUtility.TryParseHtmlString("#16db93", out var swamp);
+            ColorUtility.TryParseHtmlString("#208b3a", out var seasonalForest);
+            ColorUtility.TryParseHtmlString("#155d27", out var tropicalForest);
             ColorUtility.TryParseHtmlString("#decea2", out var beach);
             ColorUtility.TryParseHtmlString("#0a2d9b", out var coldOcean);
             ColorUtility.TryParseHtmlString("#0a4f9b", out var ocean);
@@ -256,7 +276,13 @@ namespace minescape.world.chunk
                 { 14, warmOcean }
             };
 
-            string path = "Assets/Resources/Textures/test.png";
+            var ts = temperature.scale;
+            var tbs = temperature.borderScale;
+            var tbw = temperature.borderWeight;
+            var hs = humidity.scale;
+            var hbs = humidity.borderScale;
+            var hbw = humidity.borderWeight;
+            string path = $"Assets/Resources/Textures/temp{ts}-{tbs}-{tbw}hum{hs}-{hbs}-{hbw}.png";
             Texture2D texture = new(Constants.WorldSizeInMapBlocks, Constants.WorldSizeInMapBlocks);
 
             for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)

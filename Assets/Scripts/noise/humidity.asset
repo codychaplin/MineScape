@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: humidity
   m_EditorClassIdentifier: 
   offset: 10000
-  scale: 0.02
+  scale: 0.01
+  borderWeight: 5
+  borderScale: 10
   minTerrainheight: 32
   maxTerrainheight: 128
