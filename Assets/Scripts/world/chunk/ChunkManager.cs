@@ -15,6 +15,7 @@ namespace minescape.world.chunk
         public Material textureMap;
         public bool renderMap;
         public bool renderChunks;
+        public bool flag;
 
         public NoiseParameters temperature;
         public NoiseParameters humidity;
@@ -22,8 +23,8 @@ namespace minescape.world.chunk
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
-        public List<ChunkCoord> activeChunks = new();
-        public List<ChunkCoord> newActiveChunks = new();
+        public HashSet<ChunkCoord> activeChunks = new();
+        public HashSet<ChunkCoord> newActiveChunks = new();
         public Queue<ChunkCoord> ChunksToCreate = new();
 
         public List<MapChunk> MapChunks = new();
@@ -36,7 +37,7 @@ namespace minescape.world.chunk
 
         void Update()
         {
-            if (renderMap)
+            if (renderMap || flag)
                 return;
 
             if (ChunksToCreate.Count > 0)
@@ -150,7 +151,7 @@ namespace minescape.world.chunk
             }
             catch (System.InvalidOperationException)
             {
-                return;
+                return; // suppresses stupid job scheduling error
             }
         }
 
@@ -165,7 +166,9 @@ namespace minescape.world.chunk
             chunk.RenderChunk();
 
             if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance || chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
+            {
                 chunk.IsActive = false;
+            }
         }
 
         void ReplaceSurfaceBlocks(Chunk chunk)

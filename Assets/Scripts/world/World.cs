@@ -83,7 +83,7 @@ namespace minescape.world
 
             // cache activeChunks
             chunkManager.newActiveChunks.Clear();
-
+            var chunkCoord = new ChunkCoord();
             for (int x = playerChunkCoord.x - Constants.ViewDistance; x < playerChunkCoord.x + Constants.ViewDistance; x++)
                 for (int z = playerChunkCoord.z - Constants.ViewDistance; z < playerChunkCoord.z + Constants.ViewDistance; z++)
                 {
@@ -91,27 +91,38 @@ namespace minescape.world
                     if (!IsChunkInWorld(x, z))
                         continue;
 
-                    var chunkCoord = new ChunkCoord(x, z);
+                    chunkCoord.x = x;
+                    chunkCoord.z = z;
+
                     Chunk chunk = chunkManager.TryGetChunk(chunkCoord);
 
                     if (chunk == null) // if doesn't exist, add to queue
                         chunkManager.ChunksToCreate.Enqueue(chunkCoord);
-                    else if (!chunk.isRenderd && !chunk.isProcessing) // if not yet rendered and not currently processing, add to queue
+                    else if (!chunk.isRendered && !chunk.isProcessing) // if not yet rendered and not currently processing, add to queue
                         chunkManager.ChunksToCreate.Enqueue(chunkCoord);
-                    else if (chunk.isRenderd && !chunk.IsActive) // if not active, activate
+                    else if (chunk.isRendered && !chunk.IsActive) // if not active, activate
                         chunk.IsActive = true;
 
                     chunkManager.newActiveChunks.Add(chunkCoord);
                 }
 
             // deactivate leftover chunks
-            chunkManager.activeChunks.Clear();
-            chunkManager.activeChunks.AddRange(chunkManager.newActiveChunks);
+            foreach (var coord in chunkManager.activeChunks)
+                if (!chunkManager.newActiveChunks.Contains(coord, comparer))
+                {
+                    Chunk chunk = chunkManager.TryGetChunk(coord);
+                    if (chunk != null)
+                    {
+                        // if rendered, disable chunk, else schedule it to disable
+                        if (chunk.isRendered)
+                            chunk.IsActive = false;
+                        else
+                            chunk.activate = false;
+                    }
+                }
 
-            foreach (var chunk in chunkManager.Chunks.Values)
-                if (!chunkManager.activeChunks.Contains(chunk.coord, comparer))
-                    if (chunk.isRenderd)
-                        chunk.IsActive = false;
+            chunkManager.activeChunks.Clear();
+            chunkManager.activeChunks.UnionWith(chunkManager.newActiveChunks);
         }
     }
 }

@@ -11,8 +11,9 @@ namespace minescape.world.chunk
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
-        public bool isRenderd = false;
+        public bool isRendered = false;
         public bool isProcessing = false;
+        public bool activate = true;
 
         GameObject chunkObject;
         public MeshFilter meshFilter;
@@ -95,7 +96,7 @@ namespace minescape.world.chunk
         /// </summary>
         public void RenderChunk()
         {
-            if (isRenderd)
+            if (isRendered)
                 return;
 
             chunkObject = new();
@@ -108,7 +109,14 @@ namespace minescape.world.chunk
 
             CreateMesh();
             isProcessing = false;
-            isRenderd = true;
+            isRendered = true;
+
+            // triggered if out of view distance
+            if (!activate)
+            {
+                IsActive = false;
+                activate = true;
+            }
         }
 
         /// <summary>
