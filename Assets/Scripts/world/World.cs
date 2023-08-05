@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Mathematics;
 using minescape.world.chunk;
+using minescape.splines;
 
 namespace minescape.world
 {
@@ -10,6 +11,7 @@ namespace minescape.world
     {
         public int Seed => 69;
         public RawImage image;
+        public Spline Elevation;
 
         public ChunkManager chunkManager;
         ChunkCoordComparer comparer = new();
@@ -23,6 +25,8 @@ namespace minescape.world
 
         void Start()
         {
+            Application.targetFrameRate = 60;
+
             // initialize seed, player position, and classes
             UnityEngine.Random.InitState(Seed);
 

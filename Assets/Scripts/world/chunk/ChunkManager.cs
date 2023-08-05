@@ -6,6 +6,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
+using minescape.scriptableobjects;
 
 namespace minescape.world.chunk
 {
@@ -18,7 +19,7 @@ namespace minescape.world.chunk
 
         public NoiseParameters temperature;
         public NoiseParameters humidity;
-        public NoiseParameters land;
+        public NoiseParameters elevation;
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
@@ -64,14 +65,8 @@ namespace minescape.world.chunk
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
-                temperatureScale = temperature.scale,
-                temperatureOffset = temperature.offset,
-                humidityScale = humidity.scale,
-                humidityOffset = humidity.offset,
-                landScale = land.scale,
-                landOffset = land.offset,
-                minTerrainheight = land.minTerrainheight,
-                maxTerrainheight = land.maxTerrainheight,
+                minTerrainheight = elevation.minTerrainHeight,
+                maxTerrainheight = elevation.maxTerrainHeight,
                 position = new int3(chunk.position.x, 0, chunk.position.z),
                 blockMap = chunk.BlockMap,
                 biomeMap = chunk.BiomeMap
@@ -193,16 +188,10 @@ namespace minescape.world.chunk
                     {
                         temperatureScale = temperature.scale,
                         temperatureOffset = temperature.offset,
-                        temperatureBorderScale = temperature.borderScale,
-                        temperatureBorderWeight = temperature.borderWeight,
                         humidityScale = humidity.scale,
                         humidityOffset = humidity.offset,
-                        humidityBorderScale = humidity.borderScale,
-                        humidityBorderWeight = humidity.borderWeight,
-                        landScale = land.scale,
-                        landOffset = land.offset,
-                        landBorderScale = land.borderScale,
-                        landBorderWeight = land.borderWeight,
+                        landScale = elevation.scale,
+                        landOffset = elevation.offset,
                         position = new int2(mapChunk.position.x, mapChunk.position.y),
                         biomeMap = mapChunk.BlockMap
                     };
@@ -276,13 +265,7 @@ namespace minescape.world.chunk
                 { 14, warmOcean }
             };
 
-            var ts = temperature.scale;
-            var tbs = temperature.borderScale;
-            var tbw = temperature.borderWeight;
-            var hs = humidity.scale;
-            var hbs = humidity.borderScale;
-            var hbw = humidity.borderWeight;
-            string path = $"Assets/Resources/Textures/temp{ts}-{tbs}-{tbw}hum{hs}-{hbs}-{hbw}.png";
+            string path = $"Assets/Resources/Textures/map.png";
             Texture2D texture = new(Constants.WorldSizeInMapBlocks, Constants.WorldSizeInMapBlocks);
 
             for (int x = 0; x < Constants.WorldSizeInMapChunks; x++)

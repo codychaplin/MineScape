@@ -337,7 +337,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3594d5c78e636624186da8a16379d4ed, type: 3}
   m_Name: 
@@ -680,6 +680,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 137415087}
+  elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
 --- !u!4 &1154048445
 Transform:
   m_ObjectHideFlags: 0
@@ -809,6 +810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 137415087}
+  Elevation: {fileID: 11400000, guid: 0b60e28e5cf3412469a3f99797ca50d7, type: 2}
   chunkManager: {fileID: 1389480424}
   player: {fileID: 330585546}
 --- !u!114 &1389480424
@@ -825,11 +827,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   world: {fileID: 1389480423}
   textureMap: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}
-  renderMap: 1
-  renderChunks: 0
+  renderMap: 0
+  renderChunks: 1
   temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}
   humidity: {fileID: 11400000, guid: edcb034472b8c6942b7bf21508f0e37d, type: 2}
-  land: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
+  elevation: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

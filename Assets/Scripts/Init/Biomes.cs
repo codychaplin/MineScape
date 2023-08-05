@@ -17,8 +17,8 @@ namespace minescape.init
         public static Biome SEASONAL_FOREST = new (9, 85, Blocks.GRASS_SEASONAL_FOREST);
         public static Biome TROPICAL_FOREST = new(10, 90, Blocks.GRASS_TROPICAL_FOREST);
         public static Biome BEACH = new(11, 64, Blocks.SAND);
-        public static Biome COLD_OCEAN = new(12, 32, Blocks.BEDROCK);
-        public static Biome OCEAN = new(13, 48, Blocks.STONE);
+        public static Biome COLD_OCEAN = new(12, 32, Blocks.STONE);
+        public static Biome OCEAN = new(13, 48, Blocks.GRAVEL);
         public static Biome WARM_OCEAN = new(14, 56, Blocks.SAND);
 
         public static Dictionary<byte, Biome> biomes = new()

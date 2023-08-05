@@ -9,10 +9,12 @@ using Unity.Collections;
 using minescape;
 using minescape.jobs;
 using minescape.world.chunk;
+using minescape.scriptableobjects;
 
 public class NoiseTest : MonoBehaviour
 {
     public RawImage image;
+    public NoiseParameters elevation;
     public List<MapChunk> chunks = new();
 
     void Start()
@@ -39,6 +41,11 @@ public class NoiseTest : MonoBehaviour
                 MapChunk mapChunk = new(new ChunkCoord(x, z));
                 NoiseJob job = new()
                 {
+                    offset = elevation.offset,
+                    scale = elevation.scale,
+                    octaves = elevation.octaves,
+                    persistance = elevation.persistance,
+                    lacunarity = elevation.lacunarity,
                     position = new int2(mapChunk.position.x, mapChunk.position.y),
                     map = mapChunk.BlockMap
                 };
@@ -93,7 +100,7 @@ public class NoiseTest : MonoBehaviour
         image.texture = texture;
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Point;
-        /*byte[] bytes = texture.EncodeToPNG();
-        System.IO.File.WriteAllBytes(path, bytes);*/
+        byte[] bytes = texture.EncodeToPNG();
+        System.IO.File.WriteAllBytes(path, bytes);
     }
 }

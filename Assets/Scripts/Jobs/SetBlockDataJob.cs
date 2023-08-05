@@ -7,15 +7,7 @@ using minescape.world.chunk;
 namespace minescape.jobs
 {
     public struct SetBlockDataJob : IJob
-    {
-        [ReadOnly] public float temperatureScale;
-        [ReadOnly] public float temperatureOffset;
-        [ReadOnly] public float humidityScale;
-        [ReadOnly] public float humidityOffset;
-
-        [ReadOnly] public float landOffset;
-        [ReadOnly] public float landScale;
-        
+    {   
         [ReadOnly] public int minTerrainheight;
         [ReadOnly] public int maxTerrainheight;
 
@@ -30,31 +22,15 @@ namespace minescape.jobs
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.z + z);
+                    float elevation = Noise.Get2DNoiseOctaves(pos, 0, 0.1f, 2, 0.5f, 2f);
+                    int terrainHeight = (int)math.floor(minTerrainheight + elevation * maxTerrainheight);
 
-                    // land and sea
-                    float land1 = Noise.GetPerlin(pos, landOffset, landScale);
-                    float land2 = Noise.GetPerlin(pos, landOffset, landScale * 8);
-                    float land = (land1 + land2 / 5) / 1.2f;
-
-                    // temperature
-                    float temperature1 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale);
-                    float temperature2 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale * 6);
-                    float temperature = (temperature1 + temperature2 / 4) / 1.25f;
-
-                    // humidity
-                    float humidity1 = Noise.GetPerlin(pos, humidityOffset, humidityScale);
-                    float humidity2 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale * 6);
-                    float humidity = (humidity1 + humidity2 / 4) / 1.25f;
-
-                    // set biome for x/z coordinates in chunk
+                    /*float temperature = Noise.GetClamped2DNoise(pos, 0, 0.06f, false);
+                    float humidity = Noise.GetClamped2DNoise(pos, 0, 0.15f, false);
                     byte biomeID = GetBiome(land, temperature, humidity);
                     int biomeIndex = x + z * Constants.ChunkWidth;
                     biomeMap[biomeIndex] = biomeID;
-
-                    // get terrain height
-                    //var terrainHeight = (int)math.floor(maxTerrainheight * land + minTerrainheight);
-                    var biome = Biomes.biomes[biomeID];
-                    var terrainHeight = biome.TerrainHeight;
+                    var biome = Biomes.biomes[biomeID];*/
 
                     // set blocks
                     for (int y = 0; y < Constants.ChunkHeight; y++)
@@ -62,10 +38,10 @@ namespace minescape.jobs
                         int index = Chunk.ConvertToIndex(x, y, z);
                         if (y == 0)
                             blockMap[index] = Blocks.BEDROCK.ID;
-                        else if (y < terrainHeight)
-                            blockMap[index] = Blocks.STONE.ID; 
-                        else if (y == terrainHeight)
-                            blockMap[index] = biome.SurfaceBlock.ID;
+                        else if (y <= terrainHeight)
+                            blockMap[index] = Blocks.STONE.ID;
+                        /*else if (y == terrainHeight)
+                            blockMap[index] = biome.SurfaceBlock.ID;*/
                         else if (y > terrainHeight && y == Constants.WaterLevel)
                             blockMap[index] = Blocks.WATER.ID;
                         else if (y > terrainHeight && y > Constants.WaterLevel)
@@ -77,7 +53,7 @@ namespace minescape.jobs
 
         byte GetBiome(float land, float temperature, float humidity)
         {
-            if (land < 0.3)
+            if (land < 0.4)
             {
                 if (temperature >= 0 && temperature < 0.33)
                     return Biomes.COLD_OCEAN.ID;
@@ -86,7 +62,7 @@ namespace minescape.jobs
                 if (temperature >= 0.66 && temperature <= 1)
                     return Biomes.WARM_OCEAN.ID;
             }
-            else if (land >= 0.3 && land < 0.32)
+            else if (land >= 0.4 && land < 0.42)
                 return Biomes.BEACH.ID;
 
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
