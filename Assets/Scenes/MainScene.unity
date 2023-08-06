@@ -681,6 +681,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   image: {fileID: 137415087}
   elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
+  relief: {fileID: 11400000, guid: 085529e741670604680c7b815396597b, type: 2}
+  topography: {fileID: 11400000, guid: c07b81b74b84e05419265645e3521cd1, type: 2}
 --- !u!4 &1154048445
 Transform:
   m_ObjectHideFlags: 0

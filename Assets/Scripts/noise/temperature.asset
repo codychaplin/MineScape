@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a15f9622f1d6a754b8e3fc25b91dd01d, type: 3}
   m_Name: temperature
   m_EditorClassIdentifier: 
-  offset: -10000
+  offset: -20000
   scale: 0.01
-  borderWeight: 2
-  borderScale: 5
-  minTerrainheight: 32
-  maxTerrainheight: 128
+  octaves: 0
+  persistance: 0
+  lacunarity: 0
+  minTerrainHeight: 0
+  maxTerrainHeight: 0

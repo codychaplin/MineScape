@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a15f9622f1d6a754b8e3fc25b91dd01d, type: 3}
-  m_Name: elevation
+  m_Name: topography
   m_EditorClassIdentifier: 
-  offset: 0
-  scale: 0.1
-  octaves: 3
+  offset: 10000
+  scale: 0.5
+  octaves: 2
   persistance: 0.5
   lacunarity: 2
-  minTerrainHeight: 32
-  maxTerrainHeight: 128
+  minTerrainHeight: 0
+  maxTerrainHeight: 0

@@ -15,6 +15,8 @@ public class NoiseTest : MonoBehaviour
 {
     public RawImage image;
     public NoiseParameters elevation;
+    public NoiseParameters relief;
+    public NoiseParameters topography;
     public List<MapChunk> chunks = new();
 
     void Start()
@@ -41,9 +43,12 @@ public class NoiseTest : MonoBehaviour
                 MapChunk mapChunk = new(new ChunkCoord(x, z));
                 NoiseJob job = new()
                 {
-                    offset = elevation.offset,
-                    scale = elevation.scale,
-                    octaves = elevation.octaves,
+                    elevationScale = elevation.scale,
+                    elevationOctaves = elevation.octaves,
+                    reliefScale = relief.scale,
+                    reliefOctaves = relief.octaves,
+                    topographyScale = topography.scale,
+                    topographyOctaves = topography.octaves,
                     persistance = elevation.persistance,
                     lacunarity = elevation.lacunarity,
                     position = new int2(mapChunk.position.x, mapChunk.position.y),

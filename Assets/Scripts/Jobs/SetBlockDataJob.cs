@@ -22,7 +22,7 @@ namespace minescape.jobs
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.z + z);
-                    float elevation = Noise.Get2DNoiseOctaves(pos, 0, 0.1f, 2, 0.5f, 2f);
+                    float elevation = Noise.GetTerrainNoise(pos, 0, 0.1f, 2, 0.5f, 2f, 15, 2.35f, TerrainNoise.Elevation);
                     int terrainHeight = (int)math.floor(minTerrainheight + elevation * maxTerrainheight);
 
                     /*float temperature = Noise.GetClamped2DNoise(pos, 0, 0.06f, false);
