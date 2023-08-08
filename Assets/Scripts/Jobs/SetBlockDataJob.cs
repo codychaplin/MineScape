@@ -34,8 +34,6 @@ namespace minescape.jobs
                 {
                     var pos = new float2(position.x + x, position.z + z);
                     float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f, TerrainNoise.Elevation);
-                    //int terrainHeight = (int)math.floor(minTerrainheight + (elevation * maxTerrainheight));
-                    //UnityEngine.Debug.Log($"terrainHeight: {terrainHeight}, elevation:{elevation}");
                     int elevationY = GetY(Splines.Elevation, elevationX);
                     
                     float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.35f, TerrainNoise.Relief);
@@ -45,9 +43,6 @@ namespace minescape.jobs
                     topographyX *= normalizedRelief;
                     int topographyY = GetY(Splines.Topography, topographyX);
                     int terrainHeight = elevationY + topographyY;
-
-                    /*float topography = Noise.GetTerrainNoise(pos, 10000, topographyScale, topographyOctaves, persistance, lacunarity, 8, 1.65f, TerrainNoise.Topography);
-                    int terrainHeight = (int)math.floor(minTerrainheight + elevation * maxTerrainheight);*/
 
                     /*float temperature = Noise.GetClamped2DNoise(pos, 0, 0.06f, false);
                     float humidity = Noise.GetClamped2DNoise(pos, 0, 0.15f, false);
