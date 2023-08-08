@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: topography
   m_EditorClassIdentifier: 
   offset: 10000
-  scale: 0.5
+  scale: 0.8
   octaves: 2
   persistance: 0.5
   lacunarity: 2

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: elevation
   m_EditorClassIdentifier: 
   offset: 0
-  scale: 0.1
+  scale: 0.25
   octaves: 3
   persistance: 0.5
   lacunarity: 2
-  minTerrainHeight: 32
-  maxTerrainHeight: 128
+  minTerrainHeight: 15
+  maxTerrainHeight: 96

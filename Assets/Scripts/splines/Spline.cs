@@ -13,15 +13,24 @@ namespace minescape.splines
     {
         public static float2[] Elevation = new float2[]
         {
-            new float2(0f,32f),
-            new float2(0.25f,32f),
-            new float2(0.3f,50f),
-            new float2(0.5f,50f),
-            new float2(0.55f,64f),
-            new float2(0.6f,65f),
-            new float2(0.7f,70f),
+            new float2(-1f,32f),
+            new float2(-0.45f,33f),
+            new float2(-0.4f,46f),
+            new float2(-0.1f,46f),
+            new float2(0f,64f),
+            new float2(0.1f,65f),
+            new float2(0.75f,70f),
             new float2(0.9f,80f),
-            new float2(1f,85f)
+            new float2(1f,90f)
+        };
+
+        public static float2[] Topography = new float2[]
+        {
+            new float2(-1f,-32f),
+            new float2(-0.5f,-16f),
+            new float2(0f,0f),
+            new float2(0.5f,16f),
+            new float2(1f,32f)
         };
     }
 }

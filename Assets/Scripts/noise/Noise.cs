@@ -38,18 +38,19 @@ public class Noise
         totalNoise = (totalNoise + fuzzyNoise / 20) / 1.05f;
 
         // normalize between -1 to 1
+        //float normalizedValue = (totalNoise + 1f) / (2f * octaves);
         float normalizedValue = totalNoise / octaves;
         normalizedValue *= normalizeFactor; // more octaves = closer to 0. Amplify to get back to original range
-
-        if (type == TerrainNoise.Elevation)
+        return normalizedValue;
+        /*if (type == TerrainNoise.Elevation)
             return ElevationClamp(normalizedValue);
         else if (type == TerrainNoise.Relief)
             return ReliefClamp(normalizedValue);
         else // (type == TerrainNoise.Topography)
-            return TopographyClamp(normalizedValue);
+            return TopographyClamp(normalizedValue);*/
     }
 
-    public static float GetClampedBiomeNoise(float2 pos, float offset, float scale, bool isFuzzy)
+    public static float GetBiomeNoise(float2 pos, float offset, float scale, bool isFuzzy)
     {
         // get noise value
         pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);

@@ -17,9 +17,11 @@ namespace minescape.world.chunk
         public bool renderMap;
         public bool renderChunks;
 
+        public NoiseParameters elevation;
+        public NoiseParameters relief;
+        public NoiseParameters topography;
         public NoiseParameters temperature;
         public NoiseParameters humidity;
-        public NoiseParameters elevation;
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
@@ -65,6 +67,14 @@ namespace minescape.world.chunk
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
+                elevationScale = elevation.scale,
+                elevationOctaves = elevation.octaves,
+                reliefScale = relief.scale,
+                reliefOctaves = relief.octaves,
+                topographyScale = topography.scale,
+                topographyOctaves = topography.octaves,
+                persistance = elevation.persistance,
+                lacunarity = elevation.lacunarity,
                 minTerrainheight = elevation.minTerrainHeight,
                 maxTerrainheight = elevation.maxTerrainHeight,
                 position = new int3(chunk.position.x, 0, chunk.position.z),

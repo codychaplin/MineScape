@@ -15,7 +15,7 @@ namespace minescape
         public static readonly int ViewDistance = 12;
 
         // misc
-        public static readonly int WaterLevel = 64;
+        public static readonly int WaterLevel = 63;
 
         // map data
         public static readonly int MapChunkWidth = 512;

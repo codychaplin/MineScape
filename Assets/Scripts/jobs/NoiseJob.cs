@@ -30,8 +30,8 @@ namespace minescape.jobs
                     float elevation = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f, TerrainNoise.Elevation);
                     float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.35f, TerrainNoise.Relief);
                     float topography = Noise.GetTerrainNoise(pos, 10000, topographyScale, topographyOctaves, persistance, lacunarity, 8, 1.65f, TerrainNoise.Topography);
-                    float temperature = Noise.GetClampedBiomeNoise(pos, -20000, 0.06f, true);
-                    float humidity = Noise.GetClampedBiomeNoise(pos, 20000, 0.15f, true);
+                    float temperature = Noise.GetBiomeNoise(pos, -20000, 0.06f, true);
+                    float humidity = Noise.GetBiomeNoise(pos, 20000, 0.15f, true);
 
                     var index = MapChunk.ConvertToIndex(x, z);
                     map[index] = (byte)(elevation * 255);
