@@ -33,16 +33,37 @@ namespace minescape.jobs
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.z + z);
-                    float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f, TerrainNoise.Elevation);
-                    int elevationY = GetY(Splines.Elevation, elevationX);
-                    
-                    float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.35f, TerrainNoise.Relief);
+
+                    // elevation
+                    int terrainHeight = 0;
+                    float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
+                    if (elevationX < 0)
+                    {
+                        int depth = GetY(Splines.Elevation, elevationX);
+                        float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 3, elevationOctaves, persistance, lacunarity, 10, 1.5f);
+                        terrainHeight = math.clamp(depth + (int)math.floor(elevationY * 8), 32, 65);
+                    }
+                    else
+                    {
+                        float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.6f);
+                        float normalizedRelief = (relief + 1f) / 2f;
+                        terrainHeight = 63 + (int)math.floor(elevationX * normalizedRelief * 64);
+                    }
+
+                    /*int elevationY = GetY(Splines.Elevation, elevationX);
+                    int terrainHeight = elevationY;*/
+
+                    // relief
+                    /*float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.4f);
                     float normalizedRelief = (relief + 1f) / 2f;
 
-                    float topographyX = Noise.GetTerrainNoise(pos, 10000, topographyScale, topographyOctaves, persistance, lacunarity, 8, 1.65f, TerrainNoise.Topography);
+                    // topography
+                    float topographyX = Noise.GetTerrainNoise(pos, 10000, topographyScale, topographyOctaves, persistance, lacunarity, 8, 1.7f);
                     topographyX *= normalizedRelief;
-                    int topographyY = GetY(Splines.Topography, topographyX);
-                    int terrainHeight = elevationY + topographyY;
+                    int topographyY = GetY(Splines.Topography, topographyX);*/
+
+                    // final terrain height
+                    //int terrainHeight = (int)math.round(elevationY + topographyY);
 
                     /*float temperature = Noise.GetClamped2DNoise(pos, 0, 0.06f, false);
                     float humidity = Noise.GetClamped2DNoise(pos, 0, 0.15f, false);
@@ -53,21 +74,21 @@ namespace minescape.jobs
 
                     // set blocks
                     for (int y = 0; y < Constants.ChunkHeight; y++)
-                    {
-                        int index = Chunk.ConvertToIndex(x, y, z);
-                        if (y == 0)
-                            blockMap[index] = Blocks.BEDROCK.ID;
-                        else if (y <= terrainHeight)
-                            blockMap[index] = Blocks.STONE.ID;
-                        /*else if (y == terrainHeight)
-                            blockMap[index] = biome.SurfaceBlock.ID;*/
-                        else if (y > terrainHeight && y == Constants.WaterLevel)
-                            blockMap[index] = Blocks.WATER.ID;
-                        else if (y > terrainHeight && y > Constants.WaterLevel)
-                            break;
+                            {
+                                int index = Chunk.ConvertToIndex(x, y, z);
+                                if (y == 0)
+                                    blockMap[index] = Blocks.BEDROCK.ID;
+                                else if (y <= terrainHeight)
+                                    blockMap[index] = Blocks.STONE.ID;
+                                /*else if (y == terrainHeight)
+                                    blockMap[index] = biome.SurfaceBlock.ID;*/
+                                else if (y > terrainHeight && y == Constants.WaterLevel)
+                                    blockMap[index] = Blocks.WATER.ID;
+                                else if (y > terrainHeight && y > Constants.WaterLevel)
+                                    break;
+                            }
+                        }
                     }
-                }
-            }
         }
 
         static int GetY(float2[] spline, float elevationX)

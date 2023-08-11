@@ -1,5 +1,4 @@
 using Unity.Mathematics;
-using minescape;
 
 public class Noise
 {
@@ -17,7 +16,28 @@ public class Noise
         return (og + 1f) / 2f;
     }
 
-    public static float GetTerrainNoise(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity, int fuzziness, float normalizeFactor, TerrainNoise type)
+    public static float GetPerlinNoiseOctaves(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity)
+    {
+        // init position and multipliers
+        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
+        float totalNoise = 0f;
+        float amplitude = 1f;
+        float frequency = 1f;
+
+        // calculate noise with octaves
+        for (int oct = 0; oct < octaves; oct++)
+        {
+            var noiseValue = noise.cnoise(pos * frequency);
+            totalNoise += noiseValue * amplitude;
+            amplitude *= persistance;
+            frequency *= lacunarity;
+        }
+
+        float normalizedValue = totalNoise / octaves;
+        return normalizedValue;
+    }
+
+    public static float GetTerrainNoise(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity, int fuzziness, float normalizeFactor)
     {
         // init position and multipliers
         pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
@@ -35,19 +55,13 @@ public class Noise
         }
 
         var fuzzyNoise = noise.cnoise(pos * fuzziness);
-        totalNoise = (totalNoise + fuzzyNoise / 20) / 1.05f;
+        totalNoise = (totalNoise + fuzzyNoise / 10) / 1.1f;
 
         // normalize between -1 to 1
         //float normalizedValue = (totalNoise + 1f) / (2f * octaves);
         float normalizedValue = totalNoise / octaves;
         normalizedValue *= normalizeFactor; // more octaves = closer to 0. Amplify to get back to original range
         return normalizedValue;
-        /*if (type == TerrainNoise.Elevation)
-            return ElevationClamp(normalizedValue);
-        else if (type == TerrainNoise.Relief)
-            return ReliefClamp(normalizedValue);
-        else // (type == TerrainNoise.Topography)
-            return TopographyClamp(normalizedValue);*/
     }
 
     public static float GetBiomeNoise(float2 pos, float offset, float scale, bool isFuzzy)
