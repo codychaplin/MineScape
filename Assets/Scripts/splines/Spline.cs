@@ -13,11 +13,11 @@ namespace minescape.splines
     {
         public static float2[] Elevation = new float2[]
         {
-            new float2(-1f,36f),
-            new float2(-0.5f,38f),
-            new float2(-0.45f,43f),
-            new float2(-0.3f,53f),
-            new float2(-0.02f,56f),
+            new float2(-1f,40f),
+            new float2(-0.4f,44f),
+            new float2(-0.35f,53f),
+            new float2(-0.04f,56f),
+            new float2(-0.01f,62f),
             new float2(0f,63f)
             /*new float2(0.2f,65f),
             new float2(0.25f,70f),

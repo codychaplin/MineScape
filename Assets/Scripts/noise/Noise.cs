@@ -58,7 +58,6 @@ public class Noise
         totalNoise = (totalNoise + fuzzyNoise / 10) / 1.1f;
 
         // normalize between -1 to 1
-        //float normalizedValue = (totalNoise + 1f) / (2f * octaves);
         float normalizedValue = totalNoise / octaves;
         normalizedValue *= normalizeFactor; // more octaves = closer to 0. Amplify to get back to original range
         return normalizedValue;
@@ -71,8 +70,8 @@ public class Noise
         var noiseValue = noise.cnoise(pos);
         if (isFuzzy)
         {
-            var fuzzyNoise = noise.cnoise(pos * 10);
-            noiseValue = (noiseValue + fuzzyNoise / 20) / 1.05f;
+            var fuzzyNoise = noise.cnoise(pos * 30);
+            noiseValue = (noiseValue + fuzzyNoise / 10) / 1.1f;
         }
 
         // normalize between 0-1
@@ -92,73 +91,4 @@ public class Noise
 
         return normalized;
     }
-
-    static float ElevationClamp(float value)
-    {
-        if (value < -0.35f)
-            return 0f;
-        else if (value < -0.15f)
-            return 0.1f;
-        else if (value < -0.1f)
-            return 0.286f;
-        else if (value < 0.1f)
-            return 0.429f;
-        else if (value < 0.35f)
-            return 0.572f;
-        else if (value < 0.75f)
-            return 0.715f;
-        else if (value < 0.9f)
-            return 0.858f;
-        else
-            return 1f;
-    }
-
-    static float ReliefClamp(float value)
-    {
-        if (value < -0.75f)
-            return 0f;
-        else if (value < -0.5f)
-            return 0.143f;
-        else if (value < -0.25f)
-            return 0.286f;
-        else if (value < 0f)
-            return 0.429f;
-        else if (value < 0.25f)
-            return 0.572f;
-        else if (value < 0.5f)
-            return 0.715f;
-        else if (value < 0.75f)
-            return 0.858f;
-        else
-            return 1f;
-    }
-
-    static float TopographyClamp(float value)
-    {
-        if (value < -0.7f)
-            return 0.66f;
-        else if (value < -0.5f)
-            return 1f;
-        else if (value < -0.3f)
-            return 0.66f;
-        else if (value < -0.07f)
-            return 0.33f;
-        else if (value < 0f)
-            return 0f;
-        else if (value < 0.2f)
-            return 0.33f;
-        else if (value < 0.4f)
-            return 0.66f;
-        else if (value < 0.8f)
-            return 1f;
-        else
-            return 0.66f;
-    }
-}
-
-public enum TerrainNoise
-{
-    Elevation,
-    Relief,
-    Topography
 }

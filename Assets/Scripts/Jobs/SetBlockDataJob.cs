@@ -37,15 +37,16 @@ namespace minescape.jobs
                     // elevation
                     int terrainHeight = 0;
                     float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
-                    if (elevationX < 0)
+                    if (elevationX < 0f)
                     {
                         int depth = GetY(Splines.Elevation, elevationX);
-                        float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 3, elevationOctaves, persistance, lacunarity, 10, 1.5f);
-                        terrainHeight = math.clamp(depth + (int)math.floor(elevationY * 8), 32, 65);
+                        float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
+                        float ratio = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
+                        terrainHeight = math.clamp(depth + (int)math.floor(ratio * 8), 32, 65);
                     }
                     else
                     {
-                        float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.6f);
+                        float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
                         float normalizedRelief = (relief + 1f) / 2f;
                         terrainHeight = 63 + (int)math.floor(elevationX * normalizedRelief * 64);
                     }
@@ -65,8 +66,8 @@ namespace minescape.jobs
                     // final terrain height
                     //int terrainHeight = (int)math.round(elevationY + topographyY);
 
-                    float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, false);
-                    float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, false);
+                    float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, true);
+                    float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
                     int biomeIndex = x + z * Constants.ChunkWidth;
                     biomeMap[biomeIndex] = biomeID;
@@ -78,9 +79,9 @@ namespace minescape.jobs
                                 int index = Chunk.ConvertToIndex(x, y, z);
                                 if (y == 0)
                                     blockMap[index] = Blocks.BEDROCK.ID;
-                                else if (y < terrainHeight)
+                                else if (y < terrainHeight - 4)
                                     blockMap[index] = Blocks.STONE.ID;
-                                else if (y == terrainHeight)
+                                else if (y <= terrainHeight)
                                     blockMap[index] = biome.SurfaceBlock.ID;
                                 else if (y > terrainHeight && y == Constants.WaterLevel)
                                     blockMap[index] = Blocks.WATER.ID;
@@ -126,7 +127,7 @@ namespace minescape.jobs
 
         byte GetBiome(float elevation, float temperature, float humidity)
         {
-            if (elevation < -0.01)
+            if (elevation < -0.03)
             {
                 if (temperature >= 0 && temperature < 0.33)
                     return Biomes.COLD_OCEAN.ID;
@@ -135,7 +136,7 @@ namespace minescape.jobs
                 if (temperature >= 0.66 && temperature <= 1)
                     return Biomes.WARM_OCEAN.ID;
             }
-            else if (elevation >= -0.01 && elevation < 0.03)
+            else if (elevation >= -0.03 && elevation < 0.025)
                 return Biomes.BEACH.ID;
 
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
