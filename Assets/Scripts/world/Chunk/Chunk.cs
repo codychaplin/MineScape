@@ -7,6 +7,7 @@ namespace minescape.world.chunk
     public class Chunk
     {
         public Material textureMap;
+        public Material transparentTextureMap;
         public Transform worldTransform;
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
@@ -21,6 +22,7 @@ namespace minescape.world.chunk
         public NativeList<float3> vertices;
         public NativeList<float3> normals;
         public NativeList<int> triangles;
+        public NativeList<int> transparentTriangles;
         public NativeList<float2> uvs;
         
         public Vector3Int position;
@@ -31,9 +33,10 @@ namespace minescape.world.chunk
             set { chunkObject.SetActive(value); }
         }
 
-        public Chunk(Material _textureMap, Transform _worldTransform, ChunkCoord _coord)
+        public Chunk(Material _textureMap, Material _transparentTextureMap, Transform _worldTransform, ChunkCoord _coord)
         {
             textureMap = _textureMap;
+            transparentTextureMap = _transparentTextureMap;
             worldTransform = _worldTransform;
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
@@ -43,6 +46,7 @@ namespace minescape.world.chunk
             vertices = new(4096, Allocator.Persistent);
             normals = new(4096, Allocator.Persistent);
             triangles = new(4096, Allocator.Persistent);
+            transparentTriangles = new(1024, Allocator.Persistent);
             uvs = new(4096, Allocator.Persistent);
         }
 
@@ -102,7 +106,7 @@ namespace minescape.world.chunk
             chunkObject = new();
             meshFilter = chunkObject.AddComponent<MeshFilter>();
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-            meshRenderer.material = textureMap;
+            meshRenderer.materials = new Material[] { textureMap, transparentTextureMap };
             chunkObject.transform.SetParent(worldTransform);
             chunkObject.transform.position = position;
             chunkObject.name = $"{coord.x},{coord.z}";
@@ -129,8 +133,10 @@ namespace minescape.world.chunk
             var uvsArray = uvs.ToArray(Allocator.Temp);
 
             Mesh mesh = new();
+            mesh.subMeshCount = 2;
             mesh.SetVertices(vertArray);
             mesh.SetTriangles(triangles.ToArray(), 0);
+            mesh.SetTriangles(transparentTriangles.ToArray(), 1);
             mesh.SetUVs(0, uvsArray);
             mesh.SetNormals(normArray);
 
@@ -144,6 +150,7 @@ namespace minescape.world.chunk
             vertices.Dispose();
             normals.Dispose();
             triangles.Dispose();
+            transparentTriangles.Dispose();
             uvs.Dispose();
         }
 

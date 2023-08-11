@@ -36,19 +36,27 @@ namespace minescape.jobs
 
                     // elevation
                     int terrainHeight = 0;
+
+                    // base terrain height
                     float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
-                    if (elevationX < 0f)
+
+                    // secondary terrain height with higher frequency
+                    float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
+
+                    // scales down elevationY close to water level
+                    float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
+
+                    if (elevationX < 0f) // ocean
                     {
                         int depth = GetY(Splines.Elevation, elevationX);
-                        float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
-                        float ratio = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
-                        terrainHeight = math.clamp(depth + (int)math.floor(ratio * 8), 32, 65);
+                        terrainHeight = math.clamp(depth + (int)math.floor(smooth * 8), 32, 65);
                     }
-                    else
+                    else // land
                     {
                         float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
                         float normalizedRelief = (relief + 1f) / 2f;
-                        terrainHeight = 63 + (int)math.floor(elevationX * normalizedRelief * 64);
+
+                        terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 64) + smooth * 16);
                     }
 
                     /*int elevationY = GetY(Splines.Elevation, elevationX);

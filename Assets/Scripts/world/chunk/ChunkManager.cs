@@ -14,6 +14,7 @@ namespace minescape.world.chunk
     {
         public World world;
         public Material textureMap;
+        public Material transparentTextureMap;
         public bool renderMap;
         public bool renderChunks;
 
@@ -63,7 +64,7 @@ namespace minescape.world.chunk
         /// <returns>JobHandle</returns>
         public JobHandle CreateChunk(ChunkCoord coord)
         {
-            Chunk chunk = new(textureMap, world.transform, coord);
+            Chunk chunk = new(textureMap, transparentTextureMap, world.transform, coord);
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
@@ -143,6 +144,7 @@ namespace minescape.world.chunk
                         vertices = chunk.vertices,
                         normals = chunk.normals,
                         triangles = chunk.triangles,
+                        transparentTriangles = chunk.transparentTriangles,
                         uvs = chunk.uvs,
                         vertexIndex = 0
                     };

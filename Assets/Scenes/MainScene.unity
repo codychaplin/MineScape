@@ -829,6 +829,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   world: {fileID: 1389480423}
   textureMap: {fileID: 2100000, guid: 8680e1bc726748c43a2b9c2596e021ab, type: 2}
+  transparentTextureMap: {fileID: 2100000, guid: 1eee2b20062cec9459079abac83ed90b,
+    type: 2}
   renderMap: 0
   renderChunks: 1
   elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}

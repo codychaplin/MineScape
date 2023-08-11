@@ -34,6 +34,8 @@ namespace minescape.jobs
         [WriteOnly]
         public NativeList<int> triangles;
         [WriteOnly]
+        public NativeList<int> transparentTriangles;
+        [WriteOnly]
         public NativeList<float2> uvs;
         [WriteOnly]
         public NativeList<float3> normals;
@@ -61,6 +63,8 @@ namespace minescape.jobs
         {
             int index = Chunk.ConvertToIndex(pos);
             var blockID = map[index];
+            bool isTransparent = Blocks.blocks[blockID].IsTransparent;
+
             for (int i = 0; i < 6; i++)
             {
                 if (blockID == Blocks.WATER.ID && i != 2) // only render top of water
@@ -91,12 +95,24 @@ namespace minescape.jobs
 
                 AddTexture(Blocks.blocks[blockID].Faces[i]);
 
-                triangles.Add(vertexIndex);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 3);
+                if (isTransparent)
+                {
+                    transparentTriangles.Add(vertexIndex);
+                    transparentTriangles.Add(vertexIndex + 1);
+                    transparentTriangles.Add(vertexIndex + 2);
+                    transparentTriangles.Add(vertexIndex + 2);
+                    transparentTriangles.Add(vertexIndex + 1);
+                    transparentTriangles.Add(vertexIndex + 3);
+                }
+                else
+                {
+                    triangles.Add(vertexIndex);
+                    triangles.Add(vertexIndex + 1);
+                    triangles.Add(vertexIndex + 2);
+                    triangles.Add(vertexIndex + 2);
+                    triangles.Add(vertexIndex + 1);
+                    triangles.Add(vertexIndex + 3);
+                }
 
                 vertexIndex += 4;
             }

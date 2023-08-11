@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: relief
   m_EditorClassIdentifier: 
   offset: -10000
-  scale: 0.05
+  scale: 0.1
   octaves: 3
   persistance: 0.5
   lacunarity: 2

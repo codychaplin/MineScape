@@ -17,7 +17,6 @@ namespace minescape.splines
             new float2(-0.4f,44f),
             new float2(-0.35f,53f),
             new float2(-0.04f,56f),
-            new float2(-0.01f,62f),
             new float2(0f,63f)
             /*new float2(0.2f,65f),
             new float2(0.25f,70f),
