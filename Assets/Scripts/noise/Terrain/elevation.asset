@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: elevation
   m_EditorClassIdentifier: 
   offset: 0
-  scale: 0.5
+  scale: 0.1
   octaves: 3
   persistance: 0.5
   lacunarity: 2

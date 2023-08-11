@@ -65,12 +65,12 @@ namespace minescape.jobs
                     // final terrain height
                     //int terrainHeight = (int)math.round(elevationY + topographyY);
 
-                    /*float temperature = Noise.GetClamped2DNoise(pos, 0, 0.06f, false);
-                    float humidity = Noise.GetClamped2DNoise(pos, 0, 0.15f, false);
-                    byte biomeID = GetBiome(land, temperature, humidity);
+                    float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, false);
+                    float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, false);
+                    byte biomeID = GetBiome(elevationX, temperature, humidity);
                     int biomeIndex = x + z * Constants.ChunkWidth;
                     biomeMap[biomeIndex] = biomeID;
-                    var biome = Biomes.biomes[biomeID];*/
+                    var biome = Biomes.biomes[biomeID];
 
                     // set blocks
                     for (int y = 0; y < Constants.ChunkHeight; y++)
@@ -78,10 +78,10 @@ namespace minescape.jobs
                                 int index = Chunk.ConvertToIndex(x, y, z);
                                 if (y == 0)
                                     blockMap[index] = Blocks.BEDROCK.ID;
-                                else if (y <= terrainHeight)
+                                else if (y < terrainHeight)
                                     blockMap[index] = Blocks.STONE.ID;
-                                /*else if (y == terrainHeight)
-                                    blockMap[index] = biome.SurfaceBlock.ID;*/
+                                else if (y == terrainHeight)
+                                    blockMap[index] = biome.SurfaceBlock.ID;
                                 else if (y > terrainHeight && y == Constants.WaterLevel)
                                     blockMap[index] = Blocks.WATER.ID;
                                 else if (y > terrainHeight && y > Constants.WaterLevel)
@@ -124,9 +124,9 @@ namespace minescape.jobs
             return a * y0 + b * (x1 - x0) + c * y1 + d * (x1 - x0);
         }
 
-        byte GetBiome(float land, float temperature, float humidity)
+        byte GetBiome(float elevation, float temperature, float humidity)
         {
-            if (land < 0.4)
+            if (elevation < -0.01)
             {
                 if (temperature >= 0 && temperature < 0.33)
                     return Biomes.COLD_OCEAN.ID;
@@ -135,7 +135,7 @@ namespace minescape.jobs
                 if (temperature >= 0.66 && temperature <= 1)
                     return Biomes.WARM_OCEAN.ID;
             }
-            else if (land >= 0.4 && land < 0.42)
+            else if (elevation >= -0.01 && elevation < 0.03)
                 return Biomes.BEACH.ID;
 
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)

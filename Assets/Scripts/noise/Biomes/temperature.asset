@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: temperature
   m_EditorClassIdentifier: 
   offset: -20000
-  scale: 0.01
+  scale: 0.2
   octaves: 0
   persistance: 0
   lacunarity: 0
