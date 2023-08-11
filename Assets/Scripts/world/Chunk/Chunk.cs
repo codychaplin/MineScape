@@ -9,9 +9,11 @@ namespace minescape.world.chunk
         public Material textureMap;
         public Material transparentTextureMap;
         public Transform worldTransform;
+
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
+
         public bool isRendered = false;
         public bool isProcessing = false;
         public bool activate = true;
@@ -19,6 +21,8 @@ namespace minescape.world.chunk
         GameObject chunkObject;
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
+        MeshCollider meshCollider;
+
         public NativeList<float3> vertices;
         public NativeList<float3> normals;
         public NativeList<int> triangles;
@@ -104,8 +108,10 @@ namespace minescape.world.chunk
                 return;
 
             chunkObject = new();
+            chunkObject.layer = 6;
             meshFilter = chunkObject.AddComponent<MeshFilter>();
             meshRenderer = chunkObject.AddComponent<MeshRenderer>();
+            meshCollider = chunkObject.AddComponent<MeshCollider>();
             meshRenderer.materials = new Material[] { textureMap, transparentTextureMap };
             chunkObject.transform.SetParent(worldTransform);
             chunkObject.transform.position = position;
@@ -141,6 +147,7 @@ namespace minescape.world.chunk
             mesh.SetNormals(normArray);
 
             meshFilter.mesh = mesh;
+            meshCollider.sharedMesh = mesh;
         }
 
         public void Dispose()
