@@ -1,5 +1,7 @@
-using Unity.Mathematics;
 using UnityEngine;
+using Unity.Mathematics;
+using minescape.world.chunk;
+using static UnityEditor.PlayerSettings;
 
 namespace minescape.player
 {
@@ -8,7 +10,9 @@ namespace minescape.player
         [Header("References")]
         public Camera playerCamera;
         public Transform playerBody;
+        public Transform selectedBlock;
         public CharacterController characterController;
+        public ChunkManager chunkManager;
         public LayerMask groundLayer;
 
         [Header("Movement")]
@@ -18,6 +22,8 @@ namespace minescape.player
         public float jumpHeight = 1.5f;
         public float moveSensitivity = 40f;
         public float mouseSensitivity = 150f;
+
+        public float reach = 10f;
 
         float gravity => -9.81f * 3f;
 
@@ -37,6 +43,9 @@ namespace minescape.player
         float moveZ = 0;
         float moveY = 0;
 
+        Vector3Int selectedBlockPosition;
+        Vector3 defaultSelectedBlockPosition = new(-1f, -1f, -1f);
+
         void Start ()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -46,12 +55,18 @@ namespace minescape.player
         // Update is called once per frame
         void Update()
         {
-            PlayerInput();
+            if (Input.GetKey(KeyCode.Escape))
+                Cursor.visible = true;
+
+            if (Input.GetKey(KeyCode.Mouse0))
+                Cursor.visible = false;
 
             if (Cursor.visible)
                 return;
 
+            PlayerInput();
             MoveCamera();
+            GetBlockInView();
 
             if (CreativeMode)
             {
@@ -72,12 +87,6 @@ namespace minescape.player
 
         void PlayerInput()
         {
-            if (Input.GetKey(KeyCode.Escape))
-                Cursor.visible = true;
-
-            if (Input.GetKey(KeyCode.Mouse0))
-                Cursor.visible = false;
-
             // camera
             mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
             mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
@@ -124,6 +133,23 @@ namespace minescape.player
             // apply gravity
             velocity.y += gravity * Time.deltaTime;
             characterController.Move(velocity * Time.deltaTime);
+        }
+
+        void GetBlockInView()
+        {
+            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, groundLayer))
+            {
+                hitInfo.point -= hitInfo.normal * 0.1f;
+                selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
+                selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
+                selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
+                if (chunkManager.CheckBlockAtPos(selectedBlockPosition))
+                {
+                    selectedBlock.position = selectedBlockPosition;
+                }
+            }
+            else
+                selectedBlock.position = defaultSelectedBlockPosition;
         }
 
         void MoveCreative()

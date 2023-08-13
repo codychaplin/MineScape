@@ -59,21 +59,6 @@ namespace minescape.jobs
                         terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 64) + smooth * 16);
                     }
 
-                    /*int elevationY = GetY(Splines.Elevation, elevationX);
-                    int terrainHeight = elevationY;*/
-
-                    // relief
-                    /*float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 2.4f);
-                    float normalizedRelief = (relief + 1f) / 2f;
-
-                    // topography
-                    float topographyX = Noise.GetTerrainNoise(pos, 10000, topographyScale, topographyOctaves, persistance, lacunarity, 8, 1.7f);
-                    topographyX *= normalizedRelief;
-                    int topographyY = GetY(Splines.Topography, topographyX);*/
-
-                    // final terrain height
-                    //int terrainHeight = (int)math.round(elevationY + topographyY);
-
                     float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);

@@ -7,6 +7,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
 using minescape.scriptableobjects;
+using minescape.init;
 
 namespace minescape.world.chunk
 {
@@ -45,6 +46,25 @@ namespace minescape.world.chunk
 
             if (ChunksToCreate.Count > 0)
                 CreateChunks();
+        }
+
+        public bool CheckBlockAtPos(Vector3Int pos)
+        {
+
+            var coord = new ChunkCoord(pos.x / Constants.ChunkWidth, pos.z / Constants.ChunkWidth);
+            var chunk = TryGetChunk(coord);
+
+            if (chunk != null)
+            {
+                int localX = pos.x % Constants.ChunkWidth;
+                int localZ = pos.z % Constants.ChunkWidth;
+                int index = Chunk.ConvertToIndex(localX, pos.y, localZ);
+                var blockID = chunk.BlockMap[index];
+                if (Blocks.blocks[blockID].IsSolid)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
