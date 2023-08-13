@@ -641,8 +641,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 730674619}
-  - component: {fileID: 730674620}
   - component: {fileID: 730674621}
+  - component: {fileID: 730674622}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -667,32 +667,6 @@ Transform:
   - {fileID: 667553415}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!143 &730674620
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 730674618}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.8
-  m_Radius: 0.25
-  m_SlopeLimit: 0
-  m_StepOffset: 0.1
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!114 &730674621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -707,17 +681,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 330585545}
   playerBody: {fileID: 667553415}
-  characterController: {fileID: 730674620}
+  characterController: {fileID: 730674622}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  mouseSensitivityX: 150
-  mouseSensitivityY: 150
-  moveSensitivityX: 40
-  moveSensitivityY: 40
-  moveSensitivityZ: 40
-  speed: 15
-  jumpHeight: 1.5
+  CreativeMode: 0
+  creativeSpeed: 25
+  speed: 7
+  jumpHeight: 1.2
+  moveSensitivity: 40
+  mouseSensitivity: 150
+--- !u!143 &730674622
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730674618}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.8
+  m_Radius: 0.25
+  m_SlopeLimit: 90
+  m_StepOffset: 0.1
+  m_SkinWidth: 0.01
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

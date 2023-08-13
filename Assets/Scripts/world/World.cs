@@ -31,7 +31,7 @@ namespace minescape.world
             UnityEngine.Random.InitState(Seed);
 
             // set spawn
-            spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
+            spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 76f, Constants.WorldSizeInBlocks / 2f);
             player.position = spawnpoint;
         }
 

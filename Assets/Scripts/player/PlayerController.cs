@@ -5,22 +5,20 @@ namespace minescape.player
 {
     public class PlayerController : MonoBehaviour
     {
+        [Header("References")]
         public Camera playerCamera;
         public Transform playerBody;
         public CharacterController characterController;
         public LayerMask groundLayer;
 
-        public float mouseSensitivityX = 150f;
-        public float mouseSensitivityY = 150f;
-
-        float xRotation = 0f;
-
-        public float moveSensitivityX = 40f;
-        public float moveSensitivityY = 40f;
-        public float moveSensitivityZ = 40f;
-
+        [Header("Movement")]
+        public bool CreativeMode = false;
+        public float creativeSpeed = 20f;
         public float speed = 10f;
         public float jumpHeight = 1.5f;
+        public float moveSensitivity = 40f;
+        public float mouseSensitivity = 150f;
+
         float gravity => -9.81f * 3f;
 
         bool isGrounded = false;
@@ -28,6 +26,16 @@ namespace minescape.player
         const float jumpPreventionTime = 0.2f;
 
         Vector3 velocity = Vector3.zero;
+        Vector3 move = Vector3.zero;
+        
+        float xRotation = 0f;
+
+        float mouseX = 0;
+        float mouseY = 0;
+
+        float moveX = 0;
+        float moveZ = 0;
+        float moveY = 0;
 
         void Start ()
         {
@@ -43,9 +51,23 @@ namespace minescape.player
             if (Cursor.visible)
                 return;
 
-            GroundCheck();
             MoveCamera();
-            MovePlayer();
+
+            if (CreativeMode)
+            {
+                MoveCreative();
+            }
+            else
+            {
+                GroundCheck();
+                MovePlayer();
+            }
+        }
+
+        void OnValidate()
+        {
+            // disable collisions in creative mode
+            characterController.excludeLayers = (CreativeMode) ? 64 : 0;
         }
 
         void PlayerInput()
@@ -55,40 +77,44 @@ namespace minescape.player
 
             if (Input.GetKey(KeyCode.Mouse0))
                 Cursor.visible = false;
+
+            // camera
+            mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
+            mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+
+            // movement
+            moveX = Input.GetAxis("Horizontal") * moveSensitivity * Time.deltaTime;
+            moveZ = Input.GetAxis("Vertical") * moveSensitivity * Time.deltaTime;
+            moveY = Input.GetAxis("Jump") * moveSensitivity * Time.deltaTime;
+            moveY -= Input.GetAxis("Crouch") * moveSensitivity * Time.deltaTime;
         }
 
         void GroundCheck()
         {
+            // ground check
             if (Time.time >= lastTimeJumped + jumpPreventionTime)
                 isGrounded = Physics.CheckSphere(transform.position, 0.3f, groundLayer);
 
+            // reset velocity
             if (isGrounded && velocity.y < 0)
                 velocity.y = -2f;
         }
 
         void MoveCamera()
         {
-            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivityX * Time.deltaTime;
-            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivityY * Time.deltaTime;
-
+            // set
             xRotation -= mouseY;
-
             xRotation = math.clamp(xRotation, -85f, 85f);
 
+            // apply
             playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
             transform.Rotate(Vector3.up * mouseX);
         }
 
         void MovePlayer()
         {
-            float moveX = Input.GetAxis("Horizontal") * moveSensitivityX * Time.deltaTime;
-            float moveZ = Input.GetAxis("Vertical") * moveSensitivityZ * Time.deltaTime;
-
-            float moveY = Input.GetAxis("Jump") * moveSensitivityY * Time.deltaTime;
-            moveY -= Input.GetAxis("Crouch") * moveSensitivityY * Time.deltaTime;
-
             // move
-            Vector3 move = transform.right * moveX + transform.forward * moveZ;
+            move = transform.right * moveX + transform.forward * moveZ;
             characterController.Move(move * speed * Time.deltaTime);
 
             // jump
@@ -97,8 +123,13 @@ namespace minescape.player
 
             // apply gravity
             velocity.y += gravity * Time.deltaTime;
-
             characterController.Move(velocity * Time.deltaTime);
+        }
+
+        void MoveCreative()
+        {
+            move = transform.right * moveX + transform.forward * moveZ + transform.up * moveY;
+            characterController.Move(move * creativeSpeed * Time.deltaTime);
         }
     }
 }
