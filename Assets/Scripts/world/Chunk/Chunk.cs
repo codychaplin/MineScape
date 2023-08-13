@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
+using Unity.Jobs;
 
 namespace minescape.world.chunk
 {
@@ -14,6 +15,7 @@ namespace minescape.world.chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
 
+        public bool generated = false;
         public bool isRendered = false;
         public bool isProcessing = false;
         public bool activate = true;
@@ -82,6 +84,12 @@ namespace minescape.world.chunk
             BlockMap[index] = block;
         }
 
+        public byte GetBlock(int x, int y, int z)
+        {
+            int index = ConvertToIndex(x, y, z);
+            return BlockMap[index];
+        }
+
         /// <summary>
         /// Checks if block is within the bounds of its chunk.
         /// </summary>
@@ -107,15 +115,19 @@ namespace minescape.world.chunk
             if (isRendered)
                 return;
 
-            chunkObject = new();
-            chunkObject.layer = 6;
-            meshFilter = chunkObject.AddComponent<MeshFilter>();
-            meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-            meshCollider = chunkObject.AddComponent<MeshCollider>();
-            meshRenderer.materials = new Material[] { textureMap, transparentTextureMap };
-            chunkObject.transform.SetParent(worldTransform);
-            chunkObject.transform.position = position;
-            chunkObject.name = $"{coord.x},{coord.z}";
+            if (!generated)
+            {
+                chunkObject = new();
+                chunkObject.layer = 6;
+                meshFilter = chunkObject.AddComponent<MeshFilter>();
+                meshRenderer = chunkObject.AddComponent<MeshRenderer>();
+                meshCollider = chunkObject.AddComponent<MeshCollider>();
+                meshRenderer.materials = new Material[] { textureMap, transparentTextureMap };
+                chunkObject.transform.SetParent(worldTransform);
+                chunkObject.transform.position = position;
+                chunkObject.name = $"{coord.x},{coord.z}";
+                generated = true;
+            }
 
             CreateMesh();
             isProcessing = false;

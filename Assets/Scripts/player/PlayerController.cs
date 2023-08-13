@@ -1,7 +1,9 @@
 using UnityEngine;
 using Unity.Mathematics;
+using minescape.init;
+using minescape.world;
+using minescape.block;
 using minescape.world.chunk;
-using static UnityEditor.PlayerSettings;
 
 namespace minescape.player
 {
@@ -12,7 +14,7 @@ namespace minescape.player
         public Transform playerBody;
         public Transform selectedBlock;
         public CharacterController characterController;
-        public ChunkManager chunkManager;
+        public World world;
         public LayerMask groundLayer;
 
         [Header("Movement")]
@@ -24,6 +26,9 @@ namespace minescape.player
         public float mouseSensitivity = 150f;
 
         public float reach = 10f;
+
+        float blockCooldownTimer = 0f;
+        const float blockCooldown = 0.02f;
 
         float gravity => -9.81f * 3f;
 
@@ -135,27 +140,116 @@ namespace minescape.player
             characterController.Move(velocity * Time.deltaTime);
         }
 
-        void GetBlockInView()
-        {
-            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, groundLayer))
-            {
-                hitInfo.point -= hitInfo.normal * 0.1f;
-                selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
-                selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
-                selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
-                if (chunkManager.CheckBlockAtPos(selectedBlockPosition))
-                {
-                    selectedBlock.position = selectedBlockPosition;
-                }
-            }
-            else
-                selectedBlock.position = defaultSelectedBlockPosition;
-        }
-
         void MoveCreative()
         {
             move = transform.right * moveX + transform.forward * moveZ + transform.up * moveY;
             characterController.Move(move * creativeSpeed * Time.deltaTime);
+        }
+
+        void GetBlockInView()
+        {
+            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, groundLayer))
+            {
+                hitInfo.point -= hitInfo.normal * 0.1f; // slightly past point
+
+                selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
+                selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
+                selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
+
+                var chunk = world.GetChunk(selectedBlockPosition);
+                if (chunk == null)
+                    return;
+
+                int localX = selectedBlockPosition.x % Constants.ChunkWidth;
+                int localZ = selectedBlockPosition.z % Constants.ChunkWidth;
+                byte blockID = chunk.GetBlock(localX, selectedBlockPosition.y, localZ);
+                Block block = Blocks.blocks[blockID];
+                if (block.IsSolid)
+                    selectedBlock.position = selectedBlockPosition;
+
+                // break block
+                if (Input.GetKeyDown(KeyCode.Mouse0))
+                {
+                    if (block.IsSolid && block.ID != Blocks.BEDROCK.ID)
+                    {
+                        if (Time.time < blockCooldownTimer)
+                            return;
+
+                        // break block
+                        chunk.SetBlock(localX, selectedBlockPosition.y, localZ, Blocks.AIR.ID);
+                        blockCooldownTimer = Time.time + blockCooldown;
+
+                        // update chunk
+                        chunk.isRendered = false;
+                        world.chunkManager.ChunksToCreate.Enqueue(chunk.coord);
+
+                        UpdateAdjacentChunks(chunk, localX, selectedBlockPosition.y, localZ);
+                    }
+                }
+
+                // place block
+                if (Input.GetKeyDown(KeyCode.Mouse1))
+                {
+                    if (Time.time < blockCooldownTimer)
+                        return;
+
+                    hitInfo.point += hitInfo.normal * 0.2f; // slightly before point
+
+                    // update position and get chunk
+                    selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
+                    selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
+                    selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
+                    chunk = world.GetChunk(selectedBlockPosition);
+                    if (chunk == null)
+                        return;
+
+                    // get local coordinates and block info
+                    localX = selectedBlockPosition.x % Constants.ChunkWidth;
+                    localZ = selectedBlockPosition.z % Constants.ChunkWidth;
+
+                    // place block
+                    chunk.SetBlock(localX, selectedBlockPosition.y, localZ, Blocks.DIRT.ID);
+                    blockCooldownTimer = Time.time + blockCooldown;
+
+                    // update Chunk
+                    chunk.isRendered = false;
+                    world.chunkManager.ChunksToCreate.Enqueue(chunk.coord);
+
+                    UpdateAdjacentChunks(chunk, localX, selectedBlockPosition.y, localZ);
+                }
+            }
+            else
+            {
+                selectedBlock.position = defaultSelectedBlockPosition;
+            }
+        }
+
+        void UpdateAdjacentChunks(Chunk chunk, int x, int y, int z)
+        {
+            if (!Chunk.IsBlockInChunk(x, selectedBlockPosition.y, z + 1)) // north
+            {
+                Chunk north = world.GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z + 1));
+                north.isRendered = false;
+                world.chunkManager.ChunksToCreate.Enqueue(north.coord);
+            }
+            if (!Chunk.IsBlockInChunk(x, selectedBlockPosition.y, z - 1)) // south
+            {
+                Chunk south = world.GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z - 1));
+                south.isRendered = false;
+                world.chunkManager.ChunksToCreate.Enqueue(south.coord);
+            }
+            if (!Chunk.IsBlockInChunk(x + 1, selectedBlockPosition.y, z)) // east
+            {
+                Chunk east = world.GetChunk(new ChunkCoord(chunk.coord.x + 1, chunk.coord.z));
+                east.isRendered = false;
+                world.chunkManager.ChunksToCreate.Enqueue(east.coord);
+            }
+            if (!Chunk.IsBlockInChunk(x - 1, selectedBlockPosition.y, z)) // west
+            {
+                Chunk west = world.GetChunk(new ChunkCoord(chunk.coord.x - 1, chunk.coord.z));
+                west.isRendered = false;
+                world.chunkManager.ChunksToCreate.Enqueue(west.coord);
+            }
         }
     }
 }

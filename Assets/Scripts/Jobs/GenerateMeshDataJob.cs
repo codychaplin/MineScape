@@ -11,39 +11,32 @@ namespace minescape.jobs
 {
     public struct GenerateMeshDataJob : IJob
     {
-        [ReadOnly]
-        public ChunkCoord coord;
+        [ReadOnly] public ChunkCoord coord;
 
-        [ReadOnly]
-        public int3 position;
+        [ReadOnly] public int3 position;
 
-        [ReadOnly]
-        public NativeArray<byte> map;
+        [ReadOnly] public NativeArray<byte> map;
 
-        [ReadOnly]
-        public NativeArray<byte> north;
-        [ReadOnly]
-        public NativeArray<byte> east;
-        [ReadOnly]
-        public NativeArray<byte> south;
-        [ReadOnly]
-        public NativeArray<byte> west;
+        [ReadOnly] public NativeArray<byte> north;
+        [ReadOnly] public NativeArray<byte> east;
+        [ReadOnly] public NativeArray<byte> south;
+        [ReadOnly] public NativeArray<byte> west;
 
-        [WriteOnly]
-        public NativeList<float3> vertices;
-        [WriteOnly]
-        public NativeList<int> triangles;
-        [WriteOnly]
-        public NativeList<int> transparentTriangles;
-        [WriteOnly]
-        public NativeList<float2> uvs;
-        [WriteOnly]
-        public NativeList<float3> normals;
+        [WriteOnly] public NativeList<float3> vertices;
+        [WriteOnly] public NativeList<int> triangles;
+        [WriteOnly] public NativeList<int> transparentTriangles;
+        [WriteOnly] public NativeList<float2> uvs;
+        [WriteOnly] public NativeList<float3> normals;
 
         public int vertexIndex;
 
         public void Execute()
         {
+            vertices.Clear();
+            triangles.Clear();
+            transparentTriangles.Clear();
+            uvs.Clear();
+            normals.Clear();
             int index = 0;
             int3 index3 = new(0, 0, 0);
             for (int x = 0; x < Constants.ChunkWidth; x++)

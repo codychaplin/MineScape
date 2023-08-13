@@ -76,9 +76,20 @@ namespace minescape.world
 
         ChunkCoord GetChunkCoord(Vector3 pos)
         {
-            int x = Mathf.FloorToInt(pos.x / Constants.ChunkWidth);
-            int z = Mathf.FloorToInt(pos.z / Constants.ChunkWidth);
+            int x = (int)math.floor(pos.x / Constants.ChunkWidth);
+            int z = (int)math.floor(pos.z / Constants.ChunkWidth);
             return new ChunkCoord(x, z);
+        }
+
+        public Chunk GetChunk(ChunkCoord coord)
+        {
+            return chunkManager.TryGetChunk(coord);
+        }
+
+        public Chunk GetChunk(Vector3Int pos)
+        {
+            var coord = GetChunkCoord(pos);
+            return chunkManager.TryGetChunk(coord);
         }
 
         void CheckViewDistance()
