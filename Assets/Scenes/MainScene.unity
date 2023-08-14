@@ -757,8 +757,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 730674619}
-  - component: {fileID: 730674621}
   - component: {fileID: 730674622}
+  - component: {fileID: 730674621}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -803,14 +803,22 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  defaultFOV: 90
+  sprintFOVMultiplier: 1.1
+  FOVChangeSharpness: 5
+  mouseSensitivity: 150
   CreativeMode: 0
   creativeSpeed: 25
   speed: 7
   jumpHeight: 1.2
   moveSensitivity: 40
-  mouseSensitivity: 150
+  sprintSpeedModifier: 2
+  crouchingSharpness: 20
+  CrouchSpeedModifier: 0.5
+  standingHeight: 1.8
+  crouchingHeight: 1.25
+  cameraHeightRatio: 0.9
   reach: 10
-  blockCooldown: 0.05
 --- !u!143 &730674622
 CharacterController:
   m_ObjectHideFlags: 0

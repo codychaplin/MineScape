@@ -17,21 +17,42 @@ namespace minescape.player
         public World world;
         public LayerMask groundLayer;
 
+        [Header("Camera")]
+        public float defaultFOV = 90f;
+        [Range(1f, 1.3f)]
+        public float sprintFOVMultiplier = 1.1f;
+        public float FOVChangeSharpness = 5f;
+        public float mouseSensitivity = 150f;
+
         [Header("Movement")]
         public bool CreativeMode = false;
         public float creativeSpeed = 20f;
         public float speed = 10f;
         public float jumpHeight = 1.5f;
         public float moveSensitivity = 40f;
-        public float mouseSensitivity = 150f;
+        public float sprintSpeedModifier = 2f;
+        public float crouchingSharpness = 20f;
+        [Range(0, 1)]
+        public float CrouchSpeedModifier = 0.5f;
 
+        [Header("Character")]
+        public float standingHeight = 1.8f;
+        [Range(0.5f, 1.9f)]
+        public float crouchingHeight = 1.25f;
+        [Range(0f, 1f)]
+        public float cameraHeightRatio = 0.95f;
+
+        [Header("Misc")]
         public float reach = 10f;
 
         float blockCooldownTimer = 0f;
-        const float blockCooldown = 0.02f;
+        const float blockCooldown = 0.03f;
 
         float gravity => -9.81f * 3f;
 
+        float targetHeight;
+        bool targetHeightReached;
+        bool isCrouching = false;
         bool isGrounded = false;
         float lastTimeJumped = 0f;
         const float jumpPreventionTime = 0.2f;
@@ -55,6 +76,9 @@ namespace minescape.player
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            SetFOV(defaultFOV);
+            targetHeight = standingHeight;
         }
 
         // Update is called once per frame
@@ -80,6 +104,8 @@ namespace minescape.player
             else
             {
                 GroundCheck();
+                Crouch();
+                UpdateHeight();
                 MovePlayer();
             }
         }
@@ -88,6 +114,11 @@ namespace minescape.player
         {
             // disable collisions in creative mode
             characterController.excludeLayers = (CreativeMode) ? 64 : 0;
+        }
+
+        public void SetFOV(float fov)
+        {
+            playerCamera.fieldOfView = fov;
         }
 
         void PlayerInput()
@@ -101,6 +132,48 @@ namespace minescape.player
             moveZ = Input.GetAxis("Vertical") * moveSensitivity * Time.deltaTime;
             moveY = Input.GetAxis("Jump") * moveSensitivity * Time.deltaTime;
             moveY -= Input.GetAxis("Crouch") * moveSensitivity * Time.deltaTime;
+        }
+
+        void Crouch()
+        {
+            if (Input.GetKeyDown(KeyCode.LeftShift))
+                SetCrouchingState(!isCrouching);
+        }
+
+        void SetCrouchingState(bool crouched)
+        {
+            targetHeight = crouched ? crouchingHeight : standingHeight;
+            isCrouching = crouched;
+            targetHeightReached = false;
+        }
+
+        void UpdateHeight()
+        {
+            if (targetHeightReached)
+                return;
+
+            // character controller
+            characterController.height = Mathf.Lerp(characterController.height, targetHeight, crouchingSharpness * Time.deltaTime);
+            characterController.center = 0.5f * characterController.height * Vector3.up;
+
+            // camera
+            playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition,
+                cameraHeightRatio * targetHeight * Vector3.up, crouchingSharpness * Time.deltaTime);
+
+            // body
+            playerBody.localScale = new Vector3(0.5f, Mathf.Lerp(playerBody.localScale.y, targetHeight, crouchingSharpness * Time.deltaTime), 0.5f);
+            playerBody.localPosition = 0.5f * playerBody.localScale.y * Vector3.up;
+
+            // snap to targetHeight when close
+            if (math.abs(playerBody.localScale.y - targetHeight) < 0.01f)
+            {
+                characterController.height = targetHeight;
+                characterController.center = 0.5f * characterController.height * Vector3.up;
+
+                playerBody.localScale = new Vector3(0.5f, targetHeight, 0.5f);
+                playerBody.localPosition = 0.5f * playerBody.localScale.y * Vector3.up;
+                targetHeightReached = true;
+            }
         }
 
         void GroundCheck()
@@ -129,6 +202,8 @@ namespace minescape.player
         {
             // move
             move = transform.right * moveX + transform.forward * moveZ;
+            if (isCrouching)
+                move *= CrouchSpeedModifier;
             characterController.Move(move * speed * Time.deltaTime);
 
             // jump
