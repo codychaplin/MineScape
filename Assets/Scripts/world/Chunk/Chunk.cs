@@ -1,7 +1,6 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
-using Unity.Jobs;
 
 namespace minescape.world.chunk
 {
@@ -84,6 +83,13 @@ namespace minescape.world.chunk
             BlockMap[index] = block;
         }
 
+        /// <summary>
+        /// Gets block ID in chunk.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns>Block ID</returns>
         public byte GetBlock(int x, int y, int z)
         {
             int index = ConvertToIndex(x, y, z);
@@ -150,8 +156,7 @@ namespace minescape.world.chunk
             var normArray = normals.ToArray(Allocator.Temp);
             var uvsArray = uvs.ToArray(Allocator.Temp);
 
-            Mesh mesh = new();
-            mesh.subMeshCount = 2;
+            Mesh mesh = new() { subMeshCount = 2 };
             mesh.SetVertices(vertArray);
             mesh.SetTriangles(triangles.ToArray(), 0);
             mesh.SetTriangles(transparentTriangles.ToArray(), 1);
@@ -162,6 +167,9 @@ namespace minescape.world.chunk
             meshCollider.sharedMesh = mesh;
         }
 
+        /// <summary>
+        /// Disposes of native collections.
+        /// </summary>
         public void Dispose()
         {
             BlockMap.Dispose();

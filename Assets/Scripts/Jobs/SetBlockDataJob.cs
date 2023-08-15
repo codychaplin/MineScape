@@ -32,6 +32,7 @@ namespace minescape.jobs
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
                 {
+                    // offset
                     var pos = new float2(position.x + x, position.z + z);
 
                     // elevation
@@ -59,6 +60,7 @@ namespace minescape.jobs
                         terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 64) + smooth * 16);
                     }
 
+                    // set biome
                     float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
@@ -74,11 +76,13 @@ namespace minescape.jobs
                                     blockMap[index] = Blocks.BEDROCK.ID;
                                 else if (y < terrainHeight - 4)
                                     blockMap[index] = Blocks.STONE.ID;
-                                else if (y <= terrainHeight)
+                                else if (y < terrainHeight)
+                                    blockMap[index] = biome.FillerBlock.ID;
+                                else if (y == terrainHeight)
                                     blockMap[index] = biome.SurfaceBlock.ID;
-                                else if (y > terrainHeight && y == Constants.WaterLevel)
+                                else if (y > terrainHeight && y <= Constants.WaterLevel)
                                     blockMap[index] = Blocks.WATER.ID;
-                                else if (y > terrainHeight && y > Constants.WaterLevel)
+                                else
                                     break;
                             }
                         }
@@ -120,18 +124,18 @@ namespace minescape.jobs
 
         byte GetBiome(float elevation, float temperature, float humidity)
         {
+            // ocean biomes
             if (elevation < -0.03)
             {
-                if (temperature >= 0 && temperature < 0.33)
-                    return Biomes.COLD_OCEAN.ID;
-                if (temperature >= 0.33 && temperature < 0.66)
-                    return Biomes.OCEAN.ID;
-                if (temperature >= 0.66 && temperature <= 1)
-                    return Biomes.WARM_OCEAN.ID;
+                if (temperature < 0.33) return Biomes.COLD_OCEAN.ID;
+                if (temperature < 0.66) return Biomes.OCEAN.ID;
+                return Biomes.WARM_OCEAN.ID;
             }
-            else if (elevation >= -0.03 && elevation < 0.025)
-                return Biomes.BEACH.ID;
 
+            // beach biome
+            if (elevation >= -0.03 && elevation < 0.025) return Biomes.BEACH.ID;
+
+            // land biomes
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
                 return Biomes.TUNDRA.ID;
             if (temperature >= 0.2 && temperature < 0.6 && humidity >= 0 && humidity < 0.4)

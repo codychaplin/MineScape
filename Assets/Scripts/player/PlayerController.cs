@@ -20,7 +20,7 @@ namespace minescape.player
         [Header("Camera")]
         public float defaultFOV = 90f;
         [Range(1f, 1.3f)]
-        public float sprintFOVMultiplier = 1.1f;
+        public float sprintFOVMultiplier = 1.2f;
         public float FOVChangeSharpness = 5f;
         public float mouseSensitivity = 150f;
 
@@ -52,6 +52,7 @@ namespace minescape.player
 
         float targetHeight;
         bool targetHeightReached;
+        bool isSprinting = false;
         bool isCrouching = false;
         bool isGrounded = false;
         float lastTimeJumped = 0f;
@@ -69,8 +70,10 @@ namespace minescape.player
         float moveZ = 0;
         float moveY = 0;
 
+        Vector3 playerPos;
+        Vector3 VectorHalf = new(0.5f, 0.5f, 0.5f);
         Vector3Int selectedBlockPosition;
-        Vector3 defaultSelectedBlockPosition = new(-1f, -1f, -1f);
+        Vector3 defaultPosition = new(-1f, -1f, -1f);
 
         void Start ()
         {
@@ -153,7 +156,7 @@ namespace minescape.player
                 return;
 
             // character controller
-            characterController.height = Mathf.Lerp(characterController.height, targetHeight, crouchingSharpness * Time.deltaTime);
+            characterController.height = math.lerp(characterController.height, targetHeight, crouchingSharpness * Time.deltaTime);
             characterController.center = 0.5f * characterController.height * Vector3.up;
 
             // camera
@@ -161,7 +164,7 @@ namespace minescape.player
                 cameraHeightRatio * targetHeight * Vector3.up, crouchingSharpness * Time.deltaTime);
 
             // body
-            playerBody.localScale = new Vector3(0.5f, Mathf.Lerp(playerBody.localScale.y, targetHeight, crouchingSharpness * Time.deltaTime), 0.5f);
+            playerBody.localScale = new Vector3(0.5f, math.lerp(playerBody.localScale.y, targetHeight, crouchingSharpness * Time.deltaTime), 0.5f);
             playerBody.localPosition = 0.5f * playerBody.localScale.y * Vector3.up;
 
             // snap to targetHeight when close
@@ -198,12 +201,40 @@ namespace minescape.player
             transform.Rotate(Vector3.up * mouseX);
         }
 
+        bool CanSprint(Vector3 move)
+        {
+            Vector3 forward = transform.InverseTransformDirection(move);
+            if (forward.z > 0.1 && (isGrounded || isSprinting))
+                return Input.GetKey(KeyCode.LeftControl);
+            else
+                return false;
+        }
+
         void MovePlayer()
         {
             // move
             move = transform.right * moveX + transform.forward * moveZ;
+
+            float speedModifier;
+            if (CanSprint(move)) // if player is sprinting
+            {
+                isSprinting = true;
+                SetFOV(math.lerp(playerCamera.fieldOfView, defaultFOV * sprintFOVMultiplier, FOVChangeSharpness * Time.deltaTime));
+                SetCrouchingState(false); // forces player to stand
+                speedModifier = sprintSpeedModifier;
+            }
+            else
+            {
+                isSprinting = false;
+                SetFOV(Mathf.Lerp(playerCamera.fieldOfView, defaultFOV, FOVChangeSharpness * Time.deltaTime));
+                speedModifier = 1f;
+            }
+
+            move *= speedModifier;
+
             if (isCrouching)
                 move *= CrouchSpeedModifier;
+
             characterController.Move(move * speed * Time.deltaTime);
 
             // jump
@@ -274,11 +305,16 @@ namespace minescape.player
                     selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
                     selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
                     selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
+
+                    // if player collides with where block would be placed, don't place
+                    if (Physics.CheckBox(selectedBlockPosition + VectorHalf, VectorHalf * 1.1f, Quaternion.identity, 1 << 3))
+                        return; 
+
                     chunk = world.GetChunk(selectedBlockPosition);
                     if (chunk == null)
                         return;
 
-                    // get local coordinates and block info
+                    // get local coordinates
                     localX = selectedBlockPosition.x % Constants.ChunkWidth;
                     localZ = selectedBlockPosition.z % Constants.ChunkWidth;
 
@@ -295,7 +331,7 @@ namespace minescape.player
             }
             else
             {
-                selectedBlock.position = defaultSelectedBlockPosition;
+                selectedBlock.position = defaultPosition;
             }
         }
 

@@ -759,7 +759,7 @@ GameObject:
   - component: {fileID: 730674619}
   - component: {fileID: 730674622}
   - component: {fileID: 730674621}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -804,7 +804,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   defaultFOV: 90
-  sprintFOVMultiplier: 1.1
+  sprintFOVMultiplier: 1.2
   FOVChangeSharpness: 5
   mouseSensitivity: 150
   CreativeMode: 0

@@ -60,15 +60,15 @@ namespace minescape.jobs
 
             for (int i = 0; i < 6; i++)
             {
-                if (blockID == Blocks.WATER.ID && i != 2) // only render top of water
-                    continue;
-
-                var adjacentIndex = pos + BlockData.faceCheck[i];
+                int3 adjacentIndex = pos + BlockData.faceCheck[i];
                 if (!World.IsBlockInWorld(adjacentIndex + position)) // if out of world, skip
                     continue;
 
                 var adjacentBlock = GetBlock(adjacentIndex);
                 if (adjacentBlock != 0 && adjacentBlock != Blocks.WATER.ID) // if adjacent block is not air or water, skip
+                    continue;
+
+                if (blockID == Blocks.WATER.ID && adjacentBlock == Blocks.WATER.ID) // if both water blocks, skip
                     continue;
 
                 float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];
