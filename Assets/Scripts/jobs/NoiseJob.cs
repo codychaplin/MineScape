@@ -27,7 +27,7 @@ namespace minescape.jobs
                 for (int z = 0; z < Constants.MapChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.y + z);
-                    float elevation = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f);
+                    float elevation = Noise.GetTerrainNoise(pos, 0, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f);
                     /*float elev = math.clamp(elevation + 1f, 0f, 1f);
                     elevation -= elev;*/
 

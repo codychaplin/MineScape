@@ -37,10 +37,10 @@ public class Noise
         return normalizedValue;
     }
 
-    public static float GetTerrainNoise(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity, int fuzziness, float normalizeFactor)
+    public static float GetTerrainNoise(float2 pos, int seed, float offset, float scale, int octaves, float persistance, float lacunarity, int fuzziness, float normalizeFactor)
     {
         // init position and multipliers
-        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
+        pos = new float2((pos.x + seed) / 100 * scale + offset, (pos.y + seed) / 100 * scale + offset);
         float totalNoise = 0f;
         float amplitude = 1f;
         float frequency = 1f;
@@ -63,10 +63,10 @@ public class Noise
         return normalizedValue;
     }
 
-    public static float GetBiomeNoise(float2 pos, float offset, float scale, bool isFuzzy)
+    public static float GetBiomeNoise(float2 pos, int seed, float offset, float scale, bool isFuzzy)
     {
         // get noise value
-        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
+        pos = new float2((pos.x + seed) / 100 * scale + offset, (pos.y + seed) / 100 * scale + offset);
         var noiseValue = noise.cnoise(pos);
         if (isFuzzy)
         {

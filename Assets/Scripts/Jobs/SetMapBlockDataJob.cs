@@ -3,25 +3,25 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
 using minescape.world.chunk;
+using minescape.splines;
 
 namespace minescape.jobs
 {
     public struct SetMapBlockDataJob : IJob
     {
-        [ReadOnly] public float temperatureScale;
-        [ReadOnly] public float temperatureOffset;
-        [ReadOnly] public float temperatureBorderWeight;
-        [ReadOnly] public float temperatureBorderScale;
+        [ReadOnly] public int seed;
 
-        [ReadOnly] public float humidityScale;
-        [ReadOnly] public float humidityOffset;
-        [ReadOnly] public float humidityBorderWeight;
-        [ReadOnly] public float humidityBorderScale;
+        [ReadOnly] public int minTerrainheight;
+        [ReadOnly] public int maxTerrainheight;
 
-        [ReadOnly] public float landOffset;
-        [ReadOnly] public float landScale;
-        [ReadOnly] public float landBorderWeight;
-        [ReadOnly] public float landBorderScale;
+        [ReadOnly] public float elevationScale;
+        [ReadOnly] public int elevationOctaves;
+        [ReadOnly] public float reliefScale;
+        [ReadOnly] public int reliefOctaves;
+        [ReadOnly] public float topographyScale;
+        [ReadOnly] public int topographyOctaves;
+        [ReadOnly] public float persistance;
+        [ReadOnly] public float lacunarity;
 
         [ReadOnly] public int2 position;
         [WriteOnly] public NativeArray<byte> biomeMap;
@@ -33,44 +33,37 @@ namespace minescape.jobs
                 for (int z = 0; z < Constants.MapChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.y + z);
-
-                    // land and sea
-                    float land1 = Noise.GetPerlin(pos, landOffset, landScale);
-                    float land2 = Noise.GetPerlin(pos, landOffset, landScale * landBorderScale);
-                    float land = (land1 + land2 / landBorderWeight) / ((1 / landBorderWeight) + 1);
-
-                    // temperature
-                    float temperature1 = Noise.GetPerlin(pos, temperatureOffset, temperatureScale);
-                    float temperature2 = Noise.GetSimplex(pos, temperatureOffset, temperatureScale * temperatureBorderScale);
-                    float temperature = (temperature1 + temperature2 / temperatureBorderWeight) / ((1 / temperatureBorderWeight) + 1);
-
-                    // humidity
-                    float humidity1 = Noise.GetPerlin(pos, humidityOffset, humidityScale);
-                    float humidity2 = Noise.GetSimplex(pos, humidityOffset, humidityScale * humidityBorderScale);
-                    float humidity = (humidity1 + humidity2 / humidityBorderWeight) / ((1 / humidityBorderWeight) + 1);
+                    float elevationX = Noise.GetTerrainNoise(pos, seed, 1, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
+                    float elevationY = Noise.GetTerrainNoise(pos, seed, 1, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
+                    float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
+                    float relief = Noise.GetTerrainNoise(pos, seed, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
+                    float normalizedRelief = (relief + 1f) / 2f;
+                    int terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 96) + smooth * 16);
+                    float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
+                    float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
 
                     // set biome for x/z coordinates in chunk
-                    byte biomeID = GetBiome(land, temperature, humidity);
+                    byte biomeID = GetBiome(elevationX, temperature, humidity);
                     var index = MapChunk.ConvertToIndex(x, z);
                     biomeMap[index] = biomeID;
                 }
             }
         }
 
-        byte GetBiome(float land, float temperature, float humidity)
+        byte GetBiome(float elevation, float temperature, float humidity)
         {
-            if (land < 0.3)
+            // ocean biomes
+            if (elevation < -0.03)
             {
-                if (temperature >= 0 && temperature < 0.33)
-                    return Biomes.COLD_OCEAN.ID;
-                if (temperature >= 0.33 && temperature < 0.66)
-                    return Biomes.OCEAN.ID;
-                if (temperature >= 0.66 && temperature <= 1)
-                    return Biomes.WARM_OCEAN.ID;
+                if (temperature < 0.33) return Biomes.COLD_OCEAN.ID;
+                if (temperature < 0.66) return Biomes.OCEAN.ID;
+                return Biomes.WARM_OCEAN.ID;
             }
-            else if (land >= 0.3 && land < 0.32)
-                return Biomes.BEACH.ID;
 
+            // beach biome
+            if (elevation >= -0.03 && elevation < 0.025) return Biomes.BEACH.ID;
+
+            // land biomes
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
                 return Biomes.TUNDRA.ID;
             if (temperature >= 0.2 && temperature < 0.6 && humidity >= 0 && humidity < 0.4)

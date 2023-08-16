@@ -26,7 +26,7 @@ namespace minescape.player
 
         [Header("Movement")]
         public bool CreativeMode = false;
-        public float creativeSpeed = 20f;
+        public float creativeSpeed = 50f;
         public float speed = 10f;
         public float jumpHeight = 1.5f;
         public float moveSensitivity = 40f;
@@ -43,7 +43,7 @@ namespace minescape.player
         public float cameraHeightRatio = 0.95f;
 
         [Header("Misc")]
-        public float reach = 10f;
+        public float reach = 5f;
 
         float blockCooldownTimer = 0f;
         const float blockCooldown = 0.03f;
@@ -70,7 +70,6 @@ namespace minescape.player
         float moveZ = 0;
         float moveY = 0;
 
-        Vector3 playerPos;
         Vector3 VectorHalf = new(0.5f, 0.5f, 0.5f);
         Vector3Int selectedBlockPosition;
         Vector3 defaultPosition = new(-1f, -1f, -1f);
@@ -96,7 +95,7 @@ namespace minescape.player
             if (Cursor.visible)
                 return;
 
-            PlayerInput();
+            MovementInput();
             MoveCamera();
             GetBlockInView();
 
@@ -124,7 +123,7 @@ namespace minescape.player
             playerCamera.fieldOfView = fov;
         }
 
-        void PlayerInput()
+        void MovementInput()
         {
             // camera
             mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
@@ -258,18 +257,23 @@ namespace minescape.player
             {
                 hitInfo.point -= hitInfo.normal * 0.1f; // slightly past point
 
+                // clamp selected block position
                 selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
                 selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
                 selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
 
+                // get chunk where block is located
                 var chunk = world.GetChunk(selectedBlockPosition);
                 if (chunk == null)
                     return;
 
+                // get block data
                 int localX = selectedBlockPosition.x % Constants.ChunkWidth;
                 int localZ = selectedBlockPosition.z % Constants.ChunkWidth;
                 byte blockID = chunk.GetBlock(localX, selectedBlockPosition.y, localZ);
                 Block block = Blocks.blocks[blockID];
+
+                // set focused block indicator
                 if (block.IsSolid)
                     selectedBlock.position = selectedBlockPosition;
 
@@ -301,7 +305,7 @@ namespace minescape.player
 
                     hitInfo.point += hitInfo.normal * 0.2f; // slightly before point
 
-                    // update position and get chunk
+                    // update position
                     selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
                     selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
                     selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
@@ -310,6 +314,7 @@ namespace minescape.player
                     if (Physics.CheckBox(selectedBlockPosition + VectorHalf, VectorHalf * 1.1f, Quaternion.identity, 1 << 3))
                         return; 
 
+                    // get chunk
                     chunk = world.GetChunk(selectedBlockPosition);
                     if (chunk == null)
                         return;
@@ -331,6 +336,7 @@ namespace minescape.player
             }
             else
             {
+                // if no block in reach, hide indicator
                 selectedBlock.position = defaultPosition;
             }
         }

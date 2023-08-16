@@ -807,8 +807,8 @@ MonoBehaviour:
   sprintFOVMultiplier: 1.2
   FOVChangeSharpness: 5
   mouseSensitivity: 150
-  CreativeMode: 0
-  creativeSpeed: 25
+  CreativeMode: 1
+  creativeSpeed: 50
   speed: 7
   jumpHeight: 1.2
   moveSensitivity: 40
@@ -818,7 +818,7 @@ MonoBehaviour:
   standingHeight: 1.8
   crouchingHeight: 1.25
   cameraHeightRatio: 0.9
-  reach: 10
+  reach: 5
 --- !u!143 &730674622
 CharacterController:
   m_ObjectHideFlags: 0
@@ -832,7 +832,7 @@ CharacterController:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0

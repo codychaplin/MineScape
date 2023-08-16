@@ -8,7 +8,9 @@ using minescape.world.chunk;
 namespace minescape.jobs
 {
     public struct SetBlockDataJob : IJob
-    {   
+    {
+        [ReadOnly] public int seed;
+
         [ReadOnly] public int minTerrainheight;
         [ReadOnly] public int maxTerrainheight;
 
@@ -28,6 +30,8 @@ namespace minescape.jobs
 
         public void Execute()
         {
+            seed *= 7919;
+
             for (int x = 0; x < Constants.ChunkWidth; x++)
             {
                 for (int z = 0; z < Constants.ChunkWidth; z++)
@@ -39,10 +43,10 @@ namespace minescape.jobs
                     int terrainHeight = 0;
 
                     // base terrain height
-                    float elevationX = Noise.GetTerrainNoise(pos, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
+                    float elevationX = Noise.GetTerrainNoise(pos, seed, 1, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
 
                     // secondary terrain height with higher frequency
-                    float elevationY = Noise.GetTerrainNoise(pos, 0, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
+                    float elevationY = Noise.GetTerrainNoise(pos, seed, 1, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
 
                     // scales down elevationY close to water level
                     float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
@@ -54,15 +58,15 @@ namespace minescape.jobs
                     }
                     else // land
                     {
-                        float relief = Noise.GetTerrainNoise(pos, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
+                        float relief = Noise.GetTerrainNoise(pos, seed, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
                         float normalizedRelief = (relief + 1f) / 2f;
 
-                        terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 64) + smooth * 16);
+                        terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 96) + smooth * 16);
                     }
 
                     // set biome
-                    float temperature = Noise.GetBiomeNoise(pos, 0, 0.06f, true);
-                    float humidity = Noise.GetBiomeNoise(pos, 0, 0.15f, true);
+                    float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
+                    float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
                     int biomeIndex = x + z * Constants.ChunkWidth;
                     biomeMap[biomeIndex] = biomeID;

@@ -20,8 +20,7 @@ namespace minescape.world
         public ChunkCoord playerLastChunkCoord;
 
         public Transform player;
-        [System.NonSerialized]
-        public Vector3 spawnpoint;
+        Vector3 spawnpoint;
 
         void Start()
         {

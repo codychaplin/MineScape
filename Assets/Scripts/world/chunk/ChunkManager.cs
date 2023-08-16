@@ -74,6 +74,7 @@ namespace minescape.world.chunk
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
+                seed = world.Seed,
                 elevationScale = elevation.scale,
                 elevationOctaves = elevation.octaves,
                 reliefScale = relief.scale,
@@ -204,12 +205,15 @@ namespace minescape.world.chunk
                     MapChunk mapChunk = new(new ChunkCoord(x, z));
                     SetMapBlockDataJob job = new()
                     {
-                        temperatureScale = temperature.scale,
-                        temperatureOffset = temperature.offset,
-                        humidityScale = humidity.scale,
-                        humidityOffset = humidity.offset,
-                        landScale = elevation.scale,
-                        landOffset = elevation.offset,
+                        seed = world.Seed,
+                        elevationScale = elevation.scale,
+                        elevationOctaves = elevation.octaves,
+                        reliefScale = relief.scale,
+                        reliefOctaves = relief.octaves,
+                        topographyScale = topography.scale,
+                        topographyOctaves = topography.octaves,
+                        persistance = elevation.persistance,
+                        lacunarity = elevation.lacunarity,
                         position = new int2(mapChunk.position.x, mapChunk.position.y),
                         biomeMap = mapChunk.BlockMap
                     };
