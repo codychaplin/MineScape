@@ -26,6 +26,7 @@ namespace minescape.jobs
         [WriteOnly] public NativeList<int> triangles;
         [WriteOnly] public NativeList<int> transparentTriangles;
         [WriteOnly] public NativeList<float2> uvs;
+        [WriteOnly] public NativeList<Color> colors;
         [WriteOnly] public NativeList<float3> normals;
 
         public int vertexIndex;
@@ -79,6 +80,13 @@ namespace minescape.jobs
                 vertices.Add(v1);
                 vertices.Add(v2);
                 vertices.Add(v3);
+
+                float lightLevel = (i == 2) ? 0f : 0.5f;
+
+                colors.Add(new Color(0, 0, 0, lightLevel));
+                colors.Add(new Color(0, 0, 0, lightLevel));
+                colors.Add(new Color(0, 0, 0, lightLevel));
+                colors.Add(new Color(0, 0, 0, lightLevel));
 
                 float3 faceNormal = CalculateFaceNormal(v0, v1, v2);
                 normals.Add(faceNormal);
