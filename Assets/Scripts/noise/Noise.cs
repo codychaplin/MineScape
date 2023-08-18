@@ -4,16 +4,14 @@ public class Noise
 {
     public static float GetPerlin(float2 pos, float offset, float scale)
     {
-        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
-        var og = noise.cnoise(pos);
-        return (og + 1f) / 2f;
+        pos = new float2((pos.x + 0.1f) / 16 * scale + offset, (pos.y + 0.1f) / 16 * scale + offset);
+        return noise.cnoise(pos);
     }
 
     public static float GetSimplex(float2 pos, float offset, float scale)
     {
         pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
-        var og = noise.snoise(pos);
-        return (og + 1f) / 2f;
+        return noise.snoise(pos);
     }
 
     public static float GetPerlinNoiseOctaves(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity)
@@ -90,5 +88,11 @@ public class Noise
             normalized = 0.9f;
 
         return normalized;
+    }
+
+    public static float TreeNoise(float2 pos, float scale)
+    {
+        pos = new float2(pos.x / 32 * scale, pos.y / 32 * scale);
+        return noise.snoise(pos);
     }
 }

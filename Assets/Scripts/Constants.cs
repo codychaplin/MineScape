@@ -19,7 +19,7 @@ namespace minescape
 
         // map data
         public static readonly int MapChunkWidth = 512;
-        public static int WorldSizeInMapChunks = 2;
+        public static int WorldSizeInMapChunks = 1;
         public static int WorldSizeInMapBlocks => WorldSizeInMapChunks * MapChunkWidth;
     }
 }

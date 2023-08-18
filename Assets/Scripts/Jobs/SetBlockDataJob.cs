@@ -27,10 +27,11 @@ namespace minescape.jobs
 
         [WriteOnly] public NativeArray<byte> blockMap;
         [WriteOnly] public NativeArray<byte> biomeMap;
+        [WriteOnly] public NativeArray<byte> heightMap;
 
         public void Execute()
         {
-            seed *= 7919;
+            seed *= 7919; // makes seed more unique
 
             for (int x = 0; x < Constants.ChunkWidth; x++)
             {
@@ -72,25 +73,40 @@ namespace minescape.jobs
                     biomeMap[biomeIndex] = biomeID;
                     var biome = Biomes.biomes[biomeID];
 
+                    heightMap[biomeIndex] = (byte)terrainHeight;
+
                     // set blocks
+                    int index = 0;
                     for (int y = 0; y < Constants.ChunkHeight; y++)
-                            {
-                                int index = Chunk.ConvertToIndex(x, y, z);
-                                if (y == 0)
-                                    blockMap[index] = Blocks.BEDROCK.ID;
-                                else if (y < terrainHeight - 4)
-                                    blockMap[index] = Blocks.STONE.ID;
-                                else if (y < terrainHeight)
-                                    blockMap[index] = biome.FillerBlock.ID;
-                                else if (y == terrainHeight)
-                                    blockMap[index] = biome.SurfaceBlock.ID;
-                                else if (y > terrainHeight && y <= Constants.WaterLevel)
-                                    blockMap[index] = Blocks.WATER.ID;
-                                else
-                                    break;
-                            }
+                    {
+                        index = Chunk.ConvertToIndex(x, y, z);
+                        if (y == 0)
+                            blockMap[index] = Blocks.BEDROCK.ID;
+                        else if (y < terrainHeight - 4)
+                            blockMap[index] = Blocks.STONE.ID;
+                        else if (y < terrainHeight)
+                            blockMap[index] = biome.FillerBlock.ID;
+                        else if (y == terrainHeight)
+                            blockMap[index] = biome.SurfaceBlock.ID;
+                        else if (y > terrainHeight && y <= Constants.WaterLevel)
+                            blockMap[index] = Blocks.WATER.ID;
+                        else
+                            break;
+                    }
+
+                    // set trees
+                    var treeMap = Noise.TreeNoise(pos, 15f);
+                    if (treeMap > 0.9f && terrainHeight > Constants.WaterLevel && biome.ID <= 10) // above threshold and not a beach/ocean biome
+                    {
+                        int height = terrainHeight + 1;
+                        for (int y = height; y < height + 4; y++)
+                        {
+                            index = Chunk.ConvertToIndex(x, y, z);
+                            blockMap[index] = Blocks.WOOD.ID;
                         }
                     }
+                }
+            }
         }
 
         static int GetY(float2[] spline, float elevationX)

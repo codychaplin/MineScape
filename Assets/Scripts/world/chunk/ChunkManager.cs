@@ -87,7 +87,8 @@ namespace minescape.world.chunk
                 maxTerrainheight = elevation.maxTerrainHeight,
                 position = new int3(chunk.position.x, 0, chunk.position.z),
                 blockMap = chunk.BlockMap,
-                biomeMap = chunk.BiomeMap
+                biomeMap = chunk.BiomeMap,
+                heightMap = chunk.HeightMap
             };
             return job.Schedule();
         }
@@ -132,6 +133,8 @@ namespace minescape.world.chunk
 
                     var SetBlockInChunkhandle = JobHandle.CombineDependencies(chunkAndAdjacentChunks);
                     chunkAndAdjacentChunks.Dispose();
+
+                    // generate structures
 
                     // generate mesh data
                     var northChunk = Chunks[north];

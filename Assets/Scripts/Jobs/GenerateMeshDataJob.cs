@@ -37,6 +37,7 @@ namespace minescape.jobs
             triangles.Clear();
             transparentTriangles.Clear();
             uvs.Clear();
+            colors.Clear();
             normals.Clear();
             int index = 0;
             int3 index3 = new(0, 0, 0);
@@ -59,6 +60,7 @@ namespace minescape.jobs
             var blockID = map[index];
             bool isTransparent = Blocks.blocks[blockID].IsTransparent;
 
+            Color color = new(0, 0, 0, 1);
             for (int i = 0; i < 6; i++)
             {
                 int3 adjacentIndex = pos + BlockData.faceCheck[i];
@@ -81,12 +83,13 @@ namespace minescape.jobs
                 vertices.Add(v2);
                 vertices.Add(v3);
 
-                float lightLevel = (i == 2) ? 0f : 0.5f;
-
-                colors.Add(new Color(0, 0, 0, lightLevel));
-                colors.Add(new Color(0, 0, 0, lightLevel));
-                colors.Add(new Color(0, 0, 0, lightLevel));
-                colors.Add(new Color(0, 0, 0, lightLevel));
+                // everything except top face is shaded slightly darker
+                float lightLevel = (i == 2) ? 0f : 0.6f;
+                color.a = lightLevel;
+                colors.Add(color);
+                colors.Add(color);
+                colors.Add(color);
+                colors.Add(color);
 
                 float3 faceNormal = CalculateFaceNormal(v0, v1, v2);
                 normals.Add(faceNormal);

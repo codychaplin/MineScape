@@ -13,6 +13,7 @@ namespace minescape.world.chunk
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
+        public NativeArray<byte> HeightMap; // terrain height in chunk
 
         public bool generated = false;
         public bool isRendered = false;
@@ -49,10 +50,11 @@ namespace minescape.world.chunk
 
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
+            HeightMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             vertices = new(4096, Allocator.Persistent);
             normals = new(4096, Allocator.Persistent);
             triangles = new(4096, Allocator.Persistent);
-            transparentTriangles = new(1024, Allocator.Persistent);
+            transparentTriangles = new(512, Allocator.Persistent);
             colors = new(Allocator.Persistent);
             uvs = new(4096, Allocator.Persistent);
         }
@@ -177,6 +179,8 @@ namespace minescape.world.chunk
         {
             BlockMap.Dispose();
             BiomeMap.Dispose();
+            HeightMap.Dispose();
+
             vertices.Dispose();
             normals.Dispose();
             triangles.Dispose();
