@@ -1113,7 +1113,6 @@ MonoBehaviour:
   renderChunks: 1
   elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
   relief: {fileID: 11400000, guid: 085529e741670604680c7b815396597b, type: 2}
-  topography: {fileID: 11400000, guid: c07b81b74b84e05419265645e3521cd1, type: 2}
   temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}
   humidity: {fileID: 11400000, guid: edcb034472b8c6942b7bf21508f0e37d, type: 2}
 --- !u!1 &1405992172

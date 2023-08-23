@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
+using minescape.structure;
 
 namespace minescape.world.chunk
 {
@@ -14,6 +15,13 @@ namespace minescape.world.chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
         public NativeArray<byte> HeightMap; // terrain height in chunk
+        public NativeList<Structure> Structures; // structures in chunks
+
+        // used for rendering outside faces
+        public NativeArray<bool> NorthFace;
+        public NativeArray<bool> SouthFace;
+        public NativeArray<bool> EastFace;
+        public NativeArray<bool> WestFace;
 
         public bool generated = false;
         public bool isRendered = false;
@@ -50,13 +58,20 @@ namespace minescape.world.chunk
 
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
-            HeightMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
-            vertices = new(4096, Allocator.Persistent);
-            normals = new(4096, Allocator.Persistent);
-            triangles = new(4096, Allocator.Persistent);
+            HeightMap = new(256, Allocator.Persistent);
+            Structures = new(Allocator.Persistent);
+
+            NorthFace = new(4096, Allocator.Persistent); // 4096 = 16x256
+            SouthFace = new(4096, Allocator.Persistent);
+            EastFace = new(4096, Allocator.Persistent);
+            WestFace = new(4096, Allocator.Persistent);
+
+            vertices = new(2048, Allocator.Persistent); // 2048 = average length
+            normals = new(2048, Allocator.Persistent);
+            uvs = new(512, Allocator.Persistent);
+            triangles = new(512, Allocator.Persistent);
             transparentTriangles = new(512, Allocator.Persistent);
             colors = new(Allocator.Persistent);
-            uvs = new(4096, Allocator.Persistent);
         }
 
         public static int ConvertToIndex(int x, int y, int z)
@@ -180,6 +195,12 @@ namespace minescape.world.chunk
             BlockMap.Dispose();
             BiomeMap.Dispose();
             HeightMap.Dispose();
+            Structures.Dispose();
+
+            NorthFace.Dispose();
+            SouthFace.Dispose();
+            EastFace.Dispose();
+            WestFace.Dispose();
 
             vertices.Dispose();
             normals.Dispose();

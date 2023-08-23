@@ -17,10 +17,10 @@ namespace minescape.jobs
 
         [ReadOnly] public NativeArray<byte> map;
 
-        [ReadOnly] public NativeArray<byte> north;
-        [ReadOnly] public NativeArray<byte> east;
-        [ReadOnly] public NativeArray<byte> south;
-        [ReadOnly] public NativeArray<byte> west;
+        [ReadOnly] public NativeArray<bool> northFace;
+        [ReadOnly] public NativeArray<bool> eastFace;
+        [ReadOnly] public NativeArray<bool> southFace;
+        [ReadOnly] public NativeArray<bool> westFace;
 
         [WriteOnly] public NativeList<float3> vertices;
         [WriteOnly] public NativeList<int> triangles;
@@ -67,11 +67,8 @@ namespace minescape.jobs
                 if (!World.IsBlockInWorld(adjacentIndex + position)) // if out of world, skip
                     continue;
 
-                var adjacentBlock = GetBlock(adjacentIndex);
-                if (adjacentBlock != 0 && adjacentBlock != Blocks.WATER.ID) // if adjacent block is not air or water, skip
-                    continue;
-
-                if (blockID == Blocks.WATER.ID && adjacentBlock == Blocks.WATER.ID) // if both water blocks, skip
+                var render = CanRender(adjacentIndex, blockID);
+                if (render)
                     continue;
 
                 float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];
@@ -129,34 +126,36 @@ namespace minescape.jobs
             return Vector3.Cross(side1, side2).normalized;
         }
 
-        byte GetBlock(int3 pos)
+        bool CanRender(int3 pos, byte blockID)
         {
             if (!Chunk.IsBlockInChunk(pos.x, pos.y, pos.z))
             {
                 if (pos.z >= Constants.ChunkWidth)
                 {
-                    int northIndex = Chunk.ConvertToIndex(pos.x, pos.y, 0);
-                    return north[northIndex];
+                    int northIndex = pos.x + pos.y * Constants.ChunkWidth;
+                    return northFace[northIndex];
                 }
                 else if (pos.z < 0)
                 {
-                    int southIndex = Chunk.ConvertToIndex(pos.x, pos.y, 15);
-                    return south[southIndex];
+                    int southIndex = pos.x + pos.y * Constants.ChunkWidth;
+                    return southFace[southIndex];
                 }
                 else if (pos.x >= Constants.ChunkWidth)
                 {
-                    int eastIndex = Chunk.ConvertToIndex(0, pos.y, pos.z);
-                    return east[eastIndex];
+                    int eastIndex = pos.z + pos.y * Constants.ChunkWidth;
+                    return eastFace[eastIndex];
                 }
                 else if (pos.x < 0)
                 {
-                    int westIndex = Chunk.ConvertToIndex(15, pos.y, pos.z);
-                    return west[westIndex];
+                    int westIndex = pos.z + pos.y * Constants.ChunkWidth;
+                    return westFace[westIndex];
                 }
             }
 
-            int index = Chunk.ConvertToIndex(pos);
-            return map[index];
+            var adjBlockID = map[Chunk.ConvertToIndex(pos)];
+            bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
+            bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
+            return notAirNotWater || bothWater;
         }
 
         void AddTexture(int textureId)

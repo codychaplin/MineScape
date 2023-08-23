@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.splines;
 using minescape.world.chunk;
+using minescape.structure;
 
 namespace minescape.jobs
 {
@@ -18,8 +19,6 @@ namespace minescape.jobs
         [ReadOnly] public int elevationOctaves;
         [ReadOnly] public float reliefScale;
         [ReadOnly] public int reliefOctaves;
-        [ReadOnly] public float topographyScale;
-        [ReadOnly] public int topographyOctaves;
         [ReadOnly] public float persistance;
         [ReadOnly] public float lacunarity;
 
@@ -28,6 +27,7 @@ namespace minescape.jobs
         [WriteOnly] public NativeArray<byte> blockMap;
         [WriteOnly] public NativeArray<byte> biomeMap;
         [WriteOnly] public NativeArray<byte> heightMap;
+        [WriteOnly] public NativeList<Structure> structureMap;
 
         public void Execute()
         {
@@ -69,11 +69,11 @@ namespace minescape.jobs
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int biomeIndex = x + z * Constants.ChunkWidth;
-                    biomeMap[biomeIndex] = biomeID;
+                    int Index2D = x + z * Constants.ChunkWidth;
+                    biomeMap[Index2D] = biomeID;
                     var biome = Biomes.biomes[biomeID];
 
-                    heightMap[biomeIndex] = (byte)terrainHeight;
+                    heightMap[Index2D] = (byte)terrainHeight;
 
                     // set blocks
                     int index = 0;
@@ -96,14 +96,12 @@ namespace minescape.jobs
 
                     // set trees
                     var treeMap = Noise.TreeNoise(pos, 15f);
-                    if (treeMap > 0.9f && terrainHeight > Constants.WaterLevel && biome.ID <= 10) // above threshold and not a beach/ocean biome
+                    if (treeMap > biome.TreeFrequency && terrainHeight >= Constants.WaterLevel && biome.ID <= 10) // above threshold and not a beach/ocean biome
                     {
-                        int height = terrainHeight + 1;
-                        for (int y = height; y < height + 4; y++)
-                        {
-                            index = Chunk.ConvertToIndex(x, y, z);
-                            blockMap[index] = Blocks.WOOD.ID;
-                        }
+                        if (biome.ID == Biomes.DESERT.ID)
+                            structureMap.Add(new Structure(Structures.CACTUS.ID, Structures.CACTUS.Radius, new int3(x, terrainHeight + 1, z)));
+                        else
+                            structureMap.Add(new Structure(Structures.TREE.ID, Structures.TREE.Radius, new int3(x, terrainHeight + 1, z)));
                     }
                 }
             }

@@ -3,16 +3,12 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
 using minescape.world.chunk;
-using minescape.splines;
 
 namespace minescape.jobs
 {
     public struct SetMapBlockDataJob : IJob
     {
         [ReadOnly] public int seed;
-
-        [ReadOnly] public int minTerrainheight;
-        [ReadOnly] public int maxTerrainheight;
 
         [ReadOnly] public float elevationScale;
         [ReadOnly] public int elevationOctaves;
@@ -28,21 +24,16 @@ namespace minescape.jobs
 
         public void Execute()
         {
+            seed *= 7919; // makes seed more unique
+
             for (int x = 0; x < Constants.MapChunkWidth; x++)
             {
                 for (int z = 0; z < Constants.MapChunkWidth; z++)
                 {
                     var pos = new float2(position.x + x, position.y + z);
                     float elevationX = Noise.GetTerrainNoise(pos, seed, 1, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
-                    float elevationY = Noise.GetTerrainNoise(pos, seed, 1, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
-                    float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
-                    float relief = Noise.GetTerrainNoise(pos, seed, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
-                    float normalizedRelief = (relief + 1f) / 2f;
-                    int terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 96) + smooth * 16);
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
-
-                    // set biome for x/z coordinates in chunk
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
                     var index = MapChunk.ConvertToIndex(x, z);
                     biomeMap[index] = biomeID;

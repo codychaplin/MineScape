@@ -68,8 +68,8 @@ public class Noise
         var noiseValue = noise.cnoise(pos);
         if (isFuzzy)
         {
-            var fuzzyNoise = noise.cnoise(pos * 20);
-            noiseValue = (noiseValue + fuzzyNoise / 20) / 1.05f;
+            var fuzzyNoise = noise.cnoise(pos * 15);
+            noiseValue = (noiseValue + fuzzyNoise / 10) / 1.1f;
         }
 
         // normalize between 0-1

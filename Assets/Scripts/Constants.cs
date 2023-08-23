@@ -12,14 +12,14 @@ namespace minescape
         public static int WorldSizeInBlocks => WorldSizeInChunks * ChunkWidth;
 
         // view distance
-        public static readonly int ViewDistance = 6;
+        public static readonly int ViewDistance = 8;
 
         // misc
         public static readonly int WaterLevel = 63;
 
         // map data
         public static readonly int MapChunkWidth = 512;
-        public static int WorldSizeInMapChunks = 1;
+        public static int WorldSizeInMapChunks = 8;
         public static int WorldSizeInMapBlocks => WorldSizeInMapChunks * MapChunkWidth;
     }
 }
