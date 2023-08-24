@@ -8,7 +8,7 @@ namespace minescape.init
         public static Biome TUNDRA = new(0, 68, Blocks.GRASS_TUNDRA, Blocks.DIRT, 0.9f);
         public static Biome PLAINS = new(1, 66, Blocks.GRASS_PLAINS, Blocks.DIRT, 0.91f);
         public static Biome SAVANNA = new(2, 70, Blocks.GRASS_SAVANNA, Blocks.DIRT, 0.92f);
-        public static Biome DESERT = new(3, 65, Blocks.SAND_DESERT, Blocks.SAND_DESERT, 0.93f);
+        public static Biome DESERT = new(3, 65, Blocks.SAND_DESERT, Blocks.SAND_DESERT, 0.92f);
         public static Biome BOREAL_FOREST = new(4, 80, Blocks.GRASS_BOREAL_FOREST, Blocks.DIRT, 0.85f);
         public static Biome TAIGA = new(5, 72, Blocks.GRASS_TAIGA, Blocks.DIRT, 0.9f);
         public static Biome SHRUBLAND = new(6, 74, Blocks.GRASS_SHRUBLAND, Blocks.DIRT, 0.9f);

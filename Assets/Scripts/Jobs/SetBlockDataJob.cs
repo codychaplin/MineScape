@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.splines;
 using minescape.world.chunk;
-using minescape.structure;
+using minescape.structures;
 
 namespace minescape.jobs
 {
@@ -99,9 +99,9 @@ namespace minescape.jobs
                     if (treeMap > biome.TreeFrequency && terrainHeight >= Constants.WaterLevel && biome.ID <= 10) // above threshold and not a beach/ocean biome
                     {
                         if (biome.ID == Biomes.DESERT.ID)
-                            structureMap.Add(new Structure(Structures.CACTUS.ID, Structures.CACTUS.Radius, new int3(x, terrainHeight + 1, z)));
+                            structureMap.Add(new Structure(Structures.CACTUS.ID, Structures.CACTUS.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
                         else
-                            structureMap.Add(new Structure(Structures.TREE.ID, Structures.TREE.Radius, new int3(x, terrainHeight + 1, z)));
+                            structureMap.Add(new Structure(Structures.TREE.ID, Structures.TREE.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
                     }
                 }
             }

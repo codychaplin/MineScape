@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
-using minescape.structure;
+using minescape.structures;
 
 namespace minescape.world.chunk
 {

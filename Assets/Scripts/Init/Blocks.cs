@@ -25,6 +25,7 @@ namespace minescape.init
         public static Block GRAVEL = new(17, "Gravel", new byte[] { 20, 20, 20, 20, 20, 20 });
         public static Block WOOD = new(18, "Wood", new byte[] { 6, 6, 5, 5, 6, 6 });
         public static Block LEAVES = new(19, "Leaves", new byte[] { 21, 21, 21, 21, 21, 21 }, true);
+        public static Block CACTUS = new(20, "Cactus", new byte[] { 22, 22, 23, 23, 22, 22 });
 
         public static Dictionary<byte, Block> blocks = new()
         {
@@ -47,7 +48,8 @@ namespace minescape.init
             { 16, SAND_DESERT },
             { 17, GRAVEL },
             { 18, WOOD },
-            { 19, LEAVES }
+            { 19, LEAVES },
+            { 20, CACTUS }
         };
         
     }

@@ -1,9 +1,9 @@
 ﻿using Unity.Jobs;
-using Unity.Collections;
 using Unity.Mathematics;
-using minescape.structure;
-using minescape.world.chunk;
+using Unity.Collections;
 using minescape.init;
+using minescape.structures;
+using minescape.world.chunk;
 
 namespace minescape.jobs
 {
@@ -20,25 +20,59 @@ namespace minescape.jobs
                 int x = structure.LocalPosition.x;
                 int y = structure.LocalPosition.y;
                 int z = structure.LocalPosition.z;
-                blockMap[Chunk.ConvertToIndex(x, y, z)] = Blocks.WOOD.ID;
-                blockMap[Chunk.ConvertToIndex(x, y + 1, z)] = Blocks.WOOD.ID;
-                blockMap[Chunk.ConvertToIndex(x, y + 2, z)] = Blocks.WOOD.ID;
-                blockMap[Chunk.ConvertToIndex(x, y + 3, z)] = Blocks.WOOD.ID;
-                blockMap[Chunk.ConvertToIndex(x, y + 4, z)] = Blocks.WOOD.ID;
+                var rand = new Random((uint)(x * 79 + y * 557 + z * 991));
+                byte radius = structure.Radius;
 
-                int index = 0;
-                for (int i = x - structure.Radius; i <= x + structure.Radius; i++)
-                    for (int j = z - structure.Radius; j <= z + structure.Radius; j++)
-                        for (int k = y + 2; k <= y + 5; k++)
+                switch (structure.Type)
+                {
+                    case Type.Tree:
+                        GenerateTree(x, y, z, rand, radius);
+                        break;
+                    case Type.Cactus:
+                        GenerateCactus(x, y, z, rand);
+                        break;
+                    case Type.Building:
+                        break;
+                    default:
+                        break;
+                }       
+            }
+        }
+
+        void GenerateTree(int x, int y, int z, Random rand, byte radius)
+        {
+            int index = 0;
+            int height = rand.NextInt(4, 7);
+
+            blockMap[Chunk.ConvertToIndex(x, y - 1, z)] = Blocks.DIRT.ID;
+            for (int yy = y; yy < y + height; yy++)
+                blockMap[Chunk.ConvertToIndex(x, yy, z)] = Blocks.WOOD.ID;
+
+            for (int xx = x - radius; xx <= x + radius; xx++)
+                for (int zz = z - radius; zz <= z + radius; zz++)
+                    for (int yy = y + height - 2; yy <= y + height + 2; yy++)
+                    {
+                        if (Chunk.IsBlockInChunk(xx, yy, zz))
                         {
-                            if (Chunk.IsBlockInChunk(i, k, j))
-                            {
-                                index = Chunk.ConvertToIndex(i, k, j);
-                                if (blockMap[index] == Blocks.AIR.ID)
-                                    blockMap[index] = Blocks.LEAVES.ID;
-                            }
+                            index = Chunk.ConvertToIndex(xx, yy, zz);
+                            if (blockMap[index] == Blocks.AIR.ID)
+                                blockMap[index] = Blocks.LEAVES.ID;
                         }
-                        
+                    }
+        }
+
+        void GenerateCactus(int x, int y, int z, Random rand)
+        {
+            int height = rand.NextInt(2, 6);
+            for (int yy = y; yy <= y + height; yy++)
+            {
+                if (blockMap[Chunk.ConvertToIndex(x + 1, yy, z)] != Blocks.AIR.ID ||
+                    blockMap[Chunk.ConvertToIndex(x - 1, yy, z)] != Blocks.AIR.ID ||
+                    blockMap[Chunk.ConvertToIndex(x, yy, z + 1)] != Blocks.AIR.ID ||
+                    blockMap[Chunk.ConvertToIndex(x, yy, z - 1)] != Blocks.AIR.ID)
+                    break;
+
+                blockMap[Chunk.ConvertToIndex(x, yy, z)] = Blocks.CACTUS.ID;
             }
         }
     }
