@@ -37,7 +37,6 @@ namespace minescape.world.chunk
         public NativeList<float3> normals;
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
-        public NativeList<Color> colors;
         public NativeList<float2> uvs;
         
         public Vector3Int position;
@@ -71,7 +70,6 @@ namespace minescape.world.chunk
             uvs = new(512, Allocator.Persistent);
             triangles = new(512, Allocator.Persistent);
             transparentTriangles = new(512, Allocator.Persistent);
-            colors = new(Allocator.Persistent);
         }
 
         public static int ConvertToIndex(int x, int y, int z)
@@ -180,7 +178,6 @@ namespace minescape.world.chunk
             mesh.SetTriangles(triangles.ToArray(), 0);
             mesh.SetTriangles(transparentTriangles.ToArray(), 1);
             mesh.SetUVs(0, uvsArray);
-            mesh.SetColors(colors.ToArray());
             mesh.SetNormals(normArray);
 
             meshFilter.mesh = mesh;
@@ -206,7 +203,6 @@ namespace minescape.world.chunk
             normals.Dispose();
             triangles.Dispose();
             transparentTriangles.Dispose();
-            colors.Dispose();
             uvs.Dispose();
         }
 

@@ -26,7 +26,6 @@ namespace minescape.jobs
         [WriteOnly] public NativeList<int> triangles;
         [WriteOnly] public NativeList<int> transparentTriangles;
         [WriteOnly] public NativeList<float2> uvs;
-        [WriteOnly] public NativeList<Color> colors;
         [WriteOnly] public NativeList<float3> normals;
 
         public int vertexIndex;
@@ -37,7 +36,6 @@ namespace minescape.jobs
             triangles.Clear();
             transparentTriangles.Clear();
             uvs.Clear();
-            colors.Clear();
             normals.Clear();
             int index = 0;
             int3 index3 = new(0, 0, 0);
@@ -60,15 +58,14 @@ namespace minescape.jobs
             var blockID = map[index];
             bool isTransparent = Blocks.blocks[blockID].IsTransparent;
 
-            Color color = new(0, 0, 0, 1);
             for (int i = 0; i < 6; i++)
             {
                 int3 adjacentIndex = pos + BlockData.faceCheck[i];
                 if (!World.IsBlockInWorld(adjacentIndex + position)) // if out of world, skip
                     continue;
 
-                var render = CanRender(adjacentIndex, blockID);
-                if (render)
+                var dontRender = DontRender(adjacentIndex, blockID);
+                if (dontRender)
                     continue;
 
                 float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];
@@ -79,14 +76,6 @@ namespace minescape.jobs
                 vertices.Add(v1);
                 vertices.Add(v2);
                 vertices.Add(v3);
-
-                // everything except top face is shaded slightly darker
-                float lightLevel = (i == 2) ? 0f : 0.6f;
-                color.a = lightLevel;
-                colors.Add(color);
-                colors.Add(color);
-                colors.Add(color);
-                colors.Add(color);
 
                 float3 faceNormal = CalculateFaceNormal(v0, v1, v2);
                 normals.Add(faceNormal);
@@ -126,7 +115,7 @@ namespace minescape.jobs
             return Vector3.Cross(side1, side2).normalized;
         }
 
-        bool CanRender(int3 pos, byte blockID)
+        bool DontRender(int3 pos, byte blockID)
         {
             if (!Chunk.IsBlockInChunk(pos.x, pos.y, pos.z))
             {
@@ -153,9 +142,9 @@ namespace minescape.jobs
             }
 
             var adjBlockID = map[Chunk.ConvertToIndex(pos)];
-            bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
+            bool transparent = Blocks.blocks[adjBlockID].IsTransparent;
             bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
-            return notAirNotWater || bothWater;
+            return !transparent || bothWater;
         }
 
         void AddTexture(int textureId)

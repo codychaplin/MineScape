@@ -251,7 +251,6 @@ namespace minescape.world.chunk
                     normals = chunk.normals,
                     triangles = chunk.triangles,
                     transparentTriangles = chunk.transparentTriangles,
-                    colors = chunk.colors,
                     uvs = chunk.uvs,
                     vertexIndex = 0
                 };
