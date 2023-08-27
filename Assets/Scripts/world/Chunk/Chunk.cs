@@ -88,6 +88,23 @@ namespace minescape.world.chunk
         }
 
         /// <summary>
+        /// Checks if block is within the bounds of its chunk.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns>Whether block is within chunk.</returns>
+        public static bool IsBlockInChunk(int x, int y, int z)
+        {
+            if (x < 0 || x >= Constants.ChunkWidth ||
+                y < 0 || y >= Constants.ChunkHeight ||
+                z < 0 || z >= Constants.ChunkWidth)
+                return false;
+            else
+                return true;
+        }
+
+        /// <summary>
         /// Sets block ID in chunk.
         /// </summary>
         /// <param name="x"></param>
@@ -111,23 +128,6 @@ namespace minescape.world.chunk
         {
             int index = ConvertToIndex(x, y, z);
             return BlockMap[index];
-        }
-
-        /// <summary>
-        /// Checks if block is within the bounds of its chunk.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <returns>Whether block is within chunk.</returns>
-        public static bool IsBlockInChunk(int x, int y, int z)
-        {
-            if (x < 0 || x >= Constants.ChunkWidth ||
-                y < 0 || y >= Constants.ChunkHeight ||
-                z < 0 || z >= Constants.ChunkWidth)
-                return false;
-            else
-                return true;
         }
 
         /// <summary>

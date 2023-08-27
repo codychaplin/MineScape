@@ -12,6 +12,14 @@ namespace minescape.jobs
         [ReadOnly] public NativeList<Structure> structures;
 
         public NativeArray<byte> blockMap;
+        public NativeArray<byte> northMap;
+        public NativeArray<byte> northEastMap;
+        public NativeArray<byte> eastMap;
+        public NativeArray<byte> southEastMap;
+        public NativeArray<byte> southMap;
+        public NativeArray<byte> southWestMap;
+        public NativeArray<byte> westMap;
+        public NativeArray<byte> northWestMap;
 
         public void Execute()
         {
@@ -39,9 +47,54 @@ namespace minescape.jobs
             }
         }
 
+        void TryPlaceBlock(int x, int y, int z, byte blockID)
+        {
+            if (Chunk.IsBlockInChunk(x, y, z))
+            {
+                PlaceBlock(x, y, z, blockMap, blockID);
+            }
+            else
+            {
+                if (z > 15) // north
+                {
+                    if (x < 0) // northwest
+                        PlaceBlock(x + 16, y, z - 16, northWestMap, blockID);
+                    else if (x > 15) // northeast
+                        PlaceBlock(x - 16, y, z - 16, northEastMap, blockID);
+                    else // north
+                        PlaceBlock(x, y, z - 16, northMap, blockID);
+                }
+                else if (z < 0) // south
+                {
+                    if (x < 0) // southwest
+                        PlaceBlock(x + 16, y, z + 16, southWestMap, blockID);
+                    else if (x > 15) // southeast
+                        PlaceBlock(x - 16, y, z + 16, southEastMap, blockID);
+                    else // south
+                        PlaceBlock(x, y, z + 16, southMap, blockID);
+                }
+                else
+                {
+                    if (x > 15) // east
+                        PlaceBlock(x - 16, y, z, eastMap, blockID);
+                    else if (x < 0) // west
+                        PlaceBlock(x + 16, y, z, westMap, blockID);
+                }
+            }
+        }
+
+        void PlaceBlock(int x, int y,int z, NativeArray<byte> map, byte blockID)
+        {
+            if (map.Length < 1)
+                return;
+
+            int index = Chunk.ConvertToIndex(x, y, z);
+            if (map[index] == Blocks.AIR.ID)
+                map[index] = blockID;
+        }
+
         void GenerateTree(int x, int y, int z, Random rand, byte radius)
         {
-            int index = 0;
             int height = rand.NextInt(4, 7);
 
             blockMap[Chunk.ConvertToIndex(x, y - 1, z)] = Blocks.DIRT.ID;
@@ -51,14 +104,7 @@ namespace minescape.jobs
             for (int xx = x - radius; xx <= x + radius; xx++)
                 for (int zz = z - radius; zz <= z + radius; zz++)
                     for (int yy = y + height - 2; yy <= y + height + 2; yy++)
-                    {
-                        if (Chunk.IsBlockInChunk(xx, yy, zz))
-                        {
-                            index = Chunk.ConvertToIndex(xx, yy, zz);
-                            if (blockMap[index] == Blocks.AIR.ID)
-                                blockMap[index] = Blocks.LEAVES.ID;
-                        }
-                    }
+                        TryPlaceBlock(xx, yy, zz, Blocks.LEAVES.ID);
         }
 
         void GenerateCactus(int x, int y, int z, Random rand)
@@ -74,6 +120,24 @@ namespace minescape.jobs
 
                 blockMap[Chunk.ConvertToIndex(x, yy, z)] = Blocks.CACTUS.ID;
             }
+        }
+    }
+
+    // dummy job to deallocate temp arrays
+    struct DeallocateFillerJob : IJob
+    {
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempNorth;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempNorthEast;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempEast;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempSouthEast;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempSouth;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempSouthWest;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempWest;
+        [DeallocateOnJobCompletion] public NativeArray<byte> tempNorthWest;
+
+        public void Execute()
+        {
+            
         }
     }
 }

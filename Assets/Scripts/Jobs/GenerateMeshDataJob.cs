@@ -37,6 +37,7 @@ namespace minescape.jobs
             transparentTriangles.Clear();
             uvs.Clear();
             normals.Clear();
+
             int index = 0;
             int3 index3 = new(0, 0, 0);
             for (int x = 0; x < Constants.ChunkWidth; x++)
