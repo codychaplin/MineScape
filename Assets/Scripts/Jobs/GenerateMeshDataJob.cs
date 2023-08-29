@@ -61,7 +61,7 @@ namespace minescape.jobs
 
             for (int i = 0; i < 6; i++)
             {
-                int3 adjacentIndex = pos + BlockData.faceCheck[i];
+                int3 adjacentIndex = pos + VoxelData.faceCheck[i];
                 if (!World.IsBlockInWorld(adjacentIndex + position)) // if out of world, skip
                     continue;
 
@@ -69,10 +69,10 @@ namespace minescape.jobs
                 if (dontRender)
                     continue;
 
-                float3 v0 = pos + BlockData.verts[BlockData.tris[i * 4 + 0]];
-                float3 v1 = pos + BlockData.verts[BlockData.tris[i * 4 + 1]];
-                float3 v2 = pos + BlockData.verts[BlockData.tris[i * 4 + 2]];
-                float3 v3 = pos + BlockData.verts[BlockData.tris[i * 4 + 3]];
+                float3 v0 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]];
+                float3 v1 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 1]];
+                float3 v2 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 2]];
+                float3 v3 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 3]];
                 vertices.Add(v0);
                 vertices.Add(v1);
                 vertices.Add(v2);
@@ -150,16 +150,16 @@ namespace minescape.jobs
 
         void AddTexture(int textureId)
         {
-            float y = textureId / BlockData.TextureAtlasSize;
-            float x = textureId - (y * BlockData.TextureAtlasSize);
+            float y = textureId / VoxelData.TextureAtlasSize;
+            float x = textureId - (y * VoxelData.TextureAtlasSize);
 
-            x *= BlockData.NormalizedTextureSize;
-            y *= BlockData.NormalizedTextureSize;
+            x *= VoxelData.NormalizedTextureSize;
+            y *= VoxelData.NormalizedTextureSize;
 
             uvs.Add(new float2(x, y));
-            uvs.Add(new float2(x, y + BlockData.NormalizedTextureSize));
-            uvs.Add(new float2(x + BlockData.NormalizedTextureSize, y));
-            uvs.Add(new float2(x + BlockData.NormalizedTextureSize, y + BlockData.NormalizedTextureSize));
+            uvs.Add(new float2(x, y + VoxelData.NormalizedTextureSize));
+            uvs.Add(new float2(x + VoxelData.NormalizedTextureSize, y));
+            uvs.Add(new float2(x + VoxelData.NormalizedTextureSize, y + VoxelData.NormalizedTextureSize));
         }
     }
 }

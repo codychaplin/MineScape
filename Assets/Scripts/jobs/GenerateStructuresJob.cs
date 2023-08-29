@@ -90,7 +90,7 @@ namespace minescape.jobs
 
             int index = Chunk.ConvertToIndex(x, y, z);
             if (map[index] == Blocks.AIR.ID)
-                map[index] = blockID;
+                map[index]= blockID;
         }
 
         void GenerateTree(int x, int y, int z, Random rand, byte radius)
@@ -101,10 +101,19 @@ namespace minescape.jobs
             for (int yy = y; yy < y + height; yy++)
                 blockMap[Chunk.ConvertToIndex(x, yy, z)] = Blocks.WOOD.ID;
 
-            for (int xx = x - radius; xx <= x + radius; xx++)
-                for (int zz = z - radius; zz <= z + radius; zz++)
-                    for (int yy = y + height - 2; yy <= y + height + 2; yy++)
+            bool flag = false;
+            for (int yy = y + height - 2; yy <= y + height + 1; yy++)
+            {
+                for (int xx = x - radius; xx <= x + radius; xx++)
+                    for (int zz = z - radius; zz <= z + radius; zz++)
                         TryPlaceBlock(xx, yy, zz, Blocks.LEAVES.ID);
+
+                if (flag)
+                    radius -= 1;
+                flag = !flag;
+                if (radius < 0)
+                    break;
+            }
         }
 
         void GenerateCactus(int x, int y, int z, Random rand)

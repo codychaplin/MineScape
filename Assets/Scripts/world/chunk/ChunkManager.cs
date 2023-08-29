@@ -7,6 +7,8 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
 using minescape.scriptableobjects;
+using NUnit.Framework.Internal;
+using UnityEditor.Experimental.GraphView;
 
 namespace minescape.world.chunk
 {
@@ -103,14 +105,7 @@ namespace minescape.world.chunk
             NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
 
             // cache surrounding chunk coords
-            ChunkCoord north = new();
-            ChunkCoord northEast = new();
-            ChunkCoord east = new();
-            ChunkCoord southEast = new();
-            ChunkCoord south = new();
-            ChunkCoord southWest = new();
-            ChunkCoord west = new();
-            ChunkCoord northWest = new();
+            ChunkCoordNeighbourhood neighbourhood = new(new ChunkCoord());
 
             // set job handles
             JobHandle SetBlocksInChunkHandle = new();
@@ -118,6 +113,28 @@ namespace minescape.world.chunk
             JobHandle GetBorderDataHandle = new();
             JobHandle GenerateMeshDataHandle = new();
 
+            // generate chunks
+            SetBlocksInChunkHandle = GenerateChunks(SetBlocksInChunkHandles, ref neighbourhood);
+            SetBlocksInChunkHandles.Dispose();
+            previousSetBlocksInChunksHandle = SetBlocksInChunkHandle;
+
+            // generate structures
+            GenerateStructuresHandle = GenerateStructures(GenerateStructuresHandles, ref SetBlocksInChunkHandle, ref neighbourhood);
+            GenerateStructuresHandles.Dispose();
+            previousGenerateStructuresHandle = GenerateStructuresHandle;
+
+            // set border data
+            GetBorderDataHandle = GetBorderData(GetBorderDataHandles, ref GenerateStructuresHandle, ref neighbourhood);
+            GetBorderDataHandles.Dispose();
+            previousGetBorderDataHandle = GetBorderDataHandle;
+
+            // set mesh datas
+            previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref GetBorderDataHandle);
+            GenerateMeshDataHandles.Dispose();
+        }
+
+        JobHandle GenerateChunks(NativeList<JobHandle> SetBlocksInChunkHandles, ref ChunkCoordNeighbourhood neighbourhood)
+        {
             // set block data
             while (ChunksToCreate.Count > 0)
             {
@@ -129,78 +146,67 @@ namespace minescape.world.chunk
                     continue;
                 }
 
+                // mark chunk as incomplete
                 chunk.isProcessing = true;
 
                 // get surrounding chunk coords
-                north.x = coord.x;
-                north.z = coord.z + 1;
-                northEast.x = coord.x + 1;
-                northEast.z = coord.z + 1;
-                east.x = coord.x + 1;
-                east.z = coord.z;
-                southEast.x = coord.x + 1;
-                southEast.z = coord.z - 1;
-                south.x = coord.x;
-                south.z = coord.z - 1;
-                southWest.x = coord.x - 1;
-                southWest.z = coord.z - 1;
-                west.x = coord.x - 1;
-                west.z = coord.z;
-                northWest.x = coord.x - 1;
-                northWest.z = coord.z + 1;
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAllNeighbours();
 
                 // get surrounding chunks
-                if (!Chunks.ContainsKey(north))
-                    SetBlocksInChunkHandles.Add(CreateChunk(north));
-                if (!Chunks.ContainsKey(northEast))
-                    SetBlocksInChunkHandles.Add(CreateChunk(northEast));
-                if (!Chunks.ContainsKey(east))
-                    SetBlocksInChunkHandles.Add(CreateChunk(east));
-                if (!Chunks.ContainsKey(southEast))
-                    SetBlocksInChunkHandles.Add(CreateChunk(southEast));
-                if (!Chunks.ContainsKey(south))
-                    SetBlocksInChunkHandles.Add(CreateChunk(south));
-                if (!Chunks.ContainsKey(southWest))
-                    SetBlocksInChunkHandles.Add(CreateChunk(southWest));
-                if (!Chunks.ContainsKey(west))
-                    SetBlocksInChunkHandles.Add(CreateChunk(west));
-                if (!Chunks.ContainsKey(northWest))
-                    SetBlocksInChunkHandles.Add(CreateChunk(northWest));
+                if (!Chunks.ContainsKey(neighbourhood.North))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.North));
+                if (!Chunks.ContainsKey(neighbourhood.NorthEast))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.NorthEast));
+                if (!Chunks.ContainsKey(neighbourhood.East))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.East));
+                if (!Chunks.ContainsKey(neighbourhood.SouthEast))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.SouthEast));
+                if (!Chunks.ContainsKey(neighbourhood.South))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.South));
+                if (!Chunks.ContainsKey(neighbourhood.SouthWest))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.SouthWest));
+                if (!Chunks.ContainsKey(neighbourhood.West))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.West));
+                if (!Chunks.ContainsKey(neighbourhood.NorthWest))
+                    SetBlocksInChunkHandles.Add(CreateChunk(neighbourhood.NorthWest));
 
                 // add to structures list
-                if (!ChunksWithStructures.Contains(coord))
-                    ChunksWithStructures.Enqueue(coord);
-                if (!ChunksWithStructures.Contains(north))
-                    ChunksWithStructures.Enqueue(north);
-                if (!ChunksWithStructures.Contains(northEast))
-                    ChunksWithStructures.Enqueue(northEast);
-                if (!ChunksWithStructures.Contains(east))
-                    ChunksWithStructures.Enqueue(east);
-                if (!ChunksWithStructures.Contains(southEast))
-                    ChunksWithStructures.Enqueue(southEast);
-                if (!ChunksWithStructures.Contains(south))
-                    ChunksWithStructures.Enqueue(south);
-                if (!ChunksWithStructures.Contains(southWest))
-                    ChunksWithStructures.Enqueue(southWest);
-                if (!ChunksWithStructures.Contains(west))
-                    ChunksWithStructures.Enqueue(west);
-                if (!ChunksWithStructures.Contains(northWest))
-                    ChunksWithStructures.Enqueue(northWest);
+                if (!ChunksWithStructures.Contains(neighbourhood.Center))
+                    ChunksWithStructures.Enqueue(neighbourhood.Center);
+                if (!ChunksWithStructures.Contains(neighbourhood.North))
+                    ChunksWithStructures.Enqueue(neighbourhood.North);
+                if (!ChunksWithStructures.Contains(neighbourhood.NorthEast))
+                    ChunksWithStructures.Enqueue(neighbourhood.NorthEast);
+                if (!ChunksWithStructures.Contains(neighbourhood.East))
+                    ChunksWithStructures.Enqueue(neighbourhood.East);
+                if (!ChunksWithStructures.Contains(neighbourhood.SouthEast))
+                    ChunksWithStructures.Enqueue(neighbourhood.SouthEast);
+                if (!ChunksWithStructures.Contains(neighbourhood.South))
+                    ChunksWithStructures.Enqueue(neighbourhood.South);
+                if (!ChunksWithStructures.Contains(neighbourhood.SouthWest))
+                    ChunksWithStructures.Enqueue(neighbourhood.SouthWest);
+                if (!ChunksWithStructures.Contains(neighbourhood.West))
+                    ChunksWithStructures.Enqueue(neighbourhood.West);
+                if (!ChunksWithStructures.Contains(neighbourhood.NorthWest))
+                    ChunksWithStructures.Enqueue(neighbourhood.NorthWest);
 
                 // update queues
-                ChunksToGetBorders.Enqueue(coord);
+                ChunksToGetBorders.Enqueue(neighbourhood.Center);
                 ChunksToCreate.Dequeue();
             }
+
             SetBlocksInChunkHandles.Add(previousSetBlocksInChunksHandle);
             SetBlocksInChunkHandles.Add(previousGenerateStructuresHandle);
             SetBlocksInChunkHandles.Add(previousGetBorderDataHandle);
             SetBlocksInChunkHandles.Add(previousGenerateMeshDataHandle);
-            SetBlocksInChunkHandle = JobHandle.CombineDependencies(SetBlocksInChunkHandles);
-            SetBlocksInChunkHandles.Dispose();
-            previousSetBlocksInChunksHandle = SetBlocksInChunkHandle;
+            return JobHandle.CombineDependencies(SetBlocksInChunkHandles);
+        }
 
-            // generate structures
+        JobHandle GenerateStructures(NativeList<JobHandle> GenerateStructuresHandles, ref JobHandle SetBlocksInChunkHandle, ref ChunkCoordNeighbourhood neighbourhood)
+        {
             JobHandle previousDependency = SetBlocksInChunkHandle;
+
             NativeArray<byte> tempNorth = new(0, Allocator.TempJob);
             NativeArray<byte> tempNorthEast = new(0, Allocator.TempJob);
             NativeArray<byte> tempEast = new(0, Allocator.TempJob);
@@ -209,6 +215,7 @@ namespace minescape.world.chunk
             NativeArray<byte> tempSouthWest = new(0, Allocator.TempJob);
             NativeArray<byte> tempWest = new(0, Allocator.TempJob);
             NativeArray<byte> tempNorthWest = new(0, Allocator.TempJob);
+
             while (ChunksWithStructures.Count > 0)
             {
                 // get chunk, if already generated, dequeue
@@ -221,32 +228,18 @@ namespace minescape.world.chunk
                 }
 
                 // get surrounding chunk coords
-                north.x = coord.x;
-                north.z = coord.z + 1;
-                northEast.x = coord.x + 1;
-                northEast.z = coord.z + 1;
-                east.x = coord.x + 1;
-                east.z = coord.z;
-                southEast.x = coord.x + 1;
-                southEast.z = coord.z - 1;
-                south.x = coord.x;
-                south.z = coord.z - 1;
-                southWest.x = coord.x - 1;
-                southWest.z = coord.z - 1;
-                west.x = coord.x - 1;
-                west.z = coord.z;
-                northWest.x = coord.x - 1;
-                northWest.z = coord.z + 1;
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAllNeighbours();
 
                 // try get surrounding chunks
-                Chunks.TryGetValue(north, out var northChunk);
-                Chunks.TryGetValue(northEast, out var northEastChunk);
-                Chunks.TryGetValue(east, out var eastChunk);
-                Chunks.TryGetValue(southEast, out var southEastChunk);
-                Chunks.TryGetValue(south, out var southChunk);
-                Chunks.TryGetValue(southWest, out var southWestChunk);
-                Chunks.TryGetValue(west, out var westChunk);
-                Chunks.TryGetValue(northWest, out var northWestChunk);
+                Chunks.TryGetValue(neighbourhood.North, out var northChunk);
+                Chunks.TryGetValue(neighbourhood.NorthEast, out var northEastChunk);
+                Chunks.TryGetValue(neighbourhood.East, out var eastChunk);
+                Chunks.TryGetValue(neighbourhood.SouthEast, out var southEastChunk);
+                Chunks.TryGetValue(neighbourhood.South, out var southChunk);
+                Chunks.TryGetValue(neighbourhood.SouthWest, out var southWestChunk);
+                Chunks.TryGetValue(neighbourhood.West, out var westChunk);
+                Chunks.TryGetValue(neighbourhood.NorthWest, out var northWestChunk);
 
                 // if chunk is null, assign empty NativeArray<byte> to maps
                 GenerateStructuresJob generateStructuresJob = new()
@@ -268,9 +261,8 @@ namespace minescape.world.chunk
 
                 ChunksWithStructures.Dequeue();
             }
-            GenerateStructuresHandle = JobHandle.CombineDependencies(GenerateStructuresHandles);
-            GenerateStructuresHandles.Dispose();
-            previousGenerateStructuresHandle = GenerateStructuresHandle;
+
+            var GenerateStructuresHandle = JobHandle.CombineDependencies(GenerateStructuresHandles);
 
             // simply deallocates temp arrays after structure jobs complete
             DeallocateFillerJob job = new()
@@ -286,26 +278,23 @@ namespace minescape.world.chunk
             };
             job.Schedule(GenerateStructuresHandle);
 
-            // set border data
+            return GenerateStructuresHandle;
+        }
+
+        JobHandle GetBorderData(NativeList<JobHandle> GetBorderDataHandles, ref JobHandle GenerateStructuresHandle, ref ChunkCoordNeighbourhood neighbourhood)
+        {
             while (ChunksToGetBorders.Count > 0)
             {
                 // get chunk
                 var coord = ChunksToGetBorders.Peek();
                 var chunk = Chunks[coord];
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAdjacentNeighbours();
 
-                // get adjacent chunks
-                north.x = coord.x;
-                north.z = coord.z + 1;
-                south.x = coord.x;
-                south.z = coord.z - 1;
-                east.x = coord.x + 1;
-                east.z = coord.z;
-                west.x = coord.x - 1;
-                west.z = coord.z;
-                var northChunk = Chunks[north];
-                var eastChunk = Chunks[east];
-                var southChunk = Chunks[south];
-                var westChunk = Chunks[west];
+                var northChunk = Chunks[neighbourhood.North];
+                var eastChunk = Chunks[neighbourhood.East];
+                var southChunk = Chunks[neighbourhood.South];
+                var westChunk = Chunks[neighbourhood.West];
 
                 GetBorderDataJob getBorderDataJob = new()
                 {
@@ -325,11 +314,11 @@ namespace minescape.world.chunk
                 ChunksToRender.Enqueue(coord);
                 ChunksToGetBorders.Dequeue();
             }
-            GetBorderDataHandle = JobHandle.CombineDependencies(GetBorderDataHandles);
-            GetBorderDataHandles.Dispose();
-            previousGetBorderDataHandle = GetBorderDataHandle;
+            return JobHandle.CombineDependencies(GetBorderDataHandles);
+        }
 
-            // set mesh data
+        JobHandle GenerateMeshData(NativeList<JobHandle> GenerateMeshDataHandles, ref JobHandle GenerateMeshDataHandle, ref JobHandle GetBorderDataHandle)
+        {
             while (ChunksToRender.Count > 0)
             {
                 // get chunk
@@ -360,8 +349,8 @@ namespace minescape.world.chunk
                 StartCoroutine(RenderChunk(GenerateMeshDataHandle, chunk));
                 ChunksToRender.Dequeue();
             }
-            previousGenerateMeshDataHandle = JobHandle.CombineDependencies(GenerateMeshDataHandles);
-            GenerateMeshDataHandles.Dispose();
+
+            return JobHandle.CombineDependencies(GenerateMeshDataHandles);
         }
 
         IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)

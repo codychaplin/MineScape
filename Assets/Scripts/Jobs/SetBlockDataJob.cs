@@ -3,8 +3,8 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
 using minescape.splines;
-using minescape.world.chunk;
 using minescape.structures;
+using minescape.world.chunk;
 
 namespace minescape.jobs
 {

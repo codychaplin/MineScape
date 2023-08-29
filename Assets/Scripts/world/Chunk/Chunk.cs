@@ -13,6 +13,7 @@ namespace minescape.world.chunk
 
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
+        public NativeArray<byte> LightMap; // Light levels in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
         public NativeArray<byte> HeightMap; // terrain height in chunk
         public NativeList<Structure> Structures; // structures in chunks
@@ -56,6 +57,7 @@ namespace minescape.world.chunk
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
 
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
+            LightMap = new(65536, Allocator.Persistent);
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             HeightMap = new(256, Allocator.Persistent);
             Structures = new(Allocator.Persistent);
@@ -190,6 +192,7 @@ namespace minescape.world.chunk
         public void Dispose()
         {
             BlockMap.Dispose();
+            LightMap.Dispose();
             BiomeMap.Dispose();
             HeightMap.Dispose();
             Structures.Dispose();

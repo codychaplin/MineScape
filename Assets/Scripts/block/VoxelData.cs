@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 namespace minescape.block
 {
-    public static class BlockData
+    public static class VoxelData
     {
         // texture
         public static readonly int TextureAtlasSize = 8;

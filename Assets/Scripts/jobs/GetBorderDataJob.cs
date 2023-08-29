@@ -1,7 +1,7 @@
 ﻿using Unity.Jobs;
 using Unity.Collections;
-using minescape.world.chunk;
 using minescape.init;
+using minescape.world.chunk;
 
 namespace minescape.jobs
 {
