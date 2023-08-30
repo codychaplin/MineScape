@@ -1,10 +1,12 @@
 ﻿using Unity.Jobs;
+using Unity.Burst;
 using Unity.Collections;
 using minescape.init;
 using minescape.world.chunk;
 
 namespace minescape.jobs
 {
+    [BurstCompile]
     public struct GetBorderDataJob : IJob
     {
         [ReadOnly] public NativeArray<byte> chunk;

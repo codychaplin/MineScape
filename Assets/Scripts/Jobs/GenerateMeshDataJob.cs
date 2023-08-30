@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Unity.Jobs;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
@@ -9,6 +10,7 @@ using minescape.world.chunk;
 
 namespace minescape.jobs
 {
+    [BurstCompile]
     public struct GenerateMeshDataJob : IJob
     {
         [ReadOnly] public ChunkCoord coord;

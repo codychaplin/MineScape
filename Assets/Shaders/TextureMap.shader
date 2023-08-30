@@ -44,9 +44,13 @@ Shader "Universal Render Pipeline/TextureMap"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                if (v.normal.y > 0.1)
+                if (v.normal.y == 1) // top
                     o.color = float4(0, 0, 0, 0);
-                else
+                if (v.normal.y == -1) // bottom
+                    o.color = float4(0, 0, 0, 0.8);
+                if (v.normal.z != 0) // north/south
+                    o.color = float4(0, 0, 0, 0.7);              
+                if (v.normal.x != 0) // east/west
                     o.color = float4(0, 0, 0, 0.6);
                 return o;
             }

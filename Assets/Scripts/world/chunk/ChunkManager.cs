@@ -36,6 +36,7 @@ namespace minescape.world.chunk
         JobHandle previousSetBlocksInChunksHandle = new();
         JobHandle previousGenerateStructuresHandle = new();
         JobHandle previousGetBorderDataHandle = new();
+        JobHandle previousCalculateLightingHandle = new();
         JobHandle previousGenerateMeshDataHandle = new();
 
         public List<MapChunk> MapChunks = new();
@@ -103,6 +104,7 @@ namespace minescape.world.chunk
             NativeList<JobHandle> SetBlocksInChunkHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateStructuresHandles = new(Allocator.Temp);
             NativeList<JobHandle> GetBorderDataHandles = new(Allocator.Temp);
+            NativeList<JobHandle> CalculateLightingHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
 
             // cache surrounding chunk coords
@@ -112,6 +114,7 @@ namespace minescape.world.chunk
             JobHandle SetBlocksInChunkHandle = new();
             JobHandle GenerateStructuresHandle = new();
             JobHandle GetBorderDataHandle = new();
+            JobHandle CalculateLightingHandle = new();
             JobHandle GenerateMeshDataHandle = new();
 
             // generate chunks
@@ -128,6 +131,11 @@ namespace minescape.world.chunk
             GetBorderDataHandle = GetBorderData(GetBorderDataHandles, ref GenerateStructuresHandle, ref neighbourhood);
             GetBorderDataHandles.Dispose();
             previousGetBorderDataHandle = GetBorderDataHandle;
+
+            // calculate light levels
+            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref GetBorderDataHandle);
+            CalculateLightingHandles.Dispose();
+            previousCalculateLightingHandle = CalculateLightingHandle;
 
             // set mesh datas
             previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref GetBorderDataHandle);
@@ -316,6 +324,13 @@ namespace minescape.world.chunk
                 ChunksToGetBorders.Dequeue();
             }
             return JobHandle.CombineDependencies(GetBorderDataHandles);
+        }
+
+        JobHandle CalculateLighting(NativeList<JobHandle> CalculateLightingHandles, ref JobHandle GetBorderDataHandle)
+        {
+
+
+            return default;
         }
 
         JobHandle GenerateMeshData(NativeList<JobHandle> GenerateMeshDataHandles, ref JobHandle GenerateMeshDataHandle, ref JobHandle GetBorderDataHandle)

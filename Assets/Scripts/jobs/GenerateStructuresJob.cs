@@ -1,4 +1,5 @@
 ﻿using Unity.Jobs;
+using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Collections;
 using minescape.init;
@@ -7,6 +8,7 @@ using minescape.world.chunk;
 
 namespace minescape.jobs
 {
+    [BurstCompile]
     public struct GenerateStructuresJob : IJob
     {
         [ReadOnly] public NativeList<Structure> structures;
