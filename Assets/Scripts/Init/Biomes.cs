@@ -1,43 +1,69 @@
+using Unity.Burst;
+using Unity.Collections;
 using minescape.biomes;
-using System.Collections.Generic;
 
 namespace minescape.init
 {
-    public static class Biomes
+    public class Biomes
     {
-        public static Biome TUNDRA = new(0, 68, Blocks.GRASS_TUNDRA, Blocks.DIRT, 0.9f);
-        public static Biome PLAINS = new(1, 66, Blocks.GRASS_PLAINS, Blocks.DIRT, 0.91f);
-        public static Biome SAVANNA = new(2, 70, Blocks.GRASS_SAVANNA, Blocks.DIRT, 0.92f);
-        public static Biome DESERT = new(3, 65, Blocks.SAND_DESERT, Blocks.SAND_DESERT, 0.92f);
-        public static Biome BOREAL_FOREST = new(4, 80, Blocks.GRASS_BOREAL_FOREST, Blocks.DIRT, 0.85f);
-        public static Biome TAIGA = new(5, 72, Blocks.GRASS_TAIGA, Blocks.DIRT, 0.9f);
-        public static Biome SHRUBLAND = new(6, 74, Blocks.GRASS_SHRUBLAND, Blocks.DIRT, 0.9f);
-        public static Biome TEMPERATE_FOREST = new(7, 78, Blocks.GRASS_TEMPERATE_FOREST, Blocks.DIRT, 0.81f);
-        public static Biome SWAMP = new(8, 65, Blocks.GRASS_SWAMP, Blocks.DIRT, 0.9f);
-        public static Biome SEASONAL_FOREST = new (9, 85, Blocks.GRASS_SEASONAL_FOREST, Blocks.DIRT, 0.83f);
-        public static Biome TROPICAL_FOREST = new(10, 90, Blocks.GRASS_TROPICAL_FOREST, Blocks.DIRT, 0.8f);
-        public static Biome BEACH = new(11, 64, Blocks.SAND, Blocks.SAND, 1f);
-        public static Biome COLD_OCEAN = new(12, 32, Blocks.STONE, Blocks.STONE, 1f);
-        public static Biome OCEAN = new(13, 48, Blocks.GRAVEL, Blocks.GRAVEL, 1f);
-        public static Biome WARM_OCEAN = new(14, 56, Blocks.SAND, Blocks.SAND, 1f);
+        public Biome TUNDRA = new(0, BlockIDs.GRASS_TUNDRA, BlockIDs.DIRT, 0.9f);
+        public Biome PLAINS = new(1, BlockIDs.GRASS_PLAINS, BlockIDs.DIRT, 0.91f);
+        public Biome SAVANNA = new(2, BlockIDs.GRASS_SAVANNA, BlockIDs.DIRT, 0.92f);
+        public Biome DESERT = new(3, BlockIDs.SAND_DESERT, BlockIDs.SAND_DESERT, 0.92f);
+        public Biome BOREAL_FOREST = new(4, BlockIDs.GRASS_BOREAL_FOREST, BlockIDs.DIRT, 0.85f);
+        public Biome TAIGA = new(5, BlockIDs.GRASS_TAIGA, BlockIDs.DIRT, 0.9f);
+        public Biome SHRUBLAND = new(6, BlockIDs.GRASS_SHRUBLAND, BlockIDs.DIRT, 0.9f);
+        public Biome TEMPERATE_FOREST = new(7, BlockIDs.GRASS_TEMPERATE_FOREST, BlockIDs.DIRT, 0.81f);
+        public Biome SWAMP = new(8, BlockIDs.GRASS_SWAMP, BlockIDs.DIRT, 0.9f);
+        public Biome SEASONAL_FOREST = new (9, BlockIDs.GRASS_SEASONAL_FOREST, BlockIDs.DIRT, 0.83f);
+        public Biome TROPICAL_FOREST = new(10, BlockIDs.GRASS_TROPICAL_FOREST, BlockIDs.DIRT, 0.8f);
+        public Biome BEACH = new(11, BlockIDs.SAND, BlockIDs.SAND, 1f);
+        public Biome COLD_OCEAN = new(12, BlockIDs.STONE, BlockIDs.STONE, 1f);
+        public Biome OCEAN = new(13, BlockIDs.GRAVEL, BlockIDs.GRAVEL, 1f);
+        public Biome WARM_OCEAN = new(14, BlockIDs.SAND, BlockIDs.SAND, 1f);
 
-        public static Dictionary<byte, Biome> biomes = new()
+        public NativeHashMap<byte, Biome> biomes;
+
+        public Biomes()
         {
-            { 0, TUNDRA },
-            { 1, PLAINS },
-            { 2, SAVANNA },
-            { 3, DESERT },
-            { 4, BOREAL_FOREST },
-            { 5, TAIGA },
-            { 6, SHRUBLAND },
-            { 7, TEMPERATE_FOREST },
-            { 8, SWAMP },
-            { 9, SEASONAL_FOREST },
-            { 10, TROPICAL_FOREST },
-            { 11, BEACH },
-            { 12, COLD_OCEAN },
-            { 13, OCEAN },
-            { 14, WARM_OCEAN }
-        };
+            biomes = new(15, Allocator.Persistent)
+            {
+                { TUNDRA.ID, TUNDRA },
+                { PLAINS.ID, PLAINS },
+                { SAVANNA.ID, SAVANNA },
+                { DESERT.ID, DESERT },
+                { BOREAL_FOREST.ID, BOREAL_FOREST },
+                { TAIGA.ID, TAIGA },
+                { SHRUBLAND.ID, SHRUBLAND },
+                { TEMPERATE_FOREST.ID, TEMPERATE_FOREST },
+                { SWAMP.ID, SWAMP },
+                { SEASONAL_FOREST.ID, SEASONAL_FOREST },
+                { TROPICAL_FOREST.ID, TROPICAL_FOREST },
+                { BEACH.ID, BEACH },
+                { COLD_OCEAN.ID, COLD_OCEAN },
+                { OCEAN.ID, OCEAN },
+                { WARM_OCEAN.ID, WARM_OCEAN }
+            };
+        }
+    }
+
+    [BurstCompile]
+    public struct BiomesIDs
+    {
+        public const byte TUNDRA = 0;
+        public const byte PLAINS = 1;
+        public const byte SAVANNA = 2;
+        public const byte DESERT = 3;
+        public const byte BOREAL_FOREST = 4;
+        public const byte TAIGA = 5;
+        public const byte SHRUBLAND = 6;
+        public const byte TEMPERATE_FOREST = 7;
+        public const byte SWAMP = 8;
+        public const byte SEASONAL_FOREST = 9;
+        public const byte TROPICAL_FOREST = 10;
+        public const byte BEACH = 11;
+        public const byte COLD_OCEAN = 12;
+        public const byte OCEAN = 13;
+        public const byte WARM_OCEAN = 14;
     }
 }

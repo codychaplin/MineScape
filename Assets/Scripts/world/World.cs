@@ -2,8 +2,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Mathematics;
-using minescape.world.chunk;
+using minescape.init;
 using minescape.splines;
+using minescape.world.chunk;
 
 namespace minescape.world
 {
@@ -11,7 +12,6 @@ namespace minescape.world
     {
         public int Seed => 69;
         public RawImage image;
-        public Spline Elevation;
 
         public ChunkManager chunkManager;
         ChunkCoordComparer comparer = new();
@@ -21,6 +21,19 @@ namespace minescape.world
 
         public Transform player;
         Vector3 spawnpoint;
+
+        [System.NonSerialized] public Blocks Blocks;
+        [System.NonSerialized] public Biomes Biomes;
+        [System.NonSerialized] public Structures Structures;
+        [System.NonSerialized] public Splines Splines;
+
+        void Awake()
+        {
+            Blocks = new();
+            Biomes = new();
+            Structures = new();
+            Splines = new();
+        }
 
         void Start()
         {
@@ -58,6 +71,11 @@ namespace minescape.world
                 {
                     mapChunk.Dispose();
                 }
+
+            Splines.Elevation.Dispose();
+            Biomes.biomes.Dispose();
+            Blocks.blocks.Dispose();
+            Structures.structures.Dispose();
         }
 
         public static bool IsBlockInWorld(int3 pos)

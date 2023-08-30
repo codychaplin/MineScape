@@ -33,14 +33,7 @@ namespace minescape.jobs
                     index3D = Chunk.ConvertToIndex(x, y, 15);
                     adjIndex3D = Chunk.ConvertToIndex(x, y, 0);
                     index2D = x + y * Constants.ChunkWidth;
-
-                    blockID = chunk[index3D];
-                    adjBlockID = northChunk[adjIndex3D];
-
-                    bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
-                    bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
-
-                    northFace[index2D] = notAirNotWater || bothWater;
+                    Calculate(ref index3D, ref adjIndex3D, ref index2D, ref blockID, ref adjBlockID, northChunk, northFace);
                 }
 
             for (int x = 0; x < Constants.ChunkWidth; x++)
@@ -49,14 +42,7 @@ namespace minescape.jobs
                     index3D = Chunk.ConvertToIndex(x, y, 0);
                     adjIndex3D = Chunk.ConvertToIndex(x, y, 15);
                     index2D = x + y * Constants.ChunkWidth;
-
-                    blockID = chunk[index3D];
-                    adjBlockID = southChunk[adjIndex3D];
-
-                    bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
-                    bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
-
-                    southFace[index2D] = notAirNotWater || bothWater;
+                    Calculate(ref index3D, ref adjIndex3D, ref index2D, ref blockID, ref adjBlockID, southChunk, southFace);
                 }
 
             for (int z = 0; z < Constants.ChunkWidth; z++)
@@ -65,14 +51,7 @@ namespace minescape.jobs
                     index3D = Chunk.ConvertToIndex(15, y, z);
                     adjIndex3D = Chunk.ConvertToIndex(0, y, z);
                     index2D = z + y * Constants.ChunkWidth;
-
-                    blockID = chunk[index3D];
-                    adjBlockID = eastChunk[adjIndex3D];
-
-                    bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
-                    bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
-
-                    eastFace[index2D] = notAirNotWater || bothWater;
+                    Calculate(ref index3D, ref adjIndex3D, ref index2D, ref blockID, ref adjBlockID, eastChunk, eastFace);
                 }
 
             for (int z = 0; z < Constants.ChunkWidth; z++)
@@ -81,15 +60,19 @@ namespace minescape.jobs
                     index3D = Chunk.ConvertToIndex(0, y, z);
                     adjIndex3D = Chunk.ConvertToIndex(15, y, z);
                     index2D = z + y * Constants.ChunkWidth;
-
-                    blockID = chunk[index3D];
-                    adjBlockID = westChunk[adjIndex3D];
-
-                    bool notAirNotWater = adjBlockID != 0 && adjBlockID != Blocks.WATER.ID;
-                    bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
-
-                    westFace[index2D] = notAirNotWater || bothWater;
+                    Calculate(ref index3D, ref adjIndex3D, ref index2D, ref blockID, ref adjBlockID, westChunk, westFace);
                 }
+        }
+
+        void Calculate(ref int index3D, ref int adjIndex3D, ref int index2D, ref byte blockID, ref byte adjBlockID, NativeArray<byte> adjChunk, NativeArray<bool> adjFace)
+        {
+            blockID = chunk[index3D];
+            adjBlockID = adjChunk[adjIndex3D];
+
+            bool notAirNotWater = adjBlockID != BlockIDs.AIR && adjBlockID != BlockIDs.WATER;
+            bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
+
+            adjFace[index2D] = notAirNotWater || bothWater;
         }
     }
 }

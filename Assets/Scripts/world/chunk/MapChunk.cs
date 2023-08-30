@@ -43,10 +43,10 @@ namespace minescape.world.chunk
         /// <param name="x"></param>
         /// <param name="z"></param>
         /// <returns>Block object at coordinates</returns>
-        public Block GetBlock(int x, int z)
+        public byte GetBlock(int x, int z)
         {
             int index = ConvertToIndex(x, z);
-            return Blocks.blocks[BlockMap[index]];
+            return BlockMap[index];
         }
 
         public void Dispose()

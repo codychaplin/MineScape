@@ -5,15 +5,13 @@ namespace minescape.biomes
     public struct Biome
     {
         public byte ID { get; }
-        public int TerrainHeight { get; }
-        public Block SurfaceBlock { get; }
-        public Block FillerBlock { get; }
+        public byte SurfaceBlock { get; }
+        public byte FillerBlock { get; }
         public float TreeFrequency { get; }
 
-        public Biome(byte id, int terrainHeight, Block surfaceBlock, Block fillerBlock, float treeFrequency)
+        public Biome(byte id, byte surfaceBlock, byte fillerBlock, float treeFrequency)
         {
             ID = id;
-            TerrainHeight = terrainHeight;
             SurfaceBlock = surfaceBlock;
             FillerBlock = fillerBlock;
             TreeFrequency = treeFrequency;

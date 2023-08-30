@@ -1,17 +1,30 @@
+using Unity.Burst;
+using Unity.Collections;
 using minescape.structures;
-using System.Collections.Generic;
 
 namespace minescape.init
 {
-    public static class Structures
+    public class Structures
     {
-        public static Structure TREE = new(1, 2, Type.Tree);
-        public static Structure CACTUS = new(2, 0, Type.Cactus);
+        public Structure TREE = new(0, 2, Type.Tree);
+        public Structure CACTUS = new(1, 0, Type.Cactus);
 
-        public static Dictionary<byte, Structure> structures = new()
+        public NativeHashMap<byte, Structure> structures;
+
+        public Structures()
         {
-            { 1, TREE },
-            { 2, CACTUS }
-        };
+            structures = new(2, Allocator.Persistent)
+            {
+                { TREE.ID, TREE },
+                { CACTUS.ID, CACTUS }
+            };
+        }
+    }
+
+    [BurstCompile]
+    public struct StructureIDs
+    {
+        public const byte TREE = 0;
+        public const byte CACTUS = 1;
     }
 }

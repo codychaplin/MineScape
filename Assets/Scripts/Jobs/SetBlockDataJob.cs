@@ -1,16 +1,21 @@
 ﻿using Unity.Jobs;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
-using minescape.splines;
+using minescape.biomes;
 using minescape.structures;
 using minescape.world.chunk;
 
 namespace minescape.jobs
 {
+    [BurstCompile]
     public struct SetBlockDataJob : IJob
     {
         [ReadOnly] public int seed;
+        [ReadOnly] public NativeHashMap<byte, Biome> biomes;
+        [ReadOnly] public NativeHashMap<byte, Structure> structures;
+        [ReadOnly] public NativeArray<float2> elevation;
 
         [ReadOnly] public int minTerrainheight;
         [ReadOnly] public int maxTerrainheight;
@@ -54,7 +59,7 @@ namespace minescape.jobs
 
                     if (elevationX < 0f) // ocean
                     {
-                        int depth = GetY(Splines.Elevation, elevationX);
+                        int depth = GetY(elevation, elevationX);
                         terrainHeight = math.clamp(depth + (int)math.floor(smooth * 8), 32, 65);
                     }
                     else // land
@@ -71,7 +76,7 @@ namespace minescape.jobs
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
                     int Index2D = x + z * Constants.ChunkWidth;
                     biomeMap[Index2D] = biomeID;
-                    var biome = Biomes.biomes[biomeID];
+                    var biome = biomes[biomeID];
 
                     heightMap[Index2D] = (byte)terrainHeight;
 
@@ -81,33 +86,39 @@ namespace minescape.jobs
                     {
                         index = Chunk.ConvertToIndex(x, y, z);
                         if (y == 0)
-                            blockMap[index] = Blocks.BEDROCK.ID;
+                            blockMap[index] = BlockIDs.BEDROCK;
                         else if (y < terrainHeight - 4)
-                            blockMap[index] = Blocks.STONE.ID;
+                            blockMap[index] = BlockIDs.STONE;
                         else if (y < terrainHeight)
-                            blockMap[index] = biome.FillerBlock.ID;
+                            blockMap[index] = biome.FillerBlock;
                         else if (y == terrainHeight)
-                            blockMap[index] = biome.SurfaceBlock.ID;
+                            blockMap[index] = biome.SurfaceBlock;
                         else if (y > terrainHeight && y <= Constants.WaterLevel)
-                            blockMap[index] = Blocks.WATER.ID;
+                            blockMap[index] = BlockIDs.WATER;
                         else
                             break;
                     }
 
                     // set trees
                     var treeMap = Noise.TreeNoise(pos, 15f);
-                    if (treeMap > biome.TreeFrequency && terrainHeight >= Constants.WaterLevel && biome.ID <= 10) // above threshold and not a beach/ocean biome
+                    if (treeMap > biome.TreeFrequency && terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // above threshold and not a beach/ocean biome
                     {
-                        if (biome.ID == Biomes.DESERT.ID)
-                            structureMap.Add(new Structure(Structures.CACTUS.ID, Structures.CACTUS.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
+                        if (biome.ID == BiomesIDs.DESERT)
+                        {
+                            var cactus = structures[StructureIDs.CACTUS];
+                            structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
+                        }
                         else
-                            structureMap.Add(new Structure(Structures.TREE.ID, Structures.TREE.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                        {
+                            var tree = structures[StructureIDs.TREE];
+                            structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                        }
                     }
                 }
             }
         }
 
-        static int GetY(float2[] spline, float elevationX)
+        static int GetY(NativeArray<float2> spline, float elevationX)
         {
             int lowerIndex = 0;
             int upperIndex = 1;
@@ -145,39 +156,39 @@ namespace minescape.jobs
             // ocean biomes
             if (elevation < -0.03)
             {
-                if (temperature < 0.33) return Biomes.COLD_OCEAN.ID;
-                if (temperature < 0.66) return Biomes.OCEAN.ID;
-                return Biomes.WARM_OCEAN.ID;
+                if (temperature < 0.33) return BiomesIDs.COLD_OCEAN;
+                if (temperature < 0.66) return BiomesIDs.OCEAN;
+                return BiomesIDs.WARM_OCEAN;
             }
 
             // beach biome
-            if (elevation >= -0.03 && elevation < 0.025) return Biomes.BEACH.ID;
+            if (elevation >= -0.03 && elevation < 0.025) return BiomesIDs.BEACH;
 
             // land biomes
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
-                return Biomes.TUNDRA.ID;
+                return BiomesIDs.TUNDRA;
             if (temperature >= 0.2 && temperature < 0.6 && humidity >= 0 && humidity < 0.4)
-                return Biomes.PLAINS.ID;
+                return BiomesIDs.PLAINS;
             if (temperature >= 0.6 && temperature < 0.8 && humidity >= 0 && humidity < 0.4)
-                return Biomes.SAVANNA.ID;
+                return BiomesIDs.SAVANNA;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0 && humidity < 0.6)
-                return Biomes.DESERT.ID;
+                return BiomesIDs.DESERT;
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0.6 && humidity <= 1)
-                return Biomes.BOREAL_FOREST.ID;
+                return BiomesIDs.BOREAL_FOREST;
             if (temperature >= 0.2 && temperature < 0.4 && humidity >= 0.4 && humidity <= 1)
-                return Biomes.TAIGA.ID;
+                return BiomesIDs.TAIGA;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.4 && humidity < 0.6)
-                return Biomes.SHRUBLAND.ID;
+                return BiomesIDs.SHRUBLAND;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.TEMPERATE_FOREST.ID;
+                return BiomesIDs.TEMPERATE_FOREST;
             if (temperature >= 0.4 && temperature < 0.6 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.SWAMP.ID;
+                return BiomesIDs.SWAMP;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.SEASONAL_FOREST.ID;
+                return BiomesIDs.SEASONAL_FOREST;
             if (temperature >= 0.6 && temperature <= 1 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.TROPICAL_FOREST.ID;
+                return BiomesIDs.TROPICAL_FOREST;
 
-            return Biomes.PLAINS.ID;
+            return BiomesIDs.PLAINS;
         }
     }
 }

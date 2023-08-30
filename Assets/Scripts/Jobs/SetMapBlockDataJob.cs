@@ -46,39 +46,39 @@ namespace minescape.jobs
             // ocean biomes
             if (elevation < -0.03)
             {
-                if (temperature < 0.33) return Biomes.COLD_OCEAN.ID;
-                if (temperature < 0.66) return Biomes.OCEAN.ID;
-                return Biomes.WARM_OCEAN.ID;
+                if (temperature < 0.33) return BiomesIDs.COLD_OCEAN;
+                if (temperature < 0.66) return BiomesIDs.OCEAN;
+                return BiomesIDs.WARM_OCEAN;
             }
 
             // beach biome
-            if (elevation >= -0.03 && elevation < 0.025) return Biomes.BEACH.ID;
+            if (elevation >= -0.03 && elevation < 0.025) return BiomesIDs.BEACH;
 
             // land biomes
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0 && humidity < 0.6)
-                return Biomes.TUNDRA.ID;
+                return BiomesIDs.TUNDRA;
             if (temperature >= 0.2 && temperature < 0.6 && humidity >= 0 && humidity < 0.4)
-                return Biomes.PLAINS.ID;
+                return BiomesIDs.PLAINS;
             if (temperature >= 0.6 && temperature < 0.8 && humidity >= 0 && humidity < 0.4)
-                return Biomes.SAVANNA.ID;
+                return BiomesIDs.SAVANNA;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0 && humidity < 0.6)
-                return Biomes.DESERT.ID;
+                return BiomesIDs.DESERT;
             if (temperature >= 0 && temperature < 0.2 && humidity >= 0.6 && humidity <= 1)
-                return Biomes.BOREAL_FOREST.ID;
+                return BiomesIDs.BOREAL_FOREST;
             if (temperature >= 0.2 && temperature < 0.4 && humidity >= 0.4 && humidity <= 1)
-                return Biomes.TAIGA.ID;
+                return BiomesIDs.TAIGA;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.4 && humidity < 0.6)
-                return Biomes.SHRUBLAND.ID;
+                return BiomesIDs.SHRUBLAND;
             if (temperature >= 0.4 && temperature < 0.8 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.TEMPERATE_FOREST.ID;
+                return BiomesIDs.TEMPERATE_FOREST;
             if (temperature >= 0.4 && temperature < 0.6 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.SWAMP.ID;
+                return BiomesIDs.SWAMP;
             if (temperature >= 0.8 && temperature <= 1 && humidity >= 0.6 && humidity < 0.8)
-                return Biomes.SEASONAL_FOREST.ID;
+                return BiomesIDs.SEASONAL_FOREST;
             if (temperature >= 0.6 && temperature <= 1 && humidity >= 0.8 && humidity <= 1)
-                return Biomes.TROPICAL_FOREST.ID;
+                return BiomesIDs.TROPICAL_FOREST;
 
-            return Biomes.PLAINS.ID;
+            return BiomesIDs.PLAINS;
         }
     }
 }

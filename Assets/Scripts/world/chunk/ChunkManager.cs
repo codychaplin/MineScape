@@ -7,8 +7,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
 using minescape.scriptableobjects;
-using NUnit.Framework.Internal;
-using UnityEditor.Experimental.GraphView;
 
 namespace minescape.world.chunk
 {
@@ -79,6 +77,9 @@ namespace minescape.world.chunk
             SetBlockDataJob job = new()
             {
                 seed = world.Seed,
+                biomes = world.Biomes.biomes,
+                structures = world.Structures.structures,
+                elevation= world.Splines.Elevation,
                 elevationScale = elevation.scale,
                 elevationOctaves = elevation.octaves,
                 reliefScale = relief.scale,
@@ -330,6 +331,7 @@ namespace minescape.world.chunk
                 {
                     coord = chunk.coord,
                     position = new int3(chunk.position.x, 0, chunk.position.z),
+                    blocks = world.Blocks.blocks,
                     map = chunk.BlockMap,
                     northFace = chunk.NorthFace,
                     eastFace = chunk.EastFace,

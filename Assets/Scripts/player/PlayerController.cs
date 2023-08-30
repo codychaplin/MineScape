@@ -271,7 +271,7 @@ namespace minescape.player
                 int localX = selectedBlockPosition.x % Constants.ChunkWidth;
                 int localZ = selectedBlockPosition.z % Constants.ChunkWidth;
                 byte blockID = chunk.GetBlock(localX, selectedBlockPosition.y, localZ);
-                Block block = Blocks.blocks[blockID];
+                Block block = world.Blocks.blocks[blockID];
 
                 // set focused block indicator
                 if (block.IsSolid)
@@ -280,13 +280,13 @@ namespace minescape.player
                 // break block
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
-                    if (block.IsSolid && block.ID != Blocks.BEDROCK.ID)
+                    if (block.IsSolid && block.ID != BlockIDs.BEDROCK)
                     {
                         if (Time.time < blockCooldownTimer)
                             return;
 
                         // break block
-                        chunk.SetBlock(localX, selectedBlockPosition.y, localZ, Blocks.AIR.ID);
+                        chunk.SetBlock(localX, selectedBlockPosition.y, localZ, BlockIDs.AIR);
                         blockCooldownTimer = Time.time + blockCooldown;
 
                         // update chunk
@@ -324,7 +324,7 @@ namespace minescape.player
                     localZ = selectedBlockPosition.z % Constants.ChunkWidth;
 
                     // place block
-                    chunk.SetBlock(localX, selectedBlockPosition.y, localZ, Blocks.DIRT.ID);
+                    chunk.SetBlock(localX, selectedBlockPosition.y, localZ, BlockIDs.DIRT);
                     blockCooldownTimer = Time.time + blockCooldown;
 
                     // update Chunk

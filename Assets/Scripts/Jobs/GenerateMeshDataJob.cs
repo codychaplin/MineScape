@@ -15,6 +15,8 @@ namespace minescape.jobs
 
         [ReadOnly] public int3 position;
 
+        [ReadOnly] public NativeHashMap<byte, Block> blocks;
+
         [ReadOnly] public NativeArray<byte> map;
 
         [ReadOnly] public NativeArray<bool> northFace;
@@ -57,7 +59,7 @@ namespace minescape.jobs
         {
             int index = Chunk.ConvertToIndex(pos);
             var blockID = map[index];
-            bool isTransparent = Blocks.blocks[blockID].IsTransparent;
+            bool isTransparent = blocks[blockID].IsTransparent;
 
             for (int i = 0; i < 6; i++)
             {
@@ -84,7 +86,7 @@ namespace minescape.jobs
                 normals.Add(faceNormal);
                 normals.Add(faceNormal);
 
-                AddTexture(Blocks.blocks[blockID].Faces[i]);
+                AddTexture(blocks[blockID].GetFace(i));
 
                 if (isTransparent)
                 {
@@ -143,8 +145,8 @@ namespace minescape.jobs
             }
 
             var adjBlockID = map[Chunk.ConvertToIndex(pos)];
-            bool transparent = Blocks.blocks[adjBlockID].IsTransparent;
-            bool bothWater = blockID == Blocks.WATER.ID && adjBlockID == Blocks.WATER.ID;
+            bool transparent = blocks[adjBlockID].IsTransparent;
+            bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
             return !transparent || bothWater;
         }
 
