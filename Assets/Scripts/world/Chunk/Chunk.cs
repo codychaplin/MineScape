@@ -39,6 +39,7 @@ namespace minescape.world.chunk
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
         public NativeList<float2> uvs;
+        public NativeList<float2> lightUvs;
         
         public Vector3Int position;
 
@@ -67,11 +68,17 @@ namespace minescape.world.chunk
             EastFace = new(4096, Allocator.Persistent);
             WestFace = new(4096, Allocator.Persistent);
 
-            vertices = new(2048, Allocator.Persistent); // 2048 = average length
-            normals = new(2048, Allocator.Persistent);
-            uvs = new(512, Allocator.Persistent);
-            triangles = new(512, Allocator.Persistent);
-            transparentTriangles = new(512, Allocator.Persistent);
+            vertices = new(Allocator.Persistent);
+            normals = new(Allocator.Persistent);
+            uvs = new(Allocator.Persistent);
+            lightUvs = new(Allocator.Persistent);
+            triangles = new(Allocator.Persistent);
+            transparentTriangles = new(Allocator.Persistent);
+        }
+
+        public static int ConvertToIndex(int x, int z)
+        {
+            return x + z * Constants.ChunkWidth;
         }
 
         public static int ConvertToIndex(int x, int y, int z)
@@ -174,12 +181,14 @@ namespace minescape.world.chunk
             var vertArray = vertices.ToArray(Allocator.Temp);
             var normArray = normals.ToArray(Allocator.Temp);
             var uvsArray = uvs.ToArray(Allocator.Temp);
+            var lightUvsArray = lightUvs.ToArray(Allocator.Temp);
 
             Mesh mesh = new() { subMeshCount = 2 };
             mesh.SetVertices(vertArray);
             mesh.SetTriangles(triangles.ToArray(), 0);
             mesh.SetTriangles(transparentTriangles.ToArray(), 1);
             mesh.SetUVs(0, uvsArray);
+            mesh.SetUVs(1, lightUvsArray);
             mesh.SetNormals(normArray);
 
             meshFilter.mesh = mesh;
@@ -207,6 +216,7 @@ namespace minescape.world.chunk
             triangles.Dispose();
             transparentTriangles.Dispose();
             uvs.Dispose();
+            lightUvs.Dispose();
         }
 
         public override string ToString()

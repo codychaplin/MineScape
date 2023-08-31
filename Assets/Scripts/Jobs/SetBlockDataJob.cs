@@ -74,7 +74,7 @@ namespace minescape.jobs
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int Index2D = x + z * Constants.ChunkWidth;
+                    int Index2D = Chunk.ConvertToIndex(x, z);
                     biomeMap[Index2D] = biomeID;
                     var biome = biomes[biomeID];
 

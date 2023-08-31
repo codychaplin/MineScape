@@ -20,6 +20,7 @@ namespace minescape.jobs
         [ReadOnly] public NativeHashMap<byte, Block> blocks;
 
         [ReadOnly] public NativeArray<byte> map;
+        [ReadOnly] public NativeArray<byte> lightMap;
 
         [ReadOnly] public NativeArray<bool> northFace;
         [ReadOnly] public NativeArray<bool> eastFace;
@@ -30,6 +31,7 @@ namespace minescape.jobs
         [WriteOnly] public NativeList<int> triangles;
         [WriteOnly] public NativeList<int> transparentTriangles;
         [WriteOnly] public NativeList<float2> uvs;
+        [WriteOnly] public NativeList<float2> lightUvs;
         [WriteOnly] public NativeList<float3> normals;
 
         public int vertexIndex;
@@ -40,6 +42,7 @@ namespace minescape.jobs
             triangles.Clear();
             transparentTriangles.Clear();
             uvs.Clear();
+            lightUvs.Clear();
             normals.Clear();
 
             int index = 0;
@@ -72,6 +75,24 @@ namespace minescape.jobs
                 var dontRender = DontRender(adjacentIndex, blockID);
                 if (dontRender)
                     continue;
+
+                if (Chunk.IsBlockInChunk(adjacentIndex.x, adjacentIndex.y, adjacentIndex.z))
+                {
+                    int adjIndex = Chunk.ConvertToIndex(adjacentIndex);
+                    var normalizedLight = new float2(lightMap[adjIndex], 0f);
+                    lightUvs.Add(normalizedLight);
+                    lightUvs.Add(normalizedLight);
+                    lightUvs.Add(normalizedLight);
+                    lightUvs.Add(normalizedLight);
+                }
+                else
+                {
+                    var light = new float2(15f, 0f);
+                    lightUvs.Add(light);
+                    lightUvs.Add(light);
+                    lightUvs.Add(light);
+                    lightUvs.Add(light);
+                }
 
                 float3 v0 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]];
                 float3 v1 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 1]];

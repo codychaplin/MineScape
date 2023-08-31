@@ -291,7 +291,7 @@ namespace minescape.player
 
                         // update chunk
                         chunk.isRendered = false;
-                        world.chunkManager.ChunksToCreate.Enqueue(chunk.coord);
+                        world.chunkManager.CreateChunksQueue.Enqueue(chunk.coord);
 
                         UpdateAdjacentChunks(chunk, localX, selectedBlockPosition.y, localZ);
                     }
@@ -329,7 +329,7 @@ namespace minescape.player
 
                     // update Chunk
                     chunk.isRendered = false;
-                    world.chunkManager.ChunksToCreate.Enqueue(chunk.coord);
+                    world.chunkManager.CreateChunksQueue.Enqueue(chunk.coord);
 
                     UpdateAdjacentChunks(chunk, localX, selectedBlockPosition.y, localZ);
                 }
@@ -347,25 +347,25 @@ namespace minescape.player
             {
                 Chunk north = world.GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z + 1));
                 north.isRendered = false;
-                world.chunkManager.ChunksToCreate.Enqueue(north.coord);
+                world.chunkManager.CreateChunksQueue.Enqueue(north.coord);
             }
             if (!Chunk.IsBlockInChunk(x, selectedBlockPosition.y, z - 1)) // south
             {
                 Chunk south = world.GetChunk(new ChunkCoord(chunk.coord.x, chunk.coord.z - 1));
                 south.isRendered = false;
-                world.chunkManager.ChunksToCreate.Enqueue(south.coord);
+                world.chunkManager.CreateChunksQueue.Enqueue(south.coord);
             }
             if (!Chunk.IsBlockInChunk(x + 1, selectedBlockPosition.y, z)) // east
             {
                 Chunk east = world.GetChunk(new ChunkCoord(chunk.coord.x + 1, chunk.coord.z));
                 east.isRendered = false;
-                world.chunkManager.ChunksToCreate.Enqueue(east.coord);
+                world.chunkManager.CreateChunksQueue.Enqueue(east.coord);
             }
             if (!Chunk.IsBlockInChunk(x - 1, selectedBlockPosition.y, z)) // west
             {
                 Chunk west = world.GetChunk(new ChunkCoord(chunk.coord.x - 1, chunk.coord.z));
                 west.isRendered = false;
-                world.chunkManager.ChunksToCreate.Enqueue(west.coord);
+                world.chunkManager.CreateChunksQueue.Enqueue(west.coord);
             }
         }
     }
