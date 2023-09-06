@@ -30,15 +30,17 @@ namespace minescape.world.chunk
 
         public Queue<ChunkCoord> CreateChunksQueue = new();
         Queue<ChunkCoord> CreateStructuresQueue = new();
-        Queue<ChunkCoord> CreateBordersQueue = new();
+        public Queue<ChunkCoord> RemoveLightQueue = new();
         Queue<ChunkCoord> LightingQueue = new();
         Queue<ChunkCoord> RenderQueue = new();
 
         JobHandle previousSetBlocksInChunksHandle = new();
         JobHandle previousGenerateStructuresHandle = new();
-        JobHandle previousGetBorderDataHandle = new();
         JobHandle previousCalculateLightingHandle = new();
         JobHandle previousGenerateMeshDataHandle = new();
+
+        NativeQueue<FloodFillNode> BfsQueue;
+        NativeQueue<FloodFillNode> BfsRemovalQueue;
 
         public List<MapChunk> MapChunks = new();
 
@@ -46,6 +48,9 @@ namespace minescape.world.chunk
         {
             if (renderMap)
                 GenerateMap();
+
+            BfsQueue = new(Allocator.Persistent);
+            BfsRemovalQueue = new(Allocator.Persistent);
         }
 
         void Update()
@@ -53,7 +58,7 @@ namespace minescape.world.chunk
             if (renderMap)
                 return;
 
-            if (CreateChunksQueue.Count > 0 || CreateBordersQueue.Count > 0 || CreateStructuresQueue.Count > 0 || RenderQueue.Count > 0)
+            if (CreateChunksQueue.Count > 0 || CreateStructuresQueue.Count > 0 || LightingQueue.Count > 0 || RenderQueue.Count > 0)
                 CreateChunks();
         }
 
@@ -104,7 +109,6 @@ namespace minescape.world.chunk
             // set temp job handle lists
             NativeList<JobHandle> SetBlocksInChunkHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateStructuresHandles = new(Allocator.Temp);
-            NativeList<JobHandle> GetBorderDataHandles = new(Allocator.Temp);
             NativeList<JobHandle> CalculateLightingHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
 
@@ -114,7 +118,6 @@ namespace minescape.world.chunk
             // set job handles
             JobHandle SetBlocksInChunkHandle = new();
             JobHandle GenerateStructuresHandle = new();
-            JobHandle GetBorderDataHandle = new();
             JobHandle CalculateLightingHandle = new();
             JobHandle GenerateMeshDataHandle = new();
 
@@ -128,18 +131,38 @@ namespace minescape.world.chunk
             GenerateStructuresHandles.Dispose();
             previousGenerateStructuresHandle = GenerateStructuresHandle;
 
-            // set border data
-            GetBorderDataHandle = GetBorderData(GetBorderDataHandles, ref GenerateStructuresHandle, ref neighbourhood);
-            GetBorderDataHandles.Dispose();
-            previousGetBorderDataHandle = GetBorderDataHandle;
-
             // calculate light levels
-            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref GetBorderDataHandle);
+            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref CalculateLightingHandle, ref GenerateStructuresHandle, ref neighbourhood);
             CalculateLightingHandles.Dispose();
             previousCalculateLightingHandle = CalculateLightingHandle;
 
             // set mesh data
-            previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref CalculateLightingHandle);
+            previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref CalculateLightingHandle, ref neighbourhood);
+            GenerateMeshDataHandles.Dispose();
+        }
+
+        public void AlterBlock(int x, int y, int z)
+        {
+            NativeList<JobHandle> RemoveLightHandles = new(Allocator.Temp);
+            NativeList<JobHandle> CalculateLightingHandles = new(Allocator.Temp);
+            NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
+
+            ChunkCoordNeighbourhood neighbourhood = new(new ChunkCoord());
+
+            JobHandle RemoveLightHandle = new();
+            JobHandle CalculateLightingHandle = new();
+            JobHandle GenerateMeshDataHandle = new();
+
+            // remove light
+            RemoveLightHandle = RemoveLight(new int3(x, y, z), RemoveLightHandles, ref neighbourhood);
+            RemoveLightHandles.Dispose();
+
+            // calculate light levels
+            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref CalculateLightingHandle, ref RemoveLightHandle, ref neighbourhood);
+            CalculateLightingHandles.Dispose();
+
+            // set mesh data
+            GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref CalculateLightingHandle, ref neighbourhood);
             GenerateMeshDataHandles.Dispose();
         }
 
@@ -201,22 +224,21 @@ namespace minescape.world.chunk
                     CreateStructuresQueue.Enqueue(neighbourhood.NorthWest);
 
                 // update queues
-                CreateBordersQueue.Enqueue(neighbourhood.Center);
+                LightingQueue.Enqueue(neighbourhood.Center);
                 CreateChunksQueue.Dequeue();
             }
 
             // add handles from previous frame's jobs (if any) and combine dependencies
             SetBlocksInChunkHandles.Add(previousSetBlocksInChunksHandle);
             SetBlocksInChunkHandles.Add(previousGenerateStructuresHandle);
-            SetBlocksInChunkHandles.Add(previousGetBorderDataHandle);
             SetBlocksInChunkHandles.Add(previousCalculateLightingHandle);
             SetBlocksInChunkHandles.Add(previousGenerateMeshDataHandle);
             return JobHandle.CombineDependencies(SetBlocksInChunkHandles);
         }
 
-        JobHandle GenerateStructures(NativeList<JobHandle> GenerateStructuresHandles, ref JobHandle SetBlocksInChunkHandle, ref ChunkCoordNeighbourhood neighbourhood)
+        JobHandle GenerateStructures(NativeList<JobHandle> GenerateStructuresHandles, ref JobHandle previousHandle, ref ChunkCoordNeighbourhood neighbourhood)
         {
-            JobHandle previousDependency = SetBlocksInChunkHandle;
+            JobHandle previousDependency = previousHandle;
 
             NativeArray<byte> tempNorth = new(0, Allocator.TempJob);
             NativeArray<byte> tempNorthEast = new(0, Allocator.TempJob);
@@ -292,69 +314,79 @@ namespace minescape.world.chunk
             return GenerateStructuresHandle;
         }
 
-        JobHandle GetBorderData(NativeList<JobHandle> GetBorderDataHandles, ref JobHandle GenerateStructuresHandle, ref ChunkCoordNeighbourhood neighbourhood)
+        JobHandle CalculateLighting(NativeList<JobHandle> CalculateLightingHandles, ref JobHandle CalculateLightingHandle, ref JobHandle previousHandle,
+            ref ChunkCoordNeighbourhood neighbourhood)
         {
-            while (CreateBordersQueue.Count > 0)
+            CalculateLightingHandle = previousHandle;
+            while (LightingQueue.Count > 0)
             {
-                var coord = CreateBordersQueue.Peek();
+                var coord = LightingQueue.Peek();
                 var chunk = Chunks[coord];
                 neighbourhood.SetCenter(coord.x, coord.z);
                 neighbourhood.SetAdjacentNeighbours();
-
                 var northChunk = Chunks[neighbourhood.North];
                 var eastChunk = Chunks[neighbourhood.East];
                 var southChunk = Chunks[neighbourhood.South];
                 var westChunk = Chunks[neighbourhood.West];
 
-                GetBorderDataJob getBorderDataJob = new()
-                {
-                    chunk = chunk.BlockMap,
-                    northChunk = northChunk.BlockMap,
-                    eastChunk = eastChunk.BlockMap,
-                    southChunk = southChunk.BlockMap,
-                    westChunk = westChunk.BlockMap,
-                    northFace = chunk.NorthFace,
-                    eastFace = chunk.EastFace,
-                    southFace = chunk.SouthFace,
-                    westFace = chunk.WestFace,
-                };
-                GetBorderDataHandles.Add(getBorderDataJob.Schedule(GenerateStructuresHandle));
-
-                //RenderQueue.Enqueue(coord);
-                LightingQueue.Enqueue(coord);
-                CreateBordersQueue.Dequeue();
-            }
-            return JobHandle.CombineDependencies(GetBorderDataHandles);
-        }
-
-        JobHandle CalculateLighting(NativeList<JobHandle> CalculateLightingHandles, ref JobHandle GetBorderDataHandle)
-        {
-            while (LightingQueue.Count > 0)
-            {
-                var coord = LightingQueue.Peek();
-                var chunk = Chunks[coord];
-
                 CalculateLightingJob calculateLightingJob = new()
                 {
                     blockMap = chunk.BlockMap,
-                    heightMap = chunk.HeightMap,
-                    lightMap = chunk.LightMap
+                    lightMap = chunk.LightMap,
+                    bfsQueue = BfsQueue,
                 };
-                CalculateLightingHandles.Add(calculateLightingJob.Schedule(GetBorderDataHandle));
+                CalculateLightingHandle = calculateLightingJob.Schedule(CalculateLightingHandle);
+                CalculateLightingHandles.Add(CalculateLightingHandle);
 
                 RenderQueue.Enqueue(coord);
                 LightingQueue.Dequeue();
             }
 
-            return JobHandle.CombineDependencies(CalculateLightingHandles); ;
+            return JobHandle.CombineDependencies(CalculateLightingHandles);
         }
 
-        JobHandle GenerateMeshData(NativeList<JobHandle> GenerateMeshDataHandles, ref JobHandle GenerateMeshDataHandle, ref JobHandle CalculateLightingHandle)
+        JobHandle RemoveLight(int3 position, NativeList<JobHandle> RemoveLightHandles, ref ChunkCoordNeighbourhood neighbourhood)
+        {
+            while (RemoveLightQueue.Count > 0)
+            {
+                var coord = RemoveLightQueue.Peek();
+                var chunk = Chunks[coord];
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAdjacentNeighbours();
+                var northChunk = Chunks[neighbourhood.North];
+                var eastChunk = Chunks[neighbourhood.East];
+                var southChunk = Chunks[neighbourhood.South];
+                var westChunk = Chunks[neighbourhood.West];
+
+                RemoveLightJob removeLightJob = new()
+                {
+                    position = position,
+                    blockMap = chunk.BlockMap,
+                    lightMap = chunk.LightMap,
+                    bfsRemovalQueue = BfsRemovalQueue,
+                };
+                RemoveLightHandles.Add(removeLightJob.Schedule());
+
+                LightingQueue.Enqueue(coord);
+                RemoveLightQueue.Dequeue();
+            }
+
+            return JobHandle.CombineDependencies(RemoveLightHandles);
+        }
+
+        JobHandle GenerateMeshData(NativeList<JobHandle> GenerateMeshDataHandles, ref JobHandle GenerateMeshDataHandle,
+            ref JobHandle previousHandle, ref ChunkCoordNeighbourhood neighbourhood)
         {
             while (RenderQueue.Count > 0)
             {
                 var coord = RenderQueue.Peek();
                 var chunk = Chunks[coord];
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAdjacentNeighbours();
+                var northChunk = Chunks[neighbourhood.North];
+                var eastChunk = Chunks[neighbourhood.East];
+                var southChunk = Chunks[neighbourhood.South];
+                var westChunk = Chunks[neighbourhood.West];
 
                 GenerateMeshDataJob generateMeshDataJob = new()
                 {
@@ -363,10 +395,10 @@ namespace minescape.world.chunk
                     blocks = world.Blocks.blocks,
                     map = chunk.BlockMap,
                     lightMap = chunk.LightMap,
-                    northFace = chunk.NorthFace,
-                    eastFace = chunk.EastFace,
-                    southFace = chunk.SouthFace,
-                    westFace = chunk.WestFace,
+                    northChunk = northChunk.BlockMap,
+                    eastChunk = eastChunk.BlockMap,
+                    southChunk = southChunk.BlockMap,
+                    westChunk = westChunk.BlockMap,
                     vertices = chunk.vertices,
                     normals = chunk.normals,
                     triangles = chunk.triangles,
@@ -377,7 +409,7 @@ namespace minescape.world.chunk
                 };
 
                 // render chunk
-                GenerateMeshDataHandle = generateMeshDataJob.Schedule(CalculateLightingHandle);
+                GenerateMeshDataHandle = generateMeshDataJob.Schedule(previousHandle);
                 GenerateMeshDataHandles.Add(GenerateMeshDataHandle);
                 StartCoroutine(RenderChunk(GenerateMeshDataHandle, chunk));
                 RenderQueue.Dequeue();
@@ -400,6 +432,12 @@ namespace minescape.world.chunk
             {
                 chunk.IsActive = false;
             }
+        }
+
+        public void DisposeOfQueues()
+        {
+            BfsQueue.Dispose();
+            BfsRemovalQueue.Dispose();
         }
 
         public MapChunk GetMapChunk(ChunkCoord chunkCoord)

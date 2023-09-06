@@ -27,12 +27,20 @@ namespace minescape.world.chunk
             NorthWest = new ChunkCoord();
         }
 
+        /// <summary>
+        /// Sets x/z coordinates for the center ChunkCoord
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="z"></param>
         public void SetCenter(int x, int z)
         {
             Center.x = x;
             Center.z = z;
         }
 
+        /// <summary>
+        /// Sets all x/z coordinates of surrounding ChunkCoords
+        /// </summary>
         public void SetAllNeighbours()
         {
             North.x = Center.x;
@@ -53,6 +61,9 @@ namespace minescape.world.chunk
             NorthWest.z = Center.z + 1;
         }
 
+        /// <summary>
+        /// Sets all x/z coordinates of adjacent ChunkCoords
+        /// </summary>
         public void SetAdjacentNeighbours()
         {
             North.x = Center.x;

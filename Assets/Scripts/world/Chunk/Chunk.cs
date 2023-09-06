@@ -18,12 +18,6 @@ namespace minescape.world.chunk
         public NativeArray<byte> HeightMap; // terrain height in chunk
         public NativeList<Structure> Structures; // structures in chunks
 
-        // used for rendering outside faces
-        public NativeArray<bool> NorthFace;
-        public NativeArray<bool> SouthFace;
-        public NativeArray<bool> EastFace;
-        public NativeArray<bool> WestFace;
-
         public bool generated = false;
         public bool isRendered = false;
         public bool isProcessing = false;
@@ -62,11 +56,6 @@ namespace minescape.world.chunk
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             HeightMap = new(256, Allocator.Persistent);
             Structures = new(Allocator.Persistent);
-
-            NorthFace = new(4096, Allocator.Persistent); // 4096 = 16x256
-            SouthFace = new(4096, Allocator.Persistent);
-            EastFace = new(4096, Allocator.Persistent);
-            WestFace = new(4096, Allocator.Persistent);
 
             vertices = new(Allocator.Persistent);
             normals = new(Allocator.Persistent);
@@ -205,11 +194,6 @@ namespace minescape.world.chunk
             BiomeMap.Dispose();
             HeightMap.Dispose();
             Structures.Dispose();
-
-            NorthFace.Dispose();
-            SouthFace.Dispose();
-            EastFace.Dispose();
-            WestFace.Dispose();
 
             vertices.Dispose();
             normals.Dispose();

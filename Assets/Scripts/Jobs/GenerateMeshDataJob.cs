@@ -22,10 +22,10 @@ namespace minescape.jobs
         [ReadOnly] public NativeArray<byte> map;
         [ReadOnly] public NativeArray<byte> lightMap;
 
-        [ReadOnly] public NativeArray<bool> northFace;
-        [ReadOnly] public NativeArray<bool> eastFace;
-        [ReadOnly] public NativeArray<bool> southFace;
-        [ReadOnly] public NativeArray<bool> westFace;
+        [ReadOnly] public NativeArray<byte> northChunk;
+        [ReadOnly] public NativeArray<byte> eastChunk;
+        [ReadOnly] public NativeArray<byte> southChunk;
+        [ReadOnly] public NativeArray<byte> westChunk;
 
         [WriteOnly] public NativeList<float3> vertices;
         [WriteOnly] public NativeList<int> triangles;
@@ -76,22 +76,22 @@ namespace minescape.jobs
                 if (dontRender)
                     continue;
 
+                var lightLevel = new float2(15f, 0f);
                 if (Chunk.IsBlockInChunk(adjacentIndex.x, adjacentIndex.y, adjacentIndex.z))
                 {
                     int adjIndex = Chunk.ConvertToIndex(adjacentIndex);
-                    var normalizedLight = new float2(lightMap[adjIndex], 0f);
-                    lightUvs.Add(normalizedLight);
-                    lightUvs.Add(normalizedLight);
-                    lightUvs.Add(normalizedLight);
-                    lightUvs.Add(normalizedLight);
+                    lightLevel.x = lightMap[adjIndex];
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
                 }
                 else
                 {
-                    var light = new float2(15f, 0f);
-                    lightUvs.Add(light);
-                    lightUvs.Add(light);
-                    lightUvs.Add(light);
-                    lightUvs.Add(light);
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
+                    lightUvs.Add(lightLevel);
                 }
 
                 float3 v0 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]];
@@ -143,31 +143,35 @@ namespace minescape.jobs
 
         bool DontRender(int3 pos, byte blockID)
         {
+            byte adjBlockID = 0;
             if (!Chunk.IsBlockInChunk(pos.x, pos.y, pos.z))
             {
                 if (pos.z >= Constants.ChunkWidth)
                 {
-                    int northIndex = pos.x + pos.y * Constants.ChunkWidth;
-                    return northFace[northIndex];
+                    int northIndex = Chunk.ConvertToIndex(pos.x, pos.y, 0);
+                    adjBlockID = northChunk[northIndex];
                 }
                 else if (pos.z < 0)
                 {
-                    int southIndex = pos.x + pos.y * Constants.ChunkWidth;
-                    return southFace[southIndex];
+                    int southIndex = Chunk.ConvertToIndex(pos.x, pos.y, 15);
+                    adjBlockID = southChunk[southIndex];
                 }
                 else if (pos.x >= Constants.ChunkWidth)
                 {
-                    int eastIndex = pos.z + pos.y * Constants.ChunkWidth;
-                    return eastFace[eastIndex];
+                    int eastIndex = Chunk.ConvertToIndex(0, pos.y, pos.z);
+                    adjBlockID = eastChunk[eastIndex];
                 }
                 else if (pos.x < 0)
                 {
-                    int westIndex = pos.z + pos.y * Constants.ChunkWidth;
-                    return westFace[westIndex];
+                    int westIndex = Chunk.ConvertToIndex(15, pos.y, pos.z);
+                    adjBlockID = westChunk[westIndex];
                 }
             }
+            else
+            {
+                adjBlockID = map[Chunk.ConvertToIndex(pos)];
+            }
 
-            var adjBlockID = map[Chunk.ConvertToIndex(pos)];
             bool transparent = blocks[adjBlockID].IsTransparent;
             bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
             return !transparent || bothWater;

@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.splines;
 using minescape.world.chunk;
+using TMPro;
 
 namespace minescape.world
 {
@@ -21,6 +22,8 @@ namespace minescape.world
 
         public Transform player;
         Vector3 spawnpoint;
+
+        public bool chunkChanged = false;
 
         [System.NonSerialized] public Blocks Blocks;
         [System.NonSerialized] public Biomes Biomes;
@@ -53,7 +56,8 @@ namespace minescape.world
                 return;
 
             playerChunkCoord = GetChunkCoord(player.position);
-            if (!playerChunkCoord.Equals(playerLastChunkCoord))
+            chunkChanged = !playerChunkCoord.Equals(playerLastChunkCoord); // used by debug screen too
+            if (chunkChanged)
                 CheckViewDistance();
         }
 
@@ -62,20 +66,17 @@ namespace minescape.world
             // release native collections from memory
             if (chunkManager != null && chunkManager.Chunks != null && chunkManager.Chunks.Count > 0)
                 foreach (var chunk in chunkManager.Chunks.Values)
-                {
                     chunk.Dispose();
-                }
 
             if (chunkManager != null && chunkManager.MapChunks != null && chunkManager.MapChunks.Count > 0)
                 foreach (var mapChunk in chunkManager.MapChunks)
-                {
                     mapChunk.Dispose();
-                }
 
             Splines.Elevation.Dispose();
             Biomes.biomes.Dispose();
             Blocks.blocks.Dispose();
             Structures.structures.Dispose();
+            chunkManager.DisposeOfQueues();
         }
 
         public static bool IsBlockInWorld(int3 pos)
