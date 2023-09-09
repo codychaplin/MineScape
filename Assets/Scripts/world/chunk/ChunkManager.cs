@@ -523,7 +523,7 @@ namespace minescape.world.chunk
                     bfsRemovalQueue = BfsRemovalQueue,
                     bfsQueue = BfsQueue
                 };
-                RemoveLightHandles.Add(removeLightJob.Schedule());
+                RemoveLightHandles.Add(removeLightJob.Schedule(previousGenerateMeshDataHandle));
 
                 PropagateSunlightQueue.Enqueue(coord);
                 RemoveSunlightQueue.Dequeue();
@@ -538,13 +538,13 @@ namespace minescape.world.chunk
             while (RenderQueue.Count > 0)
             {
                 var coord = RenderQueue.Peek();
-                var chunk = Chunks[coord];
+                var chunk = GetChunkForMeshGen(coord);
                 neighbourhood.SetCenter(coord.x, coord.z);
                 neighbourhood.SetAdjacentNeighbours();
-                var northChunk = Chunks[neighbourhood.North];
-                var eastChunk = Chunks[neighbourhood.East];
-                var southChunk = Chunks[neighbourhood.South];
-                var westChunk = Chunks[neighbourhood.West];
+                var northChunk = GetChunkForMeshGen(neighbourhood.North);
+                var eastChunk = GetChunkForMeshGen(neighbourhood.East);
+                var southChunk = GetChunkForMeshGen(neighbourhood.South);
+                var westChunk = GetChunkForMeshGen(neighbourhood.West);
 
                 GenerateMeshDataJob generateMeshDataJob = new()
                 {
@@ -579,6 +579,13 @@ namespace minescape.world.chunk
             }
 
             return JobHandle.CombineDependencies(GenerateMeshDataHandles);
+        }
+
+        Chunk GetChunkForMeshGen(ChunkCoord coord)
+        {
+            var chunk = Chunks[coord];
+            chunk.InitializeMeshCollections();
+            return chunk;
         }
 
         IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)

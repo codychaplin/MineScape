@@ -20,8 +20,8 @@ namespace minescape.world.chunk
         public NativeList<Structure> Structures; // structures in chunks
 
         // used to decide whether to regenerate chunk mesh
-        public NativeReference<bool> isDirty;
-        public bool isRendered = false;
+        public NativeReference<bool> isDirty; // for use in jobs
+        public bool isRendered = false; // for use on main thread
 
         // syncronization utils
         public bool generated = false;
@@ -63,13 +63,6 @@ namespace minescape.world.chunk
             Structures = new(Allocator.Persistent);
 
             isDirty = new(false, Allocator.Persistent);
-
-            vertices = new(Allocator.Persistent);
-            normals = new(Allocator.Persistent);
-            uvs = new(Allocator.Persistent);
-            lightUvs = new(Allocator.Persistent);
-            triangles = new(Allocator.Persistent);
-            transparentTriangles = new(Allocator.Persistent);
         }
 
         public static int ConvertToIndex(int x, int z)
@@ -143,7 +136,7 @@ namespace minescape.world.chunk
             if (isDirty.Value)
                 isRendered = false;
 
-            if (isRendered || !isDirty.Value)
+            if (isRendered)
                 return;
 
             if (!generated)
@@ -173,6 +166,22 @@ namespace minescape.world.chunk
             }
         }
 
+        public void InitializeMeshCollections()
+        {
+            if (!vertices.IsCreated)
+                vertices = new(Allocator.Persistent);
+            if (!normals.IsCreated)
+                normals = new(Allocator.Persistent);
+            if (!uvs.IsCreated)
+                uvs = new(Allocator.Persistent);
+            if (!lightUvs.IsCreated)
+                lightUvs = new(Allocator.Persistent);
+            if (!triangles.IsCreated)
+                triangles = new(Allocator.Persistent);
+            if (!transparentTriangles.IsCreated)
+                transparentTriangles = new(Allocator.Persistent);
+        }
+
         /// <summary>
         /// Uses voxel data to create mesh.
         /// </summary>
@@ -200,20 +209,20 @@ namespace minescape.world.chunk
         /// </summary>
         public void Dispose()
         {
-            BlockMap.Dispose();
-            LightMap.Dispose();
-            BiomeMap.Dispose();
-            HeightMap.Dispose();
-            Structures.Dispose();
+            if (BlockMap.IsCreated) BlockMap.Dispose();
+            if (LightMap.IsCreated) LightMap.Dispose();
+            if (BiomeMap.IsCreated) BiomeMap.Dispose();
+            if (HeightMap.IsCreated) HeightMap.Dispose();
+            if (Structures.IsCreated) Structures.Dispose();
 
-            isDirty.Dispose();
+            if (isDirty.IsCreated) isDirty.Dispose();
 
-            vertices.Dispose();
-            normals.Dispose();
-            triangles.Dispose();
-            transparentTriangles.Dispose();
-            uvs.Dispose();
-            lightUvs.Dispose();
+            if (vertices.IsCreated) vertices.Dispose();
+            if (normals.IsCreated) normals.Dispose();
+            if (triangles.IsCreated) triangles.Dispose();
+            if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
+            if (uvs.IsCreated) uvs.Dispose();
+            if (lightUvs.IsCreated) lightUvs.Dispose();
         }
 
         public override string ToString()
