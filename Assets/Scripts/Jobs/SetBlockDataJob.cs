@@ -34,6 +34,8 @@ namespace minescape.jobs
         [WriteOnly] public NativeArray<byte> heightMap;
         [WriteOnly] public NativeList<Structure> structureMap;
 
+        [WriteOnly] public NativeReference<bool> isDirty;
+
         public void Execute()
         {
             seed *= 7919; // makes seed more unique
@@ -116,6 +118,8 @@ namespace minescape.jobs
                     }
                 }
             }
+
+            isDirty.Value = true;
         }
 
         static int GetY(NativeArray<float2> spline, float elevationX)

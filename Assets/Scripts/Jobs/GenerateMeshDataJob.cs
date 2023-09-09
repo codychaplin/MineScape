@@ -19,13 +19,18 @@ namespace minescape.jobs
 
         [ReadOnly] public NativeHashMap<byte, Block> blocks;
 
-        [ReadOnly] public NativeArray<byte> map;
+        [ReadOnly] public NativeArray<byte> blockMap;
         [ReadOnly] public NativeArray<byte> lightMap;
 
-        [ReadOnly] public NativeArray<byte> northChunk;
-        [ReadOnly] public NativeArray<byte> eastChunk;
-        [ReadOnly] public NativeArray<byte> southChunk;
-        [ReadOnly] public NativeArray<byte> westChunk;
+        [ReadOnly] public NativeArray<byte> northBlockMap;
+        [ReadOnly] public NativeArray<byte> eastBlockMap;
+        [ReadOnly] public NativeArray<byte> southBlockMap;
+        [ReadOnly] public NativeArray<byte> westBlockMap;
+
+        [ReadOnly] public NativeArray<byte> northLightMap;
+        [ReadOnly] public NativeArray<byte> eastLightMap;
+        [ReadOnly] public NativeArray<byte> southLightMap;
+        [ReadOnly] public NativeArray<byte> westLightMap;
 
         [WriteOnly] public NativeList<float3> vertices;
         [WriteOnly] public NativeList<int> triangles;
@@ -34,10 +39,15 @@ namespace minescape.jobs
         [WriteOnly] public NativeList<float2> lightUvs;
         [WriteOnly] public NativeList<float3> normals;
 
+        [ReadOnly] public NativeReference<bool> isDirty;
+
         public int vertexIndex;
 
         public void Execute()
         {
+            if (!isDirty.Value)
+                return;
+
             vertices.Clear();
             triangles.Clear();
             transparentTriangles.Clear();
@@ -55,7 +65,7 @@ namespace minescape.jobs
                         index3.y = y;
                         index3.z = z;
                         index = Chunk.ConvertToIndex(index3);
-                        if (map[index] != 0)
+                        if (blockMap[index] != 0)
                             AddBlockToChunk(index3);
                     }
         }
@@ -63,7 +73,7 @@ namespace minescape.jobs
         void AddBlockToChunk(int3 pos)
         {
             int index = Chunk.ConvertToIndex(pos);
-            var blockID = map[index];
+            var blockID = blockMap[index];
             bool isTransparent = blocks[blockID].IsTransparent;
 
             for (int i = 0; i < 6; i++)
@@ -88,6 +98,7 @@ namespace minescape.jobs
                 }
                 else
                 {
+                    lightLevel.x = GetAdjacentLightLevel(adjacentIndex);
                     lightUvs.Add(lightLevel);
                     lightUvs.Add(lightLevel);
                     lightUvs.Add(lightLevel);
@@ -149,32 +160,62 @@ namespace minescape.jobs
                 if (pos.z >= Constants.ChunkWidth)
                 {
                     int northIndex = Chunk.ConvertToIndex(pos.x, pos.y, 0);
-                    adjBlockID = northChunk[northIndex];
+                    adjBlockID = northBlockMap[northIndex];
                 }
                 else if (pos.z < 0)
                 {
                     int southIndex = Chunk.ConvertToIndex(pos.x, pos.y, 15);
-                    adjBlockID = southChunk[southIndex];
+                    adjBlockID = southBlockMap[southIndex];
                 }
                 else if (pos.x >= Constants.ChunkWidth)
                 {
                     int eastIndex = Chunk.ConvertToIndex(0, pos.y, pos.z);
-                    adjBlockID = eastChunk[eastIndex];
+                    adjBlockID = eastBlockMap[eastIndex];
                 }
                 else if (pos.x < 0)
                 {
                     int westIndex = Chunk.ConvertToIndex(15, pos.y, pos.z);
-                    adjBlockID = westChunk[westIndex];
+                    adjBlockID = westBlockMap[westIndex];
                 }
             }
             else
             {
-                adjBlockID = map[Chunk.ConvertToIndex(pos)];
+                adjBlockID = blockMap[Chunk.ConvertToIndex(pos)];
             }
 
             bool transparent = blocks[adjBlockID].IsTransparent;
             bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
             return !transparent || bothWater;
+        }
+
+        byte GetAdjacentLightLevel(int3 pos)
+        {
+            if (Chunk.IsBlockInChunk(pos.x, pos.y, pos.z))
+                return lightMap[Chunk.ConvertToIndex(pos)];
+
+            if (pos.z >= Constants.ChunkWidth)
+            {
+                int northIndex = Chunk.ConvertToIndex(pos.x, pos.y, 0);
+                return northLightMap[northIndex];
+            }
+            else if (pos.z < 0)
+            {
+                int southIndex = Chunk.ConvertToIndex(pos.x, pos.y, 15);
+                return southLightMap[southIndex];
+            }
+            else if (pos.x >= Constants.ChunkWidth)
+            {
+                int eastIndex = Chunk.ConvertToIndex(0, pos.y, pos.z);
+                return eastLightMap[eastIndex];
+            }
+            else if (pos.x < 0)
+            {
+                int westIndex = Chunk.ConvertToIndex(15, pos.y, pos.z);
+                return westLightMap[westIndex];
+            }
+
+            return 0;
+
         }
 
         void AddTexture(int textureId)

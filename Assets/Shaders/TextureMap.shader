@@ -46,16 +46,17 @@ Shader "Universal Render Pipeline/TextureMap"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
-                float minLightLevel = 0.03;
+                // 0.0647 = normalized difference between light levels
+                float minLightLevel = 0.04;
                 float shade = 0;
                 if (v.normal.y == -1) // bottom
-                    shade = 0.4;
+                    shade = 0.1594;
                 if (v.normal.z != 0) // north/south
-                    shade = 0.3;             
+                    shade = 0.0947;             
                 if (v.normal.x != 0) // east/west
-                    shade = 0.2;
+                    shade = 0.03;
 
-                float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 16);
+                float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 15);
                 o.light.x = clamp(1 - lightLevel + shade, 0, 1 - minLightLevel);
 
                 return o;

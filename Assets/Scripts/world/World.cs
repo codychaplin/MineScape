@@ -76,7 +76,7 @@ namespace minescape.world
             Biomes.biomes.Dispose();
             Blocks.blocks.Dispose();
             Structures.structures.Dispose();
-            chunkManager.DisposeOfQueues();
+            chunkManager.Dispose();
         }
 
         public static bool IsBlockInWorld(int3 pos)

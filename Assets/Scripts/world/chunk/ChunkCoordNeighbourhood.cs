@@ -1,4 +1,4 @@
-
+using System.Collections.Generic;
 
 namespace minescape.world.chunk
 {
@@ -74,6 +74,18 @@ namespace minescape.world.chunk
             South.z = Center.z - 1;
             West.x = Center.x - 1;
             West.z = Center.z;
+        }
+
+        public void AddNeighboursToQueue(ref Queue<ChunkCoord> queue)
+        {
+            queue.Enqueue(North);
+            queue.Enqueue(NorthEast);
+            queue.Enqueue(East);
+            queue.Enqueue(SouthEast);
+            queue.Enqueue(South);
+            queue.Enqueue(SouthWest);
+            queue.Enqueue(West);
+            queue.Enqueue(NorthWest);
         }
     }
 }

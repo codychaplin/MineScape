@@ -7,6 +7,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
 using minescape.scriptableobjects;
+using minescape.lighting;
 
 namespace minescape.world.chunk
 {
@@ -30,13 +31,15 @@ namespace minescape.world.chunk
 
         public Queue<ChunkCoord> CreateChunksQueue = new();
         Queue<ChunkCoord> CreateStructuresQueue = new();
-        public Queue<ChunkCoord> RemoveLightQueue = new();
-        Queue<ChunkCoord> LightingQueue = new();
+        Queue<ChunkCoord> RemoveSunlightQueue = new();
+        Queue<ChunkCoord> CalculateSunlightQueue = new();
+        Queue<ChunkCoord> PropagateSunlightQueue = new();
         Queue<ChunkCoord> RenderQueue = new();
 
         JobHandle previousSetBlocksInChunksHandle = new();
         JobHandle previousGenerateStructuresHandle = new();
-        JobHandle previousCalculateLightingHandle = new();
+        JobHandle previousCalculateSunlightHandle = new();
+        JobHandle previousPropagateSunlightHandle = new();
         JobHandle previousGenerateMeshDataHandle = new();
 
         NativeQueue<FloodFillNode> BfsQueue;
@@ -58,7 +61,7 @@ namespace minescape.world.chunk
             if (renderMap)
                 return;
 
-            if (CreateChunksQueue.Count > 0 || CreateStructuresQueue.Count > 0 || LightingQueue.Count > 0 || RenderQueue.Count > 0)
+            if (CreateChunksQueue.Count > 0 || CreateStructuresQueue.Count > 0 || CalculateSunlightQueue.Count > 0 || PropagateSunlightQueue.Count > 0 || RenderQueue.Count > 0)
                 CreateChunks();
         }
 
@@ -86,7 +89,7 @@ namespace minescape.world.chunk
                 seed = world.Seed,
                 biomes = world.Biomes.biomes,
                 structures = world.Structures.structures,
-                elevation= world.Splines.Elevation,
+                elevation = world.Splines.Elevation,
                 elevationScale = elevation.scale,
                 elevationOctaves = elevation.octaves,
                 reliefScale = relief.scale,
@@ -99,7 +102,8 @@ namespace minescape.world.chunk
                 blockMap = chunk.BlockMap,
                 biomeMap = chunk.BiomeMap,
                 heightMap = chunk.HeightMap,
-                structureMap = chunk.Structures
+                structureMap = chunk.Structures,
+                isDirty = chunk.isDirty
             };
             return job.Schedule();
         }
@@ -109,7 +113,8 @@ namespace minescape.world.chunk
             // set temp job handle lists
             NativeList<JobHandle> SetBlocksInChunkHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateStructuresHandles = new(Allocator.Temp);
-            NativeList<JobHandle> CalculateLightingHandles = new(Allocator.Temp);
+            NativeList<JobHandle> CalculateSunlightHandles = new(Allocator.Temp);
+            NativeList<JobHandle> PropagateSunlightHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
 
             // cache surrounding chunk coords
@@ -118,7 +123,8 @@ namespace minescape.world.chunk
             // set job handles
             JobHandle SetBlocksInChunkHandle = new();
             JobHandle GenerateStructuresHandle = new();
-            JobHandle CalculateLightingHandle = new();
+            JobHandle CalculateSunlightHandle = new();
+            JobHandle PropagateSunlightHandle = new();
             JobHandle GenerateMeshDataHandle = new();
 
             // generate chunks
@@ -131,39 +137,83 @@ namespace minescape.world.chunk
             GenerateStructuresHandles.Dispose();
             previousGenerateStructuresHandle = GenerateStructuresHandle;
 
-            // calculate light levels
-            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref CalculateLightingHandle, ref GenerateStructuresHandle, ref neighbourhood);
-            CalculateLightingHandles.Dispose();
-            previousCalculateLightingHandle = CalculateLightingHandle;
+            // calculate sunlight
+            CalculateSunlightHandle = CalculateSunlight(CalculateSunlightHandles, ref CalculateSunlightHandle, ref GenerateStructuresHandle);
+            CalculateSunlightHandles.Dispose();
+            previousCalculateSunlightHandle = CalculateSunlightHandle;
+
+            // propagate sunlight
+            PropagateSunlightHandle = PropagateSunlight(true, PropagateSunlightHandles, ref PropagateSunlightHandle, ref CalculateSunlightHandle, ref neighbourhood);
+            PropagateSunlightHandles.Dispose();
+            previousPropagateSunlightHandle = PropagateSunlightHandle;
 
             // set mesh data
-            previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref CalculateLightingHandle, ref neighbourhood);
+            previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref PropagateSunlightHandle, ref neighbourhood);
             GenerateMeshDataHandles.Dispose();
         }
 
-        public void AlterBlock(int x, int y, int z)
+        public void AlterBlock(Chunk chunk, int x, int y, int z)
         {
             NativeList<JobHandle> RemoveLightHandles = new(Allocator.Temp);
-            NativeList<JobHandle> CalculateLightingHandles = new(Allocator.Temp);
+            NativeList<JobHandle> CalculateSunlightHandles = new(Allocator.Temp);
+            NativeList<JobHandle> PropagateSunlightHandles = new(Allocator.Temp);
             NativeList<JobHandle> GenerateMeshDataHandles = new(Allocator.Temp);
 
             ChunkCoordNeighbourhood neighbourhood = new(new ChunkCoord());
 
             JobHandle RemoveLightHandle = new();
-            JobHandle CalculateLightingHandle = new();
+            JobHandle CalculateSunlightHandle = new();
+            JobHandle PropagateSunlightHandle = new();
             JobHandle GenerateMeshDataHandle = new();
+
+            RemoveSunlightQueue.Enqueue(chunk.coord);
+
+            UpdateSurroundingChunks(chunk, neighbourhood, x, y, z);
 
             // remove light
             RemoveLightHandle = RemoveLight(new int3(x, y, z), RemoveLightHandles, ref neighbourhood);
             RemoveLightHandles.Dispose();
 
-            // calculate light levels
-            CalculateLightingHandle = CalculateLighting(CalculateLightingHandles, ref CalculateLightingHandle, ref RemoveLightHandle, ref neighbourhood);
-            CalculateLightingHandles.Dispose();
+            // calculate sunlight
+            CalculateSunlightHandle = CalculateSunlight(CalculateSunlightHandles, ref CalculateSunlightHandle, ref RemoveLightHandle);
+            CalculateSunlightHandles.Dispose();
+
+            // propagate sunlight
+            PropagateSunlightHandle = PropagateSunlight(false, PropagateSunlightHandles, ref PropagateSunlightHandle, ref RemoveLightHandle, ref neighbourhood);
+            PropagateSunlightHandles.Dispose();
 
             // set mesh data
-            GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref CalculateLightingHandle, ref neighbourhood);
+            GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref PropagateSunlightHandle, ref neighbourhood);
             GenerateMeshDataHandles.Dispose();
+        }
+
+        void UpdateSurroundingChunks(Chunk chunk, ChunkCoordNeighbourhood neighbourhood, int x, int y, int z)
+        {
+            chunk.isDirty.Value = true;
+            neighbourhood.SetCenter(chunk.coord.x, chunk.coord.z);
+            neighbourhood.SetAllNeighbours();
+            neighbourhood.AddNeighboursToQueue(ref RenderQueue);
+
+            if (!Chunk.IsBlockInChunk(x, y, z + 1)) // north
+            {
+                var north = Chunks[neighbourhood.North];
+                north.isDirty.Value = true;
+            }
+            if (!Chunk.IsBlockInChunk(x, y, z - 1)) // south
+            {
+                var south = Chunks[neighbourhood.South];
+                south.isDirty.Value = true;
+            }
+            if (!Chunk.IsBlockInChunk(x + 1, y, z)) // east
+            {
+                var east = Chunks[neighbourhood.East];
+                east.isDirty.Value = true;
+            }
+            if (!Chunk.IsBlockInChunk(x - 1, y, z)) // west
+            {
+                var west = Chunks[neighbourhood.West];
+                west.isDirty.Value = true;
+            }
         }
 
         JobHandle GenerateChunks(NativeList<JobHandle> SetBlocksInChunkHandles, ref ChunkCoordNeighbourhood neighbourhood)
@@ -224,14 +274,15 @@ namespace minescape.world.chunk
                     CreateStructuresQueue.Enqueue(neighbourhood.NorthWest);
 
                 // update queues
-                LightingQueue.Enqueue(neighbourhood.Center);
+                CalculateSunlightQueue.Enqueue(neighbourhood.Center);
                 CreateChunksQueue.Dequeue();
             }
 
             // add handles from previous frame's jobs (if any) and combine dependencies
             SetBlocksInChunkHandles.Add(previousSetBlocksInChunksHandle);
             SetBlocksInChunkHandles.Add(previousGenerateStructuresHandle);
-            SetBlocksInChunkHandles.Add(previousCalculateLightingHandle);
+            SetBlocksInChunkHandles.Add(previousCalculateSunlightHandle);
+            SetBlocksInChunkHandles.Add(previousPropagateSunlightHandle);
             SetBlocksInChunkHandles.Add(previousGenerateMeshDataHandle);
             return JobHandle.CombineDependencies(SetBlocksInChunkHandles);
         }
@@ -314,61 +365,133 @@ namespace minescape.world.chunk
             return GenerateStructuresHandle;
         }
 
-        JobHandle CalculateLighting(NativeList<JobHandle> CalculateLightingHandles, ref JobHandle CalculateLightingHandle, ref JobHandle previousHandle,
-            ref ChunkCoordNeighbourhood neighbourhood)
+        JobHandle CalculateSunlight(NativeList<JobHandle> CalculateSunlightHandles, ref JobHandle CalculateSunlightHandle, ref JobHandle previousHandle)
         {
-            CalculateLightingHandle = previousHandle;
-            while (LightingQueue.Count > 0)
+            while (CalculateSunlightQueue.Count > 0)
             {
-                var coord = LightingQueue.Peek();
+                var coord = CalculateSunlightQueue.Peek();
                 var chunk = Chunks[coord];
-                neighbourhood.SetCenter(coord.x, coord.z);
-                neighbourhood.SetAdjacentNeighbours();
-                var northChunk = Chunks[neighbourhood.North];
-                var eastChunk = Chunks[neighbourhood.East];
-                var southChunk = Chunks[neighbourhood.South];
-                var westChunk = Chunks[neighbourhood.West];
 
-                CalculateLightingJob calculateLightingJob = new()
+                CalculateSunlightJob calculateSunlightJob = new()
                 {
                     blockMap = chunk.BlockMap,
-                    lightMap = chunk.LightMap,
-                    bfsQueue = BfsQueue,
+                    lightMap = chunk.LightMap
                 };
-                CalculateLightingHandle = calculateLightingJob.Schedule(CalculateLightingHandle);
-                CalculateLightingHandles.Add(CalculateLightingHandle);
+                CalculateSunlightHandles.Add(calculateSunlightJob.Schedule(previousHandle));
 
-                RenderQueue.Enqueue(coord);
-                LightingQueue.Dequeue();
+                PropagateSunlightQueue.Enqueue(coord);
+                CalculateSunlightQueue.Dequeue();
             }
 
-            return JobHandle.CombineDependencies(CalculateLightingHandles);
+            return JobHandle.CombineDependencies(CalculateSunlightHandles);
+        }
+
+        JobHandle PropagateSunlight(bool onGenerate, NativeList<JobHandle> PropagateSunlightHandles, ref JobHandle PropagateSunlightHandle, ref JobHandle previousHandle,
+            ref ChunkCoordNeighbourhood neighbourhood)
+        {
+            PropagateSunlightHandle = previousHandle;
+            while (PropagateSunlightQueue.Count > 0)
+            {
+                var coord = PropagateSunlightQueue.Peek();
+                var chunk = Chunks[coord];
+                neighbourhood.SetCenter(coord.x, coord.z);
+                neighbourhood.SetAllNeighbours();
+                var northChunk = Chunks[neighbourhood.North];
+                var northEastChunk = Chunks[neighbourhood.NorthEast];
+                var eastChunk = Chunks[neighbourhood.East];
+                var SouthEastChunk = Chunks[neighbourhood.SouthEast];
+                var southChunk = Chunks[neighbourhood.South];
+                var southWestChunk = Chunks[neighbourhood.SouthWest];
+                var westChunk = Chunks[neighbourhood.West];
+                var northWestChunk = Chunks[neighbourhood.NorthWest];
+
+                PropagateSunlightJob propagateSunlightJob = new()
+                {
+                    coord = coord,
+                    blockMap = chunk.BlockMap,
+                    lightMap = chunk.LightMap,
+                    northBlockMap = northChunk.BlockMap,
+                    northLightMap = northChunk.LightMap,
+                    northIsDirty = northChunk.isDirty,
+                    northEastBlockMap = northEastChunk.BlockMap,
+                    northEastLightMap = northEastChunk.LightMap,
+                    northEastIsDirty = northEastChunk.isDirty,
+                    eastBlockMap = eastChunk.BlockMap,
+                    eastLightMap = eastChunk.LightMap,
+                    eastIsDirty = eastChunk.isDirty,
+                    southEastBlockMap = SouthEastChunk.BlockMap,
+                    southEastLightMap = SouthEastChunk.LightMap,
+                    southEastIsDirty = SouthEastChunk.isDirty,
+                    southBlockMap = southChunk.BlockMap,
+                    southLightMap = southChunk.LightMap,
+                    southIsDirty = southChunk.isDirty,
+                    southWestBlockMap = southWestChunk.BlockMap,
+                    southWestLightMap = southWestChunk.LightMap,
+                    southWestIsDirty = southWestChunk.isDirty,
+                    westBlockMap = westChunk.BlockMap,
+                    westLightMap = westChunk.LightMap,
+                    westIsDirty = westChunk.isDirty,
+                    northWestBlockMap = northWestChunk.BlockMap,
+                    northWestLightMap = northWestChunk.LightMap,
+                    northWestIsDirty = northWestChunk.isDirty,
+                    bfsQueue = BfsQueue,
+                    onGenerate = onGenerate
+                };
+                PropagateSunlightHandle = propagateSunlightJob.Schedule(PropagateSunlightHandle);
+                PropagateSunlightHandles.Add(PropagateSunlightHandle);
+
+                RenderQueue.Enqueue(coord);
+                PropagateSunlightQueue.Dequeue();
+            }
+
+            return JobHandle.CombineDependencies(PropagateSunlightHandles);
         }
 
         JobHandle RemoveLight(int3 position, NativeList<JobHandle> RemoveLightHandles, ref ChunkCoordNeighbourhood neighbourhood)
         {
-            while (RemoveLightQueue.Count > 0)
+            while (RemoveSunlightQueue.Count > 0)
             {
-                var coord = RemoveLightQueue.Peek();
+                var coord = RemoveSunlightQueue.Peek();
                 var chunk = Chunks[coord];
                 neighbourhood.SetCenter(coord.x, coord.z);
-                neighbourhood.SetAdjacentNeighbours();
+                neighbourhood.SetAllNeighbours();
                 var northChunk = Chunks[neighbourhood.North];
+                var northEastChunk = Chunks[neighbourhood.NorthEast];
                 var eastChunk = Chunks[neighbourhood.East];
+                var SouthEastChunk = Chunks[neighbourhood.SouthEast];
                 var southChunk = Chunks[neighbourhood.South];
+                var southWestChunk = Chunks[neighbourhood.SouthWest];
                 var westChunk = Chunks[neighbourhood.West];
+                var northWestChunk = Chunks[neighbourhood.NorthWest];
 
                 RemoveLightJob removeLightJob = new()
                 {
                     position = position,
                     blockMap = chunk.BlockMap,
                     lightMap = chunk.LightMap,
+                    northMap = northChunk.LightMap,
+                    northIsDirty = northChunk.isDirty,
+                    northEastMap = northEastChunk.LightMap,
+                    northEastIsDirty = northEastChunk.isDirty,
+                    eastMap = eastChunk.LightMap,
+                    eastIsDirty = eastChunk.isDirty,
+                    southEastMap = SouthEastChunk.LightMap,
+                    southEastIsDirty = SouthEastChunk.isDirty,
+                    southMap = southChunk.LightMap,
+                    southIsDirty = southChunk.isDirty,
+                    southWestMap = southWestChunk.LightMap,
+                    southWestIsDirty = southWestChunk.isDirty,
+                    westMap = westChunk.LightMap,
+                    westIsDirty = westChunk.isDirty,
+                    northWestMap = northWestChunk.LightMap,
+                    northWestIsDirty = northWestChunk.isDirty,
                     bfsRemovalQueue = BfsRemovalQueue,
+                    bfsQueue = BfsQueue
                 };
                 RemoveLightHandles.Add(removeLightJob.Schedule());
 
-                LightingQueue.Enqueue(coord);
-                RemoveLightQueue.Dequeue();
+                PropagateSunlightQueue.Enqueue(coord);
+                RemoveSunlightQueue.Dequeue();
             }
 
             return JobHandle.CombineDependencies(RemoveLightHandles);
@@ -393,18 +516,23 @@ namespace minescape.world.chunk
                     coord = chunk.coord,
                     position = new int3(chunk.position.x, 0, chunk.position.z),
                     blocks = world.Blocks.blocks,
-                    map = chunk.BlockMap,
+                    blockMap = chunk.BlockMap,
                     lightMap = chunk.LightMap,
-                    northChunk = northChunk.BlockMap,
-                    eastChunk = eastChunk.BlockMap,
-                    southChunk = southChunk.BlockMap,
-                    westChunk = westChunk.BlockMap,
+                    northBlockMap = northChunk.BlockMap,
+                    eastBlockMap = eastChunk.BlockMap,
+                    southBlockMap = southChunk.BlockMap,
+                    westBlockMap = westChunk.BlockMap,
+                    northLightMap = northChunk.LightMap,
+                    eastLightMap = eastChunk.LightMap,
+                    southLightMap = southChunk.LightMap,
+                    westLightMap = westChunk.LightMap,
                     vertices = chunk.vertices,
                     normals = chunk.normals,
                     triangles = chunk.triangles,
                     transparentTriangles = chunk.transparentTriangles,
                     uvs = chunk.uvs,
                     lightUvs = chunk.lightUvs,
+                    isDirty = chunk.isDirty,
                     vertexIndex = 0
                 };
 
@@ -434,7 +562,7 @@ namespace minescape.world.chunk
             }
         }
 
-        public void DisposeOfQueues()
+        public void Dispose()
         {
             BfsQueue.Dispose();
             BfsRemovalQueue.Dispose();

@@ -10,6 +10,7 @@ namespace minescape.world.chunk
         public Material textureMap;
         public Material transparentTextureMap;
         public Transform worldTransform;
+        public Vector3Int position;
 
         public ChunkCoord coord; // coordinates of chunk
         public NativeArray<byte> BlockMap; // blocks in chunk
@@ -18,24 +19,28 @@ namespace minescape.world.chunk
         public NativeArray<byte> HeightMap; // terrain height in chunk
         public NativeList<Structure> Structures; // structures in chunks
 
-        public bool generated = false;
+        // used to decide whether to regenerate chunk mesh
+        public NativeReference<bool> isDirty;
         public bool isRendered = false;
+
+        // syncronization utils
+        public bool generated = false;
         public bool isProcessing = false;
         public bool activate = true;
 
+        // game object and rendering properties
         GameObject chunkObject;
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
         MeshCollider meshCollider;
 
+        // mesh data
         public NativeList<float3> vertices;
         public NativeList<float3> normals;
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
         public NativeList<float2> uvs;
         public NativeList<float2> lightUvs;
-        
-        public Vector3Int position;
 
         public bool IsActive
         {
@@ -56,6 +61,8 @@ namespace minescape.world.chunk
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             HeightMap = new(256, Allocator.Persistent);
             Structures = new(Allocator.Persistent);
+
+            isDirty = new(false, Allocator.Persistent);
 
             vertices = new(Allocator.Persistent);
             normals = new(Allocator.Persistent);
@@ -133,7 +140,10 @@ namespace minescape.world.chunk
         /// </summary>
         public void RenderChunk()
         {
-            if (isRendered)
+            if (isDirty.Value)
+                isRendered = false;
+
+            if (isRendered || !isDirty.Value)
                 return;
 
             if (!generated)
@@ -153,6 +163,7 @@ namespace minescape.world.chunk
             CreateMesh();
             isProcessing = false;
             isRendered = true;
+            isDirty.Value = false;
 
             // triggered if out of view distance
             if (!activate)
@@ -194,6 +205,8 @@ namespace minescape.world.chunk
             BiomeMap.Dispose();
             HeightMap.Dispose();
             Structures.Dispose();
+
+            isDirty.Dispose();
 
             vertices.Dispose();
             normals.Dispose();

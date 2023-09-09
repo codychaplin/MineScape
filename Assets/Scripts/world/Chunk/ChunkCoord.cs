@@ -25,7 +25,7 @@ namespace minescape.world.chunk
         }
     }
 
-    class ChunkCoordComparer : IEqualityComparer<ChunkCoord>
+    struct ChunkCoordComparer : IEqualityComparer<ChunkCoord>
     {
         public bool Equals(ChunkCoord x, ChunkCoord y)
         {
