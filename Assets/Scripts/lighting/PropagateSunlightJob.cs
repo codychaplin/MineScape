@@ -77,8 +77,8 @@ namespace minescape.lighting
                     int neighbourBlockID = neighbourBlockMap[neighbourIndex];
                     byte neighbourLightLevel = neighbourLightMap[neighbourIndex];
 
-                    // if propagating downwards, light doesn't decay
-                    byte propagatedLightLevel = (i != 3) ? (byte)math.max(0, node.LightLevel - 1) : node.LightLevel;
+                    // if max light propagates downwards, light doesn't decay, otherwise, decays by 1
+                    byte propagatedLightLevel = (i == 3 && node.LightLevel == 15) ? node.LightLevel : (byte)math.max(0, node.LightLevel - 1);
 
                     // if not transparent or neighbour light level is higher than light decay
                     bool isTransparent = neighbourBlockID == BlockIDs.AIR || neighbourBlockID == BlockIDs.WATER;
