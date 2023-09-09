@@ -405,43 +405,78 @@ namespace minescape.world.chunk
                 var westChunk = Chunks[neighbourhood.West];
                 var northWestChunk = Chunks[neighbourhood.NorthWest];
 
-                PropagateSunlightJob propagateSunlightJob = new()
+                if (onGenerate)
                 {
-                    coord = coord,
-                    blockMap = chunk.BlockMap,
-                    lightMap = chunk.LightMap,
-                    northBlockMap = northChunk.BlockMap,
-                    northLightMap = northChunk.LightMap,
-                    northIsDirty = northChunk.isDirty,
-                    northEastBlockMap = northEastChunk.BlockMap,
-                    northEastLightMap = northEastChunk.LightMap,
-                    northEastIsDirty = northEastChunk.isDirty,
-                    eastBlockMap = eastChunk.BlockMap,
-                    eastLightMap = eastChunk.LightMap,
-                    eastIsDirty = eastChunk.isDirty,
-                    southEastBlockMap = SouthEastChunk.BlockMap,
-                    southEastLightMap = SouthEastChunk.LightMap,
-                    southEastIsDirty = SouthEastChunk.isDirty,
-                    southBlockMap = southChunk.BlockMap,
-                    southLightMap = southChunk.LightMap,
-                    southIsDirty = southChunk.isDirty,
-                    southWestBlockMap = southWestChunk.BlockMap,
-                    southWestLightMap = southWestChunk.LightMap,
-                    southWestIsDirty = southWestChunk.isDirty,
-                    westBlockMap = westChunk.BlockMap,
-                    westLightMap = westChunk.LightMap,
-                    westIsDirty = westChunk.isDirty,
-                    northWestBlockMap = northWestChunk.BlockMap,
-                    northWestLightMap = northWestChunk.LightMap,
-                    northWestIsDirty = northWestChunk.isDirty,
-                    bfsQueue = BfsQueue,
-                    onGenerate = onGenerate
-                };
-                PropagateSunlightHandle = propagateSunlightJob.Schedule(PropagateSunlightHandle);
-                PropagateSunlightHandles.Add(PropagateSunlightHandle);
+                    PropagateSunlightOnStartJob propagateSunlightOnStartJob = new()
+                    {
+                        coord = coord,
+                        blockMap = chunk.BlockMap,
+                        lightMap = chunk.LightMap,
+                        northBlockMap = northChunk.BlockMap,
+                        northLightMap = northChunk.LightMap,
+                        northEastBlockMap = northEastChunk.BlockMap,
+                        northEastLightMap = northEastChunk.LightMap,
+                        eastBlockMap = eastChunk.BlockMap,
+                        eastLightMap = eastChunk.LightMap,
+                        southEastBlockMap = SouthEastChunk.BlockMap,
+                        southEastLightMap = SouthEastChunk.LightMap,
+                        southBlockMap = southChunk.BlockMap,
+                        southLightMap = southChunk.LightMap,
+                        southWestBlockMap = southWestChunk.BlockMap,
+                        southWestLightMap = southWestChunk.LightMap,
+                        westBlockMap = westChunk.BlockMap,
+                        westLightMap = westChunk.LightMap,
+                        northWestBlockMap = northWestChunk.BlockMap,
+                        northWestLightMap = northWestChunk.LightMap,
+                        bfsQueue = BfsQueue,
+                        onGenerate = onGenerate
+                    };
+                    PropagateSunlightHandle = propagateSunlightOnStartJob.Schedule(PropagateSunlightHandle);
+                    PropagateSunlightHandles.Add(PropagateSunlightHandle);
 
-                RenderQueue.Enqueue(coord);
-                PropagateSunlightQueue.Dequeue();
+                    RenderQueue.Enqueue(coord);
+                    PropagateSunlightQueue.Dequeue();
+                }
+                else
+                {
+                    PropagateSunlightJob propagateSunlightJob = new()
+                    {
+                        coord = coord,
+                        blockMap = chunk.BlockMap,
+                        lightMap = chunk.LightMap,
+                        northBlockMap = northChunk.BlockMap,
+                        northLightMap = northChunk.LightMap,
+                        northIsDirty = northChunk.isDirty,
+                        northEastBlockMap = northEastChunk.BlockMap,
+                        northEastLightMap = northEastChunk.LightMap,
+                        northEastIsDirty = northEastChunk.isDirty,
+                        eastBlockMap = eastChunk.BlockMap,
+                        eastLightMap = eastChunk.LightMap,
+                        eastIsDirty = eastChunk.isDirty,
+                        southEastBlockMap = SouthEastChunk.BlockMap,
+                        southEastLightMap = SouthEastChunk.LightMap,
+                        southEastIsDirty = SouthEastChunk.isDirty,
+                        southBlockMap = southChunk.BlockMap,
+                        southLightMap = southChunk.LightMap,
+                        southIsDirty = southChunk.isDirty,
+                        southWestBlockMap = southWestChunk.BlockMap,
+                        southWestLightMap = southWestChunk.LightMap,
+                        southWestIsDirty = southWestChunk.isDirty,
+                        westBlockMap = westChunk.BlockMap,
+                        westLightMap = westChunk.LightMap,
+                        westIsDirty = westChunk.isDirty,
+                        northWestBlockMap = northWestChunk.BlockMap,
+                        northWestLightMap = northWestChunk.LightMap,
+                        northWestIsDirty = northWestChunk.isDirty,
+                        bfsQueue = BfsQueue,
+                        onGenerate = onGenerate
+                    };
+                    PropagateSunlightHandle = propagateSunlightJob.Schedule(PropagateSunlightHandle);
+                    PropagateSunlightHandles.Add(PropagateSunlightHandle);
+
+                    RenderQueue.Enqueue(coord);
+                    PropagateSunlightQueue.Dequeue();
+                }
             }
 
             return JobHandle.CombineDependencies(PropagateSunlightHandles);

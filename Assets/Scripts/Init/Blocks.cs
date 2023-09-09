@@ -50,6 +50,7 @@ namespace minescape.init
                 { GRASS_SEASONAL_FOREST.ID, GRASS_SEASONAL_FOREST },
                 { GRASS_TROPICAL_FOREST.ID, GRASS_TROPICAL_FOREST },
                 { SAND_DESERT.ID, SAND_DESERT },
+                { GRAVEL.ID, GRAVEL },
                 { WOOD.ID, WOOD },
                 { LEAVES.ID, LEAVES },
                 { CACTUS.ID, CACTUS }
