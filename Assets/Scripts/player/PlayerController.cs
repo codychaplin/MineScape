@@ -87,7 +87,16 @@ namespace minescape.player
         void Update()
         {
             if (Input.GetKey(KeyCode.Escape))
+            {
                 Cursor.visible = true;
+                Application.Quit();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F1))
+            {
+                CreativeMode = !CreativeMode;
+                characterController.excludeLayers = (CreativeMode) ? 64 : 0;
+            }
 
             if (Input.GetKey(KeyCode.Mouse0))
                 Cursor.visible = false;
@@ -110,12 +119,6 @@ namespace minescape.player
                 UpdateHeight();
                 MovePlayer();
             }
-        }
-
-        void OnValidate()
-        {
-            // disable collisions in creative mode
-            characterController.excludeLayers = (CreativeMode) ? 64 : 0;
         }
 
         public void SetFOV(float fov)

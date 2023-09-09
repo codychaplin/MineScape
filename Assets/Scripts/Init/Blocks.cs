@@ -24,7 +24,7 @@ namespace minescape.init
         public Block GRASS_TROPICAL_FOREST = new(15, 18, 18, 18, 18, 18, 18);
         public Block SAND_DESERT = new(16, 19, 19, 19, 19, 19, 19);
         public Block GRAVEL = new(17, 20, 20, 20, 20, 20, 20);
-        public Block WOOD = new(18, 6, 6, 6, 6, 6, 6);
+        public Block WOOD = new(18, 6, 6, 5, 5, 6, 6);
         public Block LEAVES = new(19, 21, 21, 21, 21, 21, 21);
         public Block CACTUS = new(20, 22, 22, 22, 22, 22, 22);
 

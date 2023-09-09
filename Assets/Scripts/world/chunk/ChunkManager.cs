@@ -6,8 +6,8 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
-using minescape.scriptableobjects;
 using minescape.lighting;
+using minescape.scriptableobjects;
 
 namespace minescape.world.chunk
 {
