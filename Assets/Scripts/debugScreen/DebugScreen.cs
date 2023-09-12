@@ -19,10 +19,24 @@ namespace minescape.debugScreen
         public TextMeshProUGUI LightLevelText;
         byte lightLevel;
         Chunk chunk;
+        public TextMeshProUGUI FPSCounterText;
+
+        float updateInterval = 0.5f;
+        float timeleft = 0.5f;
 
         void Update()
         {
             GetData();
+
+            // FPS
+            timeleft -= Time.deltaTime;
+            if (timeleft <= 0f)
+            {
+                timeleft = updateInterval;
+                float fps = math.round(Time.timeScale / Time.deltaTime);
+                FPSCounterText.text = $"FPS: {fps}";
+            }
+
             // minus worldsize to simulate starting at 0,0
             positionText.text = $"x: {x - Constants.WorldSizeInBlocks / 2}, y: {y}, z: {z - Constants.WorldSizeInBlocks / 2}";
             chunkCoordText.text = $"Chunk: {chunkCoord.x - Constants.WorldSizeInChunks / 2},{chunkCoord.z - Constants.WorldSizeInChunks / 2}";

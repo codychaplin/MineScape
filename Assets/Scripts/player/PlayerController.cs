@@ -3,7 +3,6 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.world;
 using minescape.block;
-using minescape.world.chunk;
 
 namespace minescape.player
 {
@@ -15,6 +14,7 @@ namespace minescape.player
         public Transform selectedBlock;
         public CharacterController characterController;
         public World world;
+        public Transform ceilingCheck;
         public LayerMask groundLayer;
 
         [Header("Camera")]
@@ -54,7 +54,6 @@ namespace minescape.player
         bool targetHeightReached;
         bool isSprinting = false;
         bool isCrouching = false;
-        bool isGrounded = false;
         float lastTimeJumped = 0f;
         const float jumpPreventionTime = 0.2f;
 
@@ -114,7 +113,7 @@ namespace minescape.player
             }
             else
             {
-                GroundCheck();
+                CollisionCheck();
                 Crouch();
                 UpdateHeight();
                 MovePlayer();
@@ -165,6 +164,9 @@ namespace minescape.player
             playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition,
                 cameraHeightRatio * targetHeight * Vector3.up, crouchingSharpness * Time.deltaTime);
 
+            // ceiling check
+            ceilingCheck.localPosition = Vector3.Lerp(ceilingCheck.localPosition, targetHeight * Vector3.up, crouchingSharpness * Time.deltaTime);
+
             // body
             playerBody.localScale = new Vector3(0.5f, math.lerp(playerBody.localScale.y, targetHeight, crouchingSharpness * Time.deltaTime), 0.5f);
             playerBody.localPosition = 0.5f * playerBody.localScale.y * Vector3.up;
@@ -181,14 +183,14 @@ namespace minescape.player
             }
         }
 
-        void GroundCheck()
+        void CollisionCheck()
         {
-            // ground check
-            if (Time.time >= lastTimeJumped + jumpPreventionTime)
-                isGrounded = Physics.CheckSphere(transform.position, 0.3f, groundLayer);
+            if (!characterController.isGrounded)
+                if (Physics.CheckSphere(ceilingCheck.position, 0.1f, groundLayer))
+                    velocity.y = -1f;
 
             // reset velocity
-            if (isGrounded && velocity.y < 0)
+            if (characterController.isGrounded && velocity.y < 0)
                 velocity.y = -2f;
         }
 
@@ -206,7 +208,7 @@ namespace minescape.player
         bool CanSprint(Vector3 move)
         {
             Vector3 forward = transform.InverseTransformDirection(move);
-            if (forward.z > 0.1 && (isGrounded || isSprinting))
+            if (forward.z > 0.1 && (characterController.isGrounded || isSprinting))
                 return Input.GetKey(KeyCode.LeftControl);
             else
                 return false;
@@ -237,21 +239,26 @@ namespace minescape.player
             if (isCrouching)
                 move *= CrouchSpeedModifier;
 
-            characterController.Move(move * speed * Time.deltaTime);
+            characterController.Move((move * speed + velocity) * Time.deltaTime);
 
             // jump
-            if ((Input.GetButtonDown("Jump") || Input.GetButton("Jump")) && isGrounded)
+            if ((Input.GetButtonDown("Jump") || Input.GetButton("Jump")) &&
+                characterController.isGrounded &&
+                Time.time >= lastTimeJumped + jumpPreventionTime)
+            {
+                lastTimeJumped = Time.time;
                 velocity.y = math.sqrt(jumpHeight * -2f * gravity);
+            }
 
             // apply gravity
             velocity.y += gravity * Time.deltaTime;
-            characterController.Move(velocity * Time.deltaTime);
+            //characterController.Move(velocity * Time.deltaTime);
         }
 
         void MoveCreative()
         {
             move = transform.right * moveX + transform.forward * moveZ + transform.up * moveY;
-            characterController.Move(move * creativeSpeed * Time.deltaTime);
+            characterController.Move(creativeSpeed * Time.deltaTime * move);
         }
 
         void GetBlockInView()
