@@ -23,7 +23,7 @@ namespace minescape.world
         public Transform player;
         Vector3 spawnpoint;
 
-        public bool chunkChanged = false;
+        [System.NonSerialized] public bool chunkChanged = false;
 
         [System.NonSerialized] public Blocks Blocks;
         [System.NonSerialized] public Biomes Biomes;

@@ -192,16 +192,21 @@ namespace minescape.world.chunk
             var uvsArray = uvs.ToArray(Allocator.Temp);
             var lightUvsArray = lightUvs.ToArray(Allocator.Temp);
 
-            Mesh mesh = new() { subMeshCount = 2 };
-            mesh.SetVertices(vertArray);
-            mesh.SetTriangles(triangles.ToArray(), 0);
-            mesh.SetTriangles(transparentTriangles.ToArray(), 1);
-            mesh.SetUVs(0, uvsArray);
-            mesh.SetUVs(1, lightUvsArray);
-            mesh.SetNormals(normArray);
+            Mesh filterMesh = new() { subMeshCount = 2 };
+            filterMesh.SetVertices(vertArray);
+            filterMesh.SetTriangles(triangles.ToArray(), 0);
+            filterMesh.SetTriangles(transparentTriangles.ToArray(), 1);
+            filterMesh.SetUVs(0, uvsArray);
+            filterMesh.SetUVs(1, lightUvsArray);
+            filterMesh.SetNormals(normArray);
 
-            meshFilter.mesh = mesh;
-            meshCollider.sharedMesh = mesh;
+            meshFilter.mesh.Clear();
+            meshFilter.mesh = filterMesh;
+
+            Mesh colliderMesh = new();
+            colliderMesh.SetVertices(vertArray);
+            colliderMesh.SetTriangles(triangles.ToArray(), 0);
+            meshCollider.sharedMesh = colliderMesh;
         }
 
         /// <summary>

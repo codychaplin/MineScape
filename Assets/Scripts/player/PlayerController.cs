@@ -185,6 +185,7 @@ namespace minescape.player
 
         void CollisionCheck()
         {
+            // if head hits ceiling when jumping, set downwards velocity
             if (!characterController.isGrounded)
                 if (Physics.CheckSphere(ceilingCheck.position, 0.1f, groundLayer))
                     velocity.y = -1f;
