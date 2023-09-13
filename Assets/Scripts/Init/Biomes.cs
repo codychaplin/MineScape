@@ -6,21 +6,21 @@ namespace minescape.init
 {
     public class Biomes
     {
-        public Biome TUNDRA = new(0, BlockIDs.GRASS_TUNDRA, BlockIDs.DIRT, 0.9f);
-        public Biome PLAINS = new(1, BlockIDs.GRASS_PLAINS, BlockIDs.DIRT, 0.91f);
-        public Biome SAVANNA = new(2, BlockIDs.GRASS_SAVANNA, BlockIDs.DIRT, 0.92f);
-        public Biome DESERT = new(3, BlockIDs.SAND_DESERT, BlockIDs.SAND_DESERT, 0.92f);
-        public Biome BOREAL_FOREST = new(4, BlockIDs.GRASS_BOREAL_FOREST, BlockIDs.DIRT, 0.85f);
-        public Biome TAIGA = new(5, BlockIDs.GRASS_TAIGA, BlockIDs.DIRT, 0.9f);
-        public Biome SHRUBLAND = new(6, BlockIDs.GRASS_SHRUBLAND, BlockIDs.DIRT, 0.9f);
-        public Biome TEMPERATE_FOREST = new(7, BlockIDs.GRASS_TEMPERATE_FOREST, BlockIDs.DIRT, 0.81f);
-        public Biome SWAMP = new(8, BlockIDs.GRASS_SWAMP, BlockIDs.DIRT, 0.9f);
-        public Biome SEASONAL_FOREST = new (9, BlockIDs.GRASS_SEASONAL_FOREST, BlockIDs.DIRT, 0.83f);
-        public Biome TROPICAL_FOREST = new(10, BlockIDs.GRASS_TROPICAL_FOREST, BlockIDs.DIRT, 0.8f);
-        public Biome BEACH = new(11, BlockIDs.SAND, BlockIDs.SAND, 1f);
-        public Biome COLD_OCEAN = new(12, BlockIDs.STONE, BlockIDs.STONE, 1f);
-        public Biome OCEAN = new(13, BlockIDs.GRAVEL, BlockIDs.GRAVEL, 1f);
-        public Biome WARM_OCEAN = new(14, BlockIDs.SAND, BlockIDs.SAND, 1f);
+        public Biome TUNDRA = new(0, BlockIDs.GRASS_TUNDRA, BlockIDs.DIRT, 0.9f, 0.86f);
+        public Biome PLAINS = new(1, BlockIDs.GRASS_PLAINS, BlockIDs.DIRT, 0.91f, 0.77f);
+        public Biome SAVANNA = new(2, BlockIDs.GRASS_SAVANNA, BlockIDs.DIRT, 0.92f, 0.87f);
+        public Biome DESERT = new(3, BlockIDs.SAND_DESERT, BlockIDs.SAND_DESERT, 0.91f, 0.91f);
+        public Biome BOREAL_FOREST = new(4, BlockIDs.GRASS_BOREAL_FOREST, BlockIDs.DIRT, 0.85f, 0.86f);
+        public Biome TAIGA = new(5, BlockIDs.GRASS_TAIGA, BlockIDs.DIRT, 0.9f, 0.88f);
+        public Biome SHRUBLAND = new(6, BlockIDs.GRASS_SHRUBLAND, BlockIDs.DIRT, 0.9f, 0.77f);
+        public Biome TEMPERATE_FOREST = new(7, BlockIDs.GRASS_TEMPERATE_FOREST, BlockIDs.DIRT, 0.81f, 0.84f);
+        public Biome SWAMP = new(8, BlockIDs.GRASS_SWAMP, BlockIDs.DIRT, 0.9f, 0.86f);
+        public Biome SEASONAL_FOREST = new (9, BlockIDs.GRASS_SEASONAL_FOREST, BlockIDs.DIRT, 0.83f, 0.82f);
+        public Biome TROPICAL_FOREST = new(10, BlockIDs.GRASS_TROPICAL_FOREST, BlockIDs.DIRT, 0.8f, 0.78f);
+        public Biome BEACH = new(11, BlockIDs.SAND, BlockIDs.SAND, 1f, 1f);
+        public Biome COLD_OCEAN = new(12, BlockIDs.STONE, BlockIDs.STONE, 1f, 1f);
+        public Biome OCEAN = new(13, BlockIDs.GRAVEL, BlockIDs.GRAVEL, 1f, 1f);
+        public Biome WARM_OCEAN = new(14, BlockIDs.SAND, BlockIDs.SAND, 1f, 1f);
 
         public NativeHashMap<byte, Biome> biomes;
 

@@ -101,20 +101,28 @@ namespace minescape.jobs
                             break;
                     }
 
-                    // set trees
                     var treeMap = Noise.TreeNoise(pos, 15f);
-                    if (treeMap > biome.TreeFrequency && terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // above threshold and not a beach/ocean biome
+                    var grassMap = Noise.GrassNoise(pos, 14f);
+                    if (terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // not a beach/ocean biome
                     {
-                        if (biome.ID == BiomesIDs.DESERT)
+                        // set trees
+                        if (treeMap > biome.TreeFrequency)
                         {
-                            var cactus = structures[StructureIDs.CACTUS];
-                            structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
+                            if (biome.ID == BiomesIDs.DESERT)
+                            {
+                                var cactus = structures[StructureIDs.CACTUS];
+                                structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
+                            }
+                            else
+                            {
+                                var tree = structures[StructureIDs.TREE];
+                                structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                            }
                         }
-                        else
-                        {
-                            var tree = structures[StructureIDs.TREE];
-                            structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
-                        }
+
+                        // set grass
+                        if (grassMap > biome.GrassDensity)
+                            blockMap[Chunk.ConvertToIndex(x, terrainHeight + 1, z)] = BlockIDs.GRASS_PLANT;
                     }
                 }
             }

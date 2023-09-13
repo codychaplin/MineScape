@@ -14,6 +14,10 @@ namespace minescape.world
         public int Seed => 69;
         public RawImage image;
 
+        public Material textureMap;
+        public Material transparentTextureMap;
+        public Material plants;
+
         public ChunkManager chunkManager;
         ChunkCoordComparer comparer = new();
 

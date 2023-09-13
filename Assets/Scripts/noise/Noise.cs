@@ -1,4 +1,5 @@
 using Unity.Mathematics;
+using UnityEngine.UIElements;
 
 public class Noise
 {
@@ -91,6 +92,12 @@ public class Noise
     }
 
     public static float TreeNoise(float2 pos, float scale)
+    {
+        pos = new float2(pos.x / 32 * scale, pos.y / 32 * scale);
+        return noise.snoise(pos);
+    }
+
+    public static float GrassNoise(float2 pos, float scale)
     {
         pos = new float2(pos.x / 32 * scale, pos.y / 32 * scale);
         return noise.snoise(pos);

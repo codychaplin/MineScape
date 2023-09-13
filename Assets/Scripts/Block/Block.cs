@@ -5,6 +5,7 @@ namespace minescape.block
         public byte ID { get; }
         public bool IsSolid { get; }
         public bool IsTransparent { get; }
+        public bool IsPlant { get; }
         public byte Back;
         public byte Front;
         public byte Top;
@@ -12,7 +13,7 @@ namespace minescape.block
         public byte Left;
         public byte Right;
 
-        public Block(byte _ID, byte back, byte front, byte top, byte bottom, byte left, byte right, bool isTransparent = false, bool isSolid = true)
+        public Block(byte _ID, byte back, byte front, byte top, byte bottom, byte left, byte right, bool isTransparent = false, bool isSolid = true, bool isPlant = false)
         {
             ID = _ID;
             Back = back;
@@ -23,6 +24,7 @@ namespace minescape.block
             Right = right;
             IsTransparent = isTransparent;
             IsSolid = isSolid;
+            IsPlant = isPlant;
         }
 
         public byte GetFace(int index)

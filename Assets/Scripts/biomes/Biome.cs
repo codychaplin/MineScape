@@ -1,4 +1,3 @@
-using minescape.block;
 
 namespace minescape.biomes
 {
@@ -8,13 +7,15 @@ namespace minescape.biomes
         public byte SurfaceBlock { get; }
         public byte FillerBlock { get; }
         public float TreeFrequency { get; }
+        public float GrassDensity { get; }
 
-        public Biome(byte id, byte surfaceBlock, byte fillerBlock, float treeFrequency)
+        public Biome(byte id, byte surfaceBlock, byte fillerBlock, float treeFrequency, float grassDensity)
         {
             ID = id;
             SurfaceBlock = surfaceBlock;
             FillerBlock = fillerBlock;
             TreeFrequency = treeFrequency;
+            GrassDensity = grassDensity;
         }
     }
 }

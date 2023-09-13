@@ -28,14 +28,14 @@ namespace minescape.jobs
                 {
                     var pos = new float2(position.x + x, position.y + z);
                     //float elevation = Noise.GetTerrainNoise(pos, 0, 0, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.35f);
-                    float elevation = Noise.TreeNoise(pos, 15f);
+                    float elevation = Noise.TreeNoise(pos, 9999);
                     elevation = (elevation + 1f) / 2f;
-                    float height = math.clamp(elevation * 255, 0, 255);
-                    /*float height = 0;
+                    //float height = math.clamp(elevation * 255, 0, 255);
+                    float height = 0;
                     if (elevation > 0.9f)
                         height = 255;
                     else
-                        height = 0;*/
+                        height = 0;
 
                     var index = MapChunk.ConvertToIndex(x, z);
                     map[index] = (byte)height;

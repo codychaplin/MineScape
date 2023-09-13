@@ -14,8 +14,6 @@ namespace minescape.world.chunk
     public class ChunkManager : MonoBehaviour
     {
         public World world;
-        public Material textureMap;
-        public Material transparentTextureMap;
         public bool renderMap;
         public bool renderChunks;
 
@@ -82,7 +80,7 @@ namespace minescape.world.chunk
         /// <returns>JobHandle</returns>
         public JobHandle CreateChunk(ChunkCoord coord)
         {
-            Chunk chunk = new(textureMap, transparentTextureMap, world.transform, coord);
+            Chunk chunk = new(world, coord);
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
@@ -565,10 +563,14 @@ namespace minescape.world.chunk
                     normals = chunk.normals,
                     triangles = chunk.triangles,
                     transparentTriangles = chunk.transparentTriangles,
+                    plantTriangles = chunk.plantTriangles,
+                    plantHitboxVertices = chunk.plantHitboxVertices,
+                    plantHitboxTriangles = chunk.plantHitboxTriangles,
                     uvs = chunk.uvs,
                     lightUvs = chunk.lightUvs,
                     isDirty = chunk.isDirty,
-                    vertexIndex = 0
+                    vertexIndex = 0,
+                    hitboxVertexIndex = 0,
                 };
 
                 // render chunk

@@ -81,7 +81,7 @@ namespace minescape.lighting
                     byte propagatedLightLevel = (i == 3 && node.LightLevel == 15) ? node.LightLevel : (byte)math.max(0, node.LightLevel - 1);
 
                     // if not transparent or neighbour light level is higher than light decay
-                    bool isTransparent = neighbourBlockID == BlockIDs.AIR || neighbourBlockID == BlockIDs.WATER;
+                    bool isTransparent = neighbourBlockID == BlockIDs.AIR || neighbourBlockID == BlockIDs.WATER || neighbourBlockID == BlockIDs.GRASS_PLANT;
                     bool neighbourLightLevelIsHigher = neighbourLightLevel >= propagatedLightLevel;
                     if (!isTransparent || neighbourLightLevelIsHigher)
                         continue;

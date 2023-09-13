@@ -15,7 +15,6 @@ namespace minescape.player
         public CharacterController characterController;
         public World world;
         public Transform ceilingCheck;
-        public LayerMask groundLayer;
 
         [Header("Camera")]
         public float defaultFOV = 90f;
@@ -187,7 +186,7 @@ namespace minescape.player
         {
             // if head hits ceiling when jumping, set downwards velocity
             if (!characterController.isGrounded)
-                if (Physics.CheckSphere(ceilingCheck.position, 0.1f, groundLayer))
+                if (Physics.CheckSphere(ceilingCheck.position, 0.1f, 1 << 6)) // 6 = ground
                     velocity.y = -1f;
 
             // reset velocity
@@ -264,7 +263,8 @@ namespace minescape.player
 
         void GetBlockInView()
         {
-            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, groundLayer))
+            int layerMask = 1 << 6 | 1 << 7; // ground and plants
+            if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, layerMask))
             {
                 hitInfo.point -= hitInfo.normal * 0.1f; // slightly past point
 

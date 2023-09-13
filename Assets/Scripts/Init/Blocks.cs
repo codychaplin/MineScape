@@ -27,6 +27,7 @@ namespace minescape.init
         public Block WOOD = new(18, 6, 6, 5, 5, 6, 6);
         public Block LEAVES = new(19, 21, 21, 21, 21, 21, 21);
         public Block CACTUS = new(20, 22, 22, 22, 22, 22, 22);
+        public Block GRASS_PLANT = new(21, 58, 58, 58, 58, 58, 58, true, true, true);
 
         public NativeHashMap<byte, Block> blocks;
 
@@ -53,7 +54,8 @@ namespace minescape.init
                 { GRAVEL.ID, GRAVEL },
                 { WOOD.ID, WOOD },
                 { LEAVES.ID, LEAVES },
-                { CACTUS.ID, CACTUS }
+                { CACTUS.ID, CACTUS },
+                { GRASS_PLANT.ID, GRASS_PLANT }
             };
         }
     }
@@ -82,5 +84,6 @@ namespace minescape.init
         public const byte WOOD = 18;
         public const byte LEAVES = 19;
         public const byte CACTUS = 20;
+        public const byte GRASS_PLANT = 21;
     }
 }

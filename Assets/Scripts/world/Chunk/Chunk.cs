@@ -7,9 +7,7 @@ namespace minescape.world.chunk
 {
     public class Chunk
     {
-        public Material textureMap;
-        public Material transparentTextureMap;
-        public Transform worldTransform;
+        public World world;
         public Vector3Int position;
 
         public ChunkCoord coord; // coordinates of chunk
@@ -33,14 +31,18 @@ namespace minescape.world.chunk
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
         MeshCollider meshCollider;
+        MeshCollider plantMeshCollider;
 
         // mesh data
         public NativeList<float3> vertices;
         public NativeList<float3> normals;
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
+        public NativeList<int> plantTriangles;
         public NativeList<float2> uvs;
         public NativeList<float2> lightUvs;
+        public NativeList<float3> plantHitboxVertices;
+        public NativeList<int> plantHitboxTriangles;
 
         public bool IsActive
         {
@@ -48,11 +50,9 @@ namespace minescape.world.chunk
             set { chunkObject.SetActive(value); }
         }
 
-        public Chunk(Material _textureMap, Material _transparentTextureMap, Transform _worldTransform, ChunkCoord _coord)
+        public Chunk(World _world, ChunkCoord _coord)
         {
-            textureMap = _textureMap;
-            transparentTextureMap = _transparentTextureMap;
-            worldTransform = _worldTransform;
+            world = _world;
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
 
@@ -141,13 +141,13 @@ namespace minescape.world.chunk
 
             if (!generated)
             {
-                chunkObject = new();
-                chunkObject.layer = 6;
+                chunkObject = new() { layer = 6 }; // chunk layer
                 meshFilter = chunkObject.AddComponent<MeshFilter>();
                 meshRenderer = chunkObject.AddComponent<MeshRenderer>();
                 meshCollider = chunkObject.AddComponent<MeshCollider>();
-                meshRenderer.materials = new Material[] { textureMap, transparentTextureMap };
-                chunkObject.transform.SetParent(worldTransform);
+                plantMeshCollider = chunkObject.AddComponent<MeshCollider>();
+                meshRenderer.materials = new Material[] { world.textureMap, world.transparentTextureMap, world.plants };
+                chunkObject.transform.SetParent(world.transform);
                 chunkObject.transform.position = position;
                 chunkObject.name = $"{coord.x},{coord.z}";
                 generated = true;
@@ -180,6 +180,12 @@ namespace minescape.world.chunk
                 triangles = new(Allocator.Persistent);
             if (!transparentTriangles.IsCreated)
                 transparentTriangles = new(Allocator.Persistent);
+            if (!plantTriangles.IsCreated)
+                plantTriangles = new(Allocator.Persistent);
+            if (!plantHitboxVertices.IsCreated)
+                plantHitboxVertices = new(Allocator.Persistent);
+            if (!plantHitboxTriangles.IsCreated)
+                plantHitboxTriangles = new(Allocator.Persistent);
         }
 
         /// <summary>
@@ -192,10 +198,11 @@ namespace minescape.world.chunk
             var uvsArray = uvs.ToArray(Allocator.Temp);
             var lightUvsArray = lightUvs.ToArray(Allocator.Temp);
 
-            Mesh filterMesh = new() { subMeshCount = 2 };
+            Mesh filterMesh = new() { subMeshCount = 3 };
             filterMesh.SetVertices(vertArray);
             filterMesh.SetTriangles(triangles.ToArray(), 0);
             filterMesh.SetTriangles(transparentTriangles.ToArray(), 1);
+            filterMesh.SetTriangles(plantTriangles.ToArray(), 2);
             filterMesh.SetUVs(0, uvsArray);
             filterMesh.SetUVs(1, lightUvsArray);
             filterMesh.SetNormals(normArray);
@@ -207,6 +214,13 @@ namespace minescape.world.chunk
             colliderMesh.SetVertices(vertArray);
             colliderMesh.SetTriangles(triangles.ToArray(), 0);
             meshCollider.sharedMesh = colliderMesh;
+
+            var plantVertArray = plantHitboxVertices.ToArray(Allocator.Temp);
+            Mesh plantMesh = new();
+            plantMesh.SetVertices(plantVertArray);
+            plantMesh.SetTriangles(plantHitboxTriangles.ToArray(), 0);
+            plantMeshCollider.sharedMesh = plantMesh;
+            plantMeshCollider.excludeLayers = 1 << 3; // player
         }
 
         /// <summary>
@@ -226,8 +240,11 @@ namespace minescape.world.chunk
             if (normals.IsCreated) normals.Dispose();
             if (triangles.IsCreated) triangles.Dispose();
             if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
+            if (plantTriangles.IsCreated) plantTriangles.Dispose();
             if (uvs.IsCreated) uvs.Dispose();
             if (lightUvs.IsCreated) lightUvs.Dispose();
+            if (plantHitboxVertices.IsCreated) plantHitboxVertices.Dispose();
+            if (plantHitboxTriangles.IsCreated) plantHitboxTriangles.Dispose();
         }
 
         public override string ToString()

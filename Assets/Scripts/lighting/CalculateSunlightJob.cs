@@ -19,7 +19,7 @@ namespace minescape.lighting
                     for (int y = Constants.ChunkHeight - 1; y >= 0; y--)
                     {
                         int index = Chunk.ConvertToIndex(x, y, z);
-                        if (blockMap[index] == BlockIDs.AIR || blockMap[index] == BlockIDs.WATER)
+                        if (blockMap[index] == BlockIDs.AIR || blockMap[index] == BlockIDs.WATER || blockMap[index] == BlockIDs.GRASS_PLANT)
                             lightMap[index] = 15;
                         else
                             break;
