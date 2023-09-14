@@ -76,7 +76,7 @@ namespace minescape.jobs
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int Index2D = Chunk.ConvertToIndex(x, z);
+                    int Index2D = Utils.ConvertToIndex(x, z);
                     biomeMap[Index2D] = biomeID;
                     var biome = biomes[biomeID];
 
@@ -86,7 +86,7 @@ namespace minescape.jobs
                     int index = 0;
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
-                        index = Chunk.ConvertToIndex(x, y, z);
+                        index = Utils.ConvertToIndex(x, y, z);
                         if (y == 0)
                             blockMap[index] = BlockIDs.BEDROCK;
                         else if (y < terrainHeight - 4)
@@ -122,7 +122,7 @@ namespace minescape.jobs
 
                         // set grass
                         if (grassMap > biome.GrassDensity)
-                            blockMap[Chunk.ConvertToIndex(x, terrainHeight + 1, z)] = BlockIDs.GRASS_PLANT;
+                            blockMap[Utils.ConvertToIndex(x, terrainHeight + 1, z)] = BlockIDs.GRASS_PLANT;
                     }
                 }
             }

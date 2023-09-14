@@ -17,6 +17,10 @@ namespace minescape
         // misc
         public static readonly int WaterLevel = 63;
 
+        // texture
+        public static readonly int TextureAtlasSize = 16;
+        public static float NormalizedTextureSize => 1f / TextureAtlasSize;
+
         // map data
         public static readonly int MapChunkWidth = 512;
         public static int WorldSizeInMapChunks = 1;

@@ -35,10 +35,11 @@ namespace minescape.world.chunk
 
         // mesh data
         public NativeList<float3> vertices;
-        public NativeList<float3> normals;
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
         public NativeList<int> plantTriangles;
+        public NativeList<Color32> colours;
+        public NativeList<float3> normals;
         public NativeList<float2> uvs;
         public NativeList<float2> lightUvs;
         public NativeList<float3> plantHitboxVertices;
@@ -60,46 +61,10 @@ namespace minescape.world.chunk
             LightMap = new(65536, Allocator.Persistent);
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
             HeightMap = new(256, Allocator.Persistent);
+
             Structures = new(Allocator.Persistent);
 
             isDirty = new(false, Allocator.Persistent);
-        }
-
-        public static int ConvertToIndex(int x, int z)
-        {
-            return x + z * Constants.ChunkWidth;
-        }
-
-        public static int ConvertToIndex(int x, int y, int z)
-        {
-            return x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
-        }
-
-        public static int ConvertToIndex(Vector3Int pos)
-        {
-            return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
-        }
-
-        public static int ConvertToIndex(int3 pos)
-        {
-            return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
-        }
-
-        /// <summary>
-        /// Checks if block is within the bounds of its chunk.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <returns>Whether block is within chunk.</returns>
-        public static bool IsBlockInChunk(int x, int y, int z)
-        {
-            if (x < 0 || x >= Constants.ChunkWidth ||
-                y < 0 || y >= Constants.ChunkHeight ||
-                z < 0 || z >= Constants.ChunkWidth)
-                return false;
-            else
-                return true;
         }
 
         /// <summary>
@@ -111,7 +76,7 @@ namespace minescape.world.chunk
         /// <param name="block"></param>
         public void SetBlock(int x, int y, int z, byte block)
         {
-            int index = ConvertToIndex(x, y, z);
+            int index = Utils.ConvertToIndex(x, y, z);
             BlockMap[index] = block;
         }
 
@@ -124,7 +89,7 @@ namespace minescape.world.chunk
         /// <returns>Block ID</returns>
         public byte GetBlock(int x, int y, int z)
         {
-            int index = ConvertToIndex(x, y, z);
+            int index = Utils.ConvertToIndex(x, y, z);
             return BlockMap[index];
         }
 
@@ -168,24 +133,16 @@ namespace minescape.world.chunk
 
         public void InitializeMeshCollections()
         {
-            if (!vertices.IsCreated)
-                vertices = new(Allocator.Persistent);
-            if (!normals.IsCreated)
-                normals = new(Allocator.Persistent);
-            if (!uvs.IsCreated)
-                uvs = new(Allocator.Persistent);
-            if (!lightUvs.IsCreated)
-                lightUvs = new(Allocator.Persistent);
-            if (!triangles.IsCreated)
-                triangles = new(Allocator.Persistent);
-            if (!transparentTriangles.IsCreated)
-                transparentTriangles = new(Allocator.Persistent);
-            if (!plantTriangles.IsCreated)
-                plantTriangles = new(Allocator.Persistent);
-            if (!plantHitboxVertices.IsCreated)
-                plantHitboxVertices = new(Allocator.Persistent);
-            if (!plantHitboxTriangles.IsCreated)
-                plantHitboxTriangles = new(Allocator.Persistent);
+            if (!vertices.IsCreated) vertices = new(Allocator.Persistent);
+            if (!triangles.IsCreated) triangles = new(Allocator.Persistent);
+            if (!transparentTriangles.IsCreated) transparentTriangles = new(Allocator.Persistent);
+            if (!colours.IsCreated) colours = new(Allocator.Persistent);
+            if (!normals.IsCreated) normals = new(Allocator.Persistent);
+            if (!uvs.IsCreated) uvs = new(Allocator.Persistent);
+            if (!lightUvs.IsCreated) lightUvs = new(Allocator.Persistent);
+            if (!plantTriangles.IsCreated) plantTriangles = new(Allocator.Persistent);
+            if (!plantHitboxVertices.IsCreated) plantHitboxVertices = new(Allocator.Persistent);
+            if (!plantHitboxTriangles.IsCreated) plantHitboxTriangles = new(Allocator.Persistent);
         }
 
         /// <summary>
@@ -193,28 +150,27 @@ namespace minescape.world.chunk
         /// </summary>
         void CreateMesh()
         {
-            var vertArray = vertices.ToArray(Allocator.Temp);
-            var normArray = normals.ToArray(Allocator.Temp);
-            var uvsArray = uvs.ToArray(Allocator.Temp);
-            var lightUvsArray = lightUvs.ToArray(Allocator.Temp);
-
+            // visible mesh
             Mesh filterMesh = new() { subMeshCount = 3 };
-            filterMesh.SetVertices(vertArray);
+            filterMesh.SetVertices(vertices.AsArray());
             filterMesh.SetTriangles(triangles.ToArray(), 0);
             filterMesh.SetTriangles(transparentTriangles.ToArray(), 1);
             filterMesh.SetTriangles(plantTriangles.ToArray(), 2);
-            filterMesh.SetUVs(0, uvsArray);
-            filterMesh.SetUVs(1, lightUvsArray);
-            filterMesh.SetNormals(normArray);
+            filterMesh.SetUVs(0, uvs.AsArray());
+            filterMesh.SetUVs(1, lightUvs.AsArray());
+            filterMesh.SetNormals(normals.AsArray());
+            filterMesh.SetColors(colours.AsArray());
 
             meshFilter.mesh.Clear();
             meshFilter.mesh = filterMesh;
 
+            // collider mesh
             Mesh colliderMesh = new();
-            colliderMesh.SetVertices(vertArray);
+            colliderMesh.SetVertices(vertices.AsArray());
             colliderMesh.SetTriangles(triangles.ToArray(), 0);
             meshCollider.sharedMesh = colliderMesh;
 
+            // plants collider mesh
             var plantVertArray = plantHitboxVertices.ToArray(Allocator.Temp);
             Mesh plantMesh = new();
             plantMesh.SetVertices(plantVertArray);
@@ -241,6 +197,7 @@ namespace minescape.world.chunk
             if (triangles.IsCreated) triangles.Dispose();
             if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
             if (plantTriangles.IsCreated) plantTriangles.Dispose();
+            if (colours.IsCreated) colours.Dispose();
             if (uvs.IsCreated) uvs.Dispose();
             if (lightUvs.IsCreated) lightUvs.Dispose();
             if (plantHitboxVertices.IsCreated) plantHitboxVertices.Dispose();

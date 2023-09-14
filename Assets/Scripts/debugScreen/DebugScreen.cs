@@ -56,7 +56,7 @@ namespace minescape.debugScreen
                     chunk = world.GetChunk(chunkCoord);
                 }
                 if (chunk != null)
-                    lightLevel = chunk.LightMap[Chunk.ConvertToIndex(x % Constants.ChunkWidth, y, z % Constants.ChunkWidth)];
+                    lightLevel = chunk.LightMap[Utils.ConvertToIndex(x % Constants.ChunkWidth, y, z % Constants.ChunkWidth)];
             }
             catch (InvalidOperationException)
             {

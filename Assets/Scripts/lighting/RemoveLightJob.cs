@@ -38,7 +38,7 @@ namespace minescape.lighting
         public void Execute()
         {
             // add initial node
-            int index = Chunk.ConvertToIndex(position);
+            int index = Utils.ConvertToIndex(position);
             byte lightLevel = lightMap[index];
             bfsRemovalQueue.Enqueue(new FloodFillNode(position, lightLevel));
             lightMap[index] = 0;
@@ -78,9 +78,9 @@ namespace minescape.lighting
             neighbourIndex = 0;
             neighbourLightmap = default;
 
-            if (Chunk.IsBlockInChunk(pos.x, pos.y, pos.z)) // in chunk
+            if (Utils.IsBlockInChunk(pos.x, pos.y, pos.z)) // in chunk
             {
-                neighbourIndex = Chunk.ConvertToIndex(pos);
+                neighbourIndex = Utils.ConvertToIndex(pos);
                 neighbourLightmap = lightMap;
                 return true;
             }
@@ -92,21 +92,21 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // northwest
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z - 16);
                     neighbourLightmap = northWestMap;
                     northWestIsDirty.Value = true;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // northeast
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z - 16);
                     neighbourLightmap = northEastMap;
                     northEastIsDirty.Value = true;
                     return true;
                 }
                 else // north
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x, pos.y, pos.z - 16);
                     neighbourLightmap = northMap;
                     northIsDirty.Value = true;
                     return true;
@@ -116,21 +116,21 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // southwest
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z + 16);
                     neighbourLightmap = southWestMap;
                     southWestIsDirty.Value = true;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // southeast
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z + 16);
                     neighbourLightmap = southEastMap;
                     southEastIsDirty.Value = true;
                     return true;
                 }
                 else // south
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x, pos.y, pos.z + 16);
                     neighbourLightmap = southMap;
                     southIsDirty.Value = true;
                     return true;
@@ -140,14 +140,14 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // west
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z);
                     neighbourLightmap = westMap;
                     westIsDirty.Value = true;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // east
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z);
                     neighbourLightmap = eastMap;
                     eastIsDirty.Value = true;
                     return true;

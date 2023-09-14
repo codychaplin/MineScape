@@ -45,7 +45,7 @@ namespace minescape.lighting
                     for (int z = 0; z < Constants.ChunkWidth; z++)
                         for (int y = Constants.ChunkHeight - 1; y >= 0; y--)
                         {
-                            int index = Chunk.ConvertToIndex(x, y, z);
+                            int index = Utils.ConvertToIndex(x, y, z);
                             if (lightMap[index] == 15)
                                 bfsQueue.Enqueue(new FloodFillNode(new int3(x, y, z), 15));
                             else
@@ -93,9 +93,9 @@ namespace minescape.lighting
             neighbourBlockMap = default;
             neighbourLightmap = default;
 
-            if (Chunk.IsBlockInChunk(pos.x, pos.y, pos.z)) // in chunk
+            if (Utils.IsBlockInChunk(pos.x, pos.y, pos.z)) // in chunk
             {
-                neighbourIndex = Chunk.ConvertToIndex(pos);
+                neighbourIndex = Utils.ConvertToIndex(pos);
                 neighbourBlockMap = blockMap;
                 neighbourLightmap = lightMap;
                 return true;
@@ -108,21 +108,21 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // northwest
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z - 16);
                     neighbourBlockMap = northWestBlockMap;
                     neighbourLightmap = northWestLightMap;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // northeast
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z - 16);
                     neighbourBlockMap = northEastBlockMap;
                     neighbourLightmap = northEastLightMap;
                     return true;
                 }
                 else // north
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x, pos.y, pos.z - 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x, pos.y, pos.z - 16);
                     neighbourBlockMap = northBlockMap;
                     neighbourLightmap = northLightMap;
                     return true;
@@ -132,21 +132,21 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // southwest
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z + 16);
                     neighbourBlockMap = southWestBlockMap;
                     neighbourLightmap = southWestLightMap;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // southeast
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z + 16);
                     neighbourBlockMap = southEastBlockMap;
                     neighbourLightmap = southEastLightMap;
                     return true;
                 }
                 else // south
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x, pos.y, pos.z + 16);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x, pos.y, pos.z + 16);
                     neighbourBlockMap = southBlockMap;
                     neighbourLightmap = southLightMap;
                     return true;
@@ -156,14 +156,14 @@ namespace minescape.lighting
             {
                 if (pos.x < 0) // west
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x + 16, pos.y, pos.z);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x + 16, pos.y, pos.z);
                     neighbourBlockMap = westBlockMap;
                     neighbourLightmap = westLightMap;
                     return true;
                 }
                 if (pos.x >= Constants.ChunkWidth) // east
                 {
-                    neighbourIndex = Chunk.ConvertToIndex(pos.x - 16, pos.y, pos.z);
+                    neighbourIndex = Utils.ConvertToIndex(pos.x - 16, pos.y, pos.z);
                     neighbourBlockMap = eastBlockMap;
                     neighbourLightmap = eastLightMap;
                     return true;

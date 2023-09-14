@@ -51,7 +51,7 @@ namespace minescape.jobs
 
         void TryPlaceBlock(int x, int y, int z, byte blockID)
         {
-            if (Chunk.IsBlockInChunk(x, y, z))
+            if (Utils.IsBlockInChunk(x, y, z))
             {
                 PlaceBlock(x, y, z, blockMap, blockID);
             }
@@ -90,7 +90,7 @@ namespace minescape.jobs
             if (map.Length < 1)
                 return;
 
-            int index = Chunk.ConvertToIndex(x, y, z);
+            int index = Utils.ConvertToIndex(x, y, z);
             if (map[index] == BlockIDs.AIR)
                 map[index]= blockID;
         }
@@ -99,9 +99,9 @@ namespace minescape.jobs
         {
             int height = rand.NextInt(4, 7);
 
-            blockMap[Chunk.ConvertToIndex(x, y - 1, z)] = BlockIDs.DIRT;
+            blockMap[Utils.ConvertToIndex(x, y - 1, z)] = BlockIDs.DIRT;
             for (int yy = y; yy < y + height; yy++)
-                blockMap[Chunk.ConvertToIndex(x, yy, z)] = BlockIDs.WOOD;
+                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.WOOD;
 
             bool flag = false;
             for (int yy = y + height - 2; yy <= y + height + 1; yy++)
@@ -123,13 +123,13 @@ namespace minescape.jobs
             int height = rand.NextInt(2, 6);
             for (int yy = y; yy <= y + height; yy++)
             {
-                if (blockMap[Chunk.ConvertToIndex(x + 1, yy, z)] != BlockIDs.AIR ||
-                    blockMap[Chunk.ConvertToIndex(x - 1, yy, z)] != BlockIDs.AIR     ||
-                    blockMap[Chunk.ConvertToIndex(x, yy, z + 1)] != BlockIDs.AIR     ||
-                    blockMap[Chunk.ConvertToIndex(x, yy, z - 1)] != BlockIDs.AIR)
+                if (blockMap[Utils.ConvertToIndex(x + 1, yy, z)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndex(x - 1, yy, z)] != BlockIDs.AIR     ||
+                    blockMap[Utils.ConvertToIndex(x, yy, z + 1)] != BlockIDs.AIR     ||
+                    blockMap[Utils.ConvertToIndex(x, yy, z - 1)] != BlockIDs.AIR)
                     break;
 
-                blockMap[Chunk.ConvertToIndex(x, yy, z)] = BlockIDs.CACTUS;
+                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.CACTUS;
             }
         }
     }

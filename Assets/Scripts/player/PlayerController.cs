@@ -353,7 +353,7 @@ namespace minescape.player
                 blockInView.z = selectedBlockPosition.z % Constants.ChunkWidth;
 
                 // place block
-                chunk.SetBlock(blockInView.x, selectedBlockPosition.y, blockInView.z, BlockIDs.DIRT);
+                chunk.SetBlock(blockInView.x, selectedBlockPosition.y, blockInView.z, BlockIDs.GRASS);
                 blockCooldownTimer = Time.time + blockCooldown;
 
                 // update Chunk

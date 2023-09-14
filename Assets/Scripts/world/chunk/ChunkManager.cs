@@ -192,22 +192,22 @@ namespace minescape.world.chunk
             neighbourhood.SetAllNeighbours();
             neighbourhood.AddNeighboursToQueue(ref RenderQueue);
 
-            if (!Chunk.IsBlockInChunk(x, y, z + 1)) // north
+            if (!Utils.IsBlockInChunk(x, y, z + 1)) // north
             {
                 var north = Chunks[neighbourhood.North];
                 north.isDirty.Value = true;
             }
-            if (!Chunk.IsBlockInChunk(x, y, z - 1)) // south
+            if (!Utils.IsBlockInChunk(x, y, z - 1)) // south
             {
                 var south = Chunks[neighbourhood.South];
                 south.isDirty.Value = true;
             }
-            if (!Chunk.IsBlockInChunk(x + 1, y, z)) // east
+            if (!Utils.IsBlockInChunk(x + 1, y, z)) // east
             {
                 var east = Chunks[neighbourhood.East];
                 east.isDirty.Value = true;
             }
-            if (!Chunk.IsBlockInChunk(x - 1, y, z)) // west
+            if (!Utils.IsBlockInChunk(x - 1, y, z)) // west
             {
                 var west = Chunks[neighbourhood.West];
                 west.isDirty.Value = true;
@@ -549,8 +549,10 @@ namespace minescape.world.chunk
                     coord = chunk.coord,
                     position = new int3(chunk.position.x, 0, chunk.position.z),
                     blocks = world.Blocks.blocks,
+                    biomes = world.Biomes.biomes,
                     blockMap = chunk.BlockMap,
                     lightMap = chunk.LightMap,
+                    biomeMap = chunk.BiomeMap,
                     northBlockMap = northChunk.BlockMap,
                     eastBlockMap = eastChunk.BlockMap,
                     southBlockMap = southChunk.BlockMap,
@@ -560,14 +562,15 @@ namespace minescape.world.chunk
                     southLightMap = southChunk.LightMap,
                     westLightMap = westChunk.LightMap,
                     vertices = chunk.vertices,
-                    normals = chunk.normals,
                     triangles = chunk.triangles,
                     transparentTriangles = chunk.transparentTriangles,
                     plantTriangles = chunk.plantTriangles,
-                    plantHitboxVertices = chunk.plantHitboxVertices,
-                    plantHitboxTriangles = chunk.plantHitboxTriangles,
+                    normals = chunk.normals,
+                    colours = chunk.colours,
                     uvs = chunk.uvs,
                     lightUvs = chunk.lightUvs,
+                    plantHitboxVertices = chunk.plantHitboxVertices,
+                    plantHitboxTriangles = chunk.plantHitboxTriangles,
                     isDirty = chunk.isDirty,
                     vertexIndex = 0,
                     hitboxVertexIndex = 0,

@@ -4,11 +4,6 @@ namespace minescape.block
 {
     public static class VoxelData
     {
-        // texture
-        public static readonly int TextureAtlasSize = 8;
-        public static float NormalizedTextureSize => 1f / TextureAtlasSize;
-
-
         /// <summary>
         /// Stores all 8 corners (vertices) of a 1x1 cube.
         /// </summary>
