@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.world;
 using minescape.block;
+using minescape.world.chunk;
 
 namespace minescape.player
 {
@@ -72,6 +73,8 @@ namespace minescape.player
         Vector3Int selectedBlockPosition;
         Vector3 defaultPosition = new(-1f, -1f, -1f);
 
+        BlockInView blockInView = new();
+
         void Start ()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -104,7 +107,8 @@ namespace minescape.player
 
             MovementInput();
             MoveCamera();
-            GetBlockInView();
+            var chunk = GetBlockInView();
+            HitBlock(chunk);
 
             if (CreativeMode)
             {
@@ -252,7 +256,6 @@ namespace minescape.player
 
             // apply gravity
             velocity.y += gravity * Time.deltaTime;
-            //characterController.Move(velocity * Time.deltaTime);
         }
 
         void MoveCreative()
@@ -261,7 +264,7 @@ namespace minescape.player
             characterController.Move(creativeSpeed * Time.deltaTime * move);
         }
 
-        void GetBlockInView()
+        Chunk GetBlockInView()
         {
             int layerMask = 1 << 6 | 1 << 7; // ground and plants
             if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hitInfo, reach, layerMask))
@@ -276,7 +279,7 @@ namespace minescape.player
                 // get chunk where block is located
                 var chunk = world.GetChunk(selectedBlockPosition);
                 if (chunk == null)
-                    return;
+                    return null;
 
                 // get block data
                 int localX = selectedBlockPosition.x % Constants.ChunkWidth;
@@ -284,66 +287,96 @@ namespace minescape.player
                 byte blockID = chunk.GetBlock(localX, selectedBlockPosition.y, localZ);
                 Block block = world.Blocks.blocks[blockID];
 
+                blockInView.Set(hitInfo, localX, localZ, blockID, block);
+
                 // set focused block indicator
                 if (block.IsSolid)
                     selectedBlock.position = selectedBlockPosition;
 
-                // break block
-                if (Input.GetKeyDown(KeyCode.Mouse0))
-                {
-                    if (block.IsSolid && block.ID != BlockIDs.BEDROCK)
-                    {
-                        if (Time.time < blockCooldownTimer)
-                            return;
-
-                        // break block
-                        chunk.SetBlock(localX, selectedBlockPosition.y, localZ, BlockIDs.AIR);
-                        blockCooldownTimer = Time.time + blockCooldown;
-
-                        // update chunk
-                        world.chunkManager.AlterBlock(chunk, localX, selectedBlockPosition.y, localZ);
-                    }
-                }
-
-                // place block
-                if (Input.GetKeyDown(KeyCode.Mouse1))
-                {
-                    if (Time.time < blockCooldownTimer)
-                        return;
-
-                    hitInfo.point += hitInfo.normal * 0.2f; // slightly before point
-
-                    // update position
-                    selectedBlockPosition.x = (int)math.floor(hitInfo.point.x);
-                    selectedBlockPosition.y = (int)math.floor(hitInfo.point.y);
-                    selectedBlockPosition.z = (int)math.floor(hitInfo.point.z);
-
-                    // if player collides with where block would be placed, don't place
-                    if (Physics.CheckBox(selectedBlockPosition + VectorHalf, VectorHalf * 1.1f, Quaternion.identity, 1 << 3))
-                        return; 
-
-                    // get chunk
-                    chunk = world.GetChunk(selectedBlockPosition);
-                    if (chunk == null)
-                        return;
-
-                    // get local coordinates
-                    localX = selectedBlockPosition.x % Constants.ChunkWidth;
-                    localZ = selectedBlockPosition.z % Constants.ChunkWidth;
-
-                    // place block
-                    chunk.SetBlock(localX, selectedBlockPosition.y, localZ, BlockIDs.DIRT);
-                    blockCooldownTimer = Time.time + blockCooldown;
-
-                    // update Chunk
-                    world.chunkManager.AlterBlock(chunk, localX, selectedBlockPosition.y, localZ);
-                }
+                return chunk;
             }
             else
             {
                 // if no block in reach, hide indicator
                 selectedBlock.position = defaultPosition;
             }
+
+            return null;
+        }
+
+        void HitBlock(Chunk chunk)
+        {
+            if (chunk == null)
+                return;
+
+            // break block
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                if (blockInView.block.IsSolid && blockInView.blockID != BlockIDs.BEDROCK)
+                {
+                    if (Time.time < blockCooldownTimer)
+                        return;
+
+                    // break block
+                    chunk.SetBlock(blockInView.x, selectedBlockPosition.y, blockInView.z, BlockIDs.AIR);
+                    blockCooldownTimer = Time.time + blockCooldown;
+
+                    // update chunk
+                    world.chunkManager.AlterBlock(chunk, blockInView.x, selectedBlockPosition.y, blockInView.z);
+                }
+            }
+
+            // place block
+            if (Input.GetKeyDown(KeyCode.Mouse1))
+            {
+                if (Time.time < blockCooldownTimer)
+                    return;
+
+                blockInView.hit.point += blockInView.hit.normal * 0.2f; // slightly before point
+
+                // update position
+                selectedBlockPosition.x = (int)math.floor(blockInView.hit.point.x);
+                selectedBlockPosition.y = (int)math.floor(blockInView.hit.point.y);
+                selectedBlockPosition.z = (int)math.floor(blockInView.hit.point.z);
+
+                // if player collides with where block would be placed, don't place
+                if (Physics.CheckBox(selectedBlockPosition + VectorHalf, VectorHalf * 1.1f, Quaternion.identity, 1 << 3)) // 3 == player
+                    return;
+
+                // get chunk
+                chunk = world.GetChunk(selectedBlockPosition);
+                if (chunk == null)
+                    return;
+
+                // get local coordinates
+                blockInView.x = selectedBlockPosition.x % Constants.ChunkWidth;
+                blockInView.z = selectedBlockPosition.z % Constants.ChunkWidth;
+
+                // place block
+                chunk.SetBlock(blockInView.x, selectedBlockPosition.y, blockInView.z, BlockIDs.DIRT);
+                blockCooldownTimer = Time.time + blockCooldown;
+
+                // update Chunk
+                world.chunkManager.AlterBlock(chunk, blockInView.x, selectedBlockPosition.y, blockInView.z);
+            }
+        }
+    }
+
+    struct BlockInView
+    {
+        public RaycastHit hit;
+        public int x;
+        public int z;
+        public byte blockID;
+        public Block block;
+
+        public void Set(RaycastHit _hit, int _x, int _z, byte _blockID, Block _block)
+        {
+            hit = _hit;
+            x = _x;
+            z = _z;
+            blockID = _blockID;
+            block = _block;
         }
     }
 }

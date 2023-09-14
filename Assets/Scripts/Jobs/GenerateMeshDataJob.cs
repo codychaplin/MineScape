@@ -204,10 +204,10 @@ namespace minescape.jobs
             for (int i = 0;i < 6; i++)
             {
                 // set vertices
-                float3 v0 = pos + VoxelData.plantVerts[VoxelData.tris[i * 4 + 0]];
-                float3 v1 = pos + VoxelData.plantVerts[VoxelData.tris[i * 4 + 1]];
-                float3 v2 = pos + VoxelData.plantVerts[VoxelData.tris[i * 4 + 2]];
-                float3 v3 = pos + VoxelData.plantVerts[VoxelData.tris[i * 4 + 3]];
+                float3 v0 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]];
+                float3 v1 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 1]];
+                float3 v2 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 2]];
+                float3 v3 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 3]];
                 plantHitboxVertices.Add(v0);
                 plantHitboxVertices.Add(v1);
                 plantHitboxVertices.Add(v2);

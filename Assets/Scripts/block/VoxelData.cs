@@ -25,32 +25,23 @@ namespace minescape.block
         };
 
         /// <summary>
-        /// Stores all 8 corners (vertices) of a 1x1 cube.
-        /// </summary>
-        public static readonly float3[] plantVerts = new float3[8]
-        {
-            new float3(0.1f, 0.0f, 0.1f), // 0
-            new float3(0.9f, 0.0f, 0.1f), // 1
-            new float3(0.9f, 0.7f, 0.1f), // 2
-            new float3(0.1f, 0.7f, 0.1f), // 3
-            new float3(0.1f, 0.0f, 0.9f), // 4
-            new float3(0.9f, 0.0f, 0.9f), // 5
-            new float3(0.9f, 0.7f, 0.9f), // 6
-            new float3(0.1f, 0.7f, 0.9f)  // 7
-        };
-
-        /// <summary>
         /// Stores arrays containing 2 triangles that make up the faces of a cube.
         /// Uses indexes of verts to create triangles.
         /// </summary>
         public static readonly int[] tris = new int[24] // int[6,4]
-        { 0, 3, 1, 2 ,5, 6, 4, 7, 3, 7, 2, 6, 1, 5, 0, 4, 4, 7, 0, 3, 1, 2, 5, 6 };
+        { 0, 3, 1, 2,
+          5, 6, 4, 7,
+          3, 7, 2, 6,
+          1, 5, 0, 4,
+          4, 7, 0, 3,
+          1, 2, 5, 6 };
 
         /// <summary>
         /// Stores 2 sets of triangles for plants.
         /// </summary>
         public static readonly int[] plantTris = new int[8] // int[2,4]
-        { 0, 3, 5, 6 ,4, 7, 1, 2 };
+        { 0, 3, 5, 6,
+          4, 7, 1, 2 };
 
         /// <summary>
         /// Stores array representing the direction UVs are created on a block face.
