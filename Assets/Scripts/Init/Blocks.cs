@@ -6,12 +6,12 @@ namespace minescape.init
 {
     public class Blocks
     {
-        public Block AIR = new(0, 255, 255, 255, 255, 255, 255, true, false);
+        public Block AIR = new(0, 255, 255, 255, 255, 255, 255, false, true, false);
         public Block BEDROCK = new(1, 0, 0, 0, 0, 0, 0 );
         public Block STONE = new(2, 1, 1, 1, 1, 1, 1 );
         public Block COBBLESTONE = new(3, 2, 2, 2, 2, 2, 2 );
         public Block STONE_BRICKS = new(4, 3, 3, 3, 3, 3, 3);
-        public Block GRASS = new(5, 4, 4, 4, 4, 4, 4);
+        public Block GRASS = new(5, 4, 4, 4, 4, 4, 4, true);
         public Block DIRT = new(6, 5, 5, 5, 5, 5, 5 );
         public Block SAND = new(7, 6, 6, 6, 6, 6, 6 );
         public Block SAND_DESERT = new(8, 7, 7, 7, 7, 7, 7);
@@ -19,10 +19,10 @@ namespace minescape.init
         public Block PLANKS = new(10, 10, 10, 10, 10, 10, 10);
         public Block BRICKS = new(11, 11, 11, 11, 11, 11, 11);
         public Block GRAVEL = new(12, 12, 12, 12, 12, 12, 12);
-        public Block LEAVES = new(13, 13, 13, 13, 13, 13, 13);
+        public Block LEAVES = new(13, 13, 13, 13, 13, 13, 13, true);
         public Block CACTUS = new(14, 14, 14, 15, 15, 14, 14);
-        public Block WATER = new(15, 16, 16, 16, 16, 16, 16, true);
-        public Block GRASS_PLANT = new(16, 17, 17, 17, 17, 17, 17, true, true, true);
+        public Block WATER = new(15, 16, 16, 16, 16, 16, 16, false, true);
+        public Block GRASS_PLANT = new(16, 17, 17, 17, 17, 17, 17, true, true, true, true);
         /*public Block GRASS_TUNDRA = new(6, 9, 9, 9, 9, 9, 9 );
         public Block GRASS_PLAINS = new(7, 20, 20, 20, 20, 20, 20 );   
         public Block GRASS_SAVANNA = new(8, 22, 22, 22, 22, 22, 22 );

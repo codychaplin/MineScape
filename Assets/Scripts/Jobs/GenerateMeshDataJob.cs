@@ -90,12 +90,12 @@ namespace minescape.jobs
             var biome = biomeMap[Utils.ConvertToIndex(pos.x, pos.z)];
 
             if (!block.IsPlant)
-                AddBlock(pos, blockID, block.IsTransparent, biome, blockID == BlockIDs.GRASS);
+                AddBlock(pos, blockID, block.IsTransparent, biome, block.TintToBiome);
             else
-                AddPlant(pos, blockID, biome, blockID == BlockIDs.GRASS_PLANT);
+                AddPlant(pos, blockID, biome, block.TintToBiome);
         }
 
-        void AddBlock(int3 pos, byte blockID, bool isTransparent, byte biome, bool tint)
+        void AddBlock(int3 pos, byte blockID, bool isTransparent, byte biome, bool tintToBiome)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -122,7 +122,7 @@ namespace minescape.jobs
                 lightUvs.Add(lightLevel);
                 lightUvs.Add(lightLevel);
 
-                if (tint)
+                if (tintToBiome)
                 {
                     Color biomeColour = (Color)biomes[biome].GrassTint;
                     colours.Add(biomeColour);
@@ -180,7 +180,7 @@ namespace minescape.jobs
             }
         }
 
-        void AddPlant(int3 pos, byte blockID, byte biome, bool tint)
+        void AddPlant(int3 pos, byte blockID, byte biome, bool tintToBiome)
         {
             // visible mesh
             for (int i = 0; i < 2; i++)
@@ -202,7 +202,7 @@ namespace minescape.jobs
                 lightUvs.Add(lightLevel);
                 lightUvs.Add(lightLevel);
 
-                if (tint)
+                if (tintToBiome)
                 {
                     Color biomeColour = (Color)biomes[biome].GrassTint;
                     colours.Add(biomeColour);
