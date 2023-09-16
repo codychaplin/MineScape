@@ -35,6 +35,8 @@ namespace minescape.world.chunk
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
         Mesh mainMesh;
+        Mesh colliderMesh;
+        Mesh plantMesh;
         MeshCollider meshCollider;
         MeshCollider plantMeshCollider;
 
@@ -100,19 +102,23 @@ namespace minescape.world.chunk
         /// <summary>
         /// Renders chunk using block data.
         /// </summary>
-        public void RenderChunk()
+        public JobHandle RenderChunk()
         {
             if (isDirty.Value)
                 isRendered = false;
 
             if (isRendered)
-                return;
+                return default;
 
             if (!generated)
             {
                 chunkObject = new() { layer = 6 }; // chunk layer
                 mainMesh = new();
                 mainMesh.MarkDynamic();
+                colliderMesh = new();
+                colliderMesh.MarkDynamic();
+                plantMesh = new();
+                plantMesh.MarkDynamic();
                 meshFilter = chunkObject.AddComponent<MeshFilter>();
                 meshRenderer = chunkObject.AddComponent<MeshRenderer>();
                 meshCollider = chunkObject.AddComponent<MeshCollider>();
@@ -124,7 +130,7 @@ namespace minescape.world.chunk
                 generated = true;
             }
 
-            CreateMesh();
+            var handle = CreateMesh();
             isProcessing = false;
             isRendered = true;
             isDirty.Value = false;
@@ -135,6 +141,8 @@ namespace minescape.world.chunk
                 IsActive = false;
                 activate = true;
             }
+
+            return handle;
         }
 
         public void InitializeMeshCollections()
@@ -153,54 +161,101 @@ namespace minescape.world.chunk
         /// <summary>
         /// Uses voxel data to create mesh.
         /// </summary>
-        void CreateMesh()
+        JobHandle CreateMesh()
         {
-            // collider mesh
-            Mesh colliderMesh = new();
-            colliderMesh.SetVertices(vertices.AsArray());
-            colliderMesh.SetTriangles(triangles.ToArray(), 0);
+            // cache lengths
+            int verticesLength = vertices.Length;
+            int trianglesLength = triangles.Length;
 
-            var meshID = new NativeReference<int>(Allocator.TempJob) { Value = colliderMesh.GetInstanceID() };
-            BakeMeshJob bakeMeshJob = new() { meshID = meshID };
-            var bakeMeshHandle = bakeMeshJob.Schedule();
+            SetColliderMesh(verticesLength, trianglesLength);
+            BakeMeshJob bakeColliderMeshJob = new() { meshID = colliderMesh.GetInstanceID() };
+            var bakeColliderMeshHandle = bakeColliderMeshJob.Schedule();
 
-            // visible mesh
-            mainMesh.Clear();
-            int length = vertices.Length;
+            SetPlantColliderMesh();
+            BakeMeshJob bakePlantColliderMeshJob = new() { meshID = plantMesh.GetInstanceID() };
+            var bakePlantColliderMeshHandle = bakePlantColliderMeshJob.Schedule();
+
+            SetMainMesh(verticesLength, trianglesLength);
+
+            return JobHandle.CombineDependencies(bakeColliderMeshHandle, bakePlantColliderMeshHandle);
+        }
+
+        void SetColliderMesh(int verticesLength, int trianglesLength)
+        {
+            colliderMesh.Clear();
 
             // set vertex data
-            mainMesh.SetVertexBufferParams(length, Constants.VertexAttributes);
-            mainMesh.SetVertexBufferData(vertices.AsArray(), 0, 0, length, 0);
-            mainMesh.SetVertexBufferData(normals.AsArray(), 0, 0, length, 1);
-            mainMesh.SetVertexBufferData(colours.AsArray(), 0, 0, length, 2);
-            mainMesh.SetVertexBufferData(uvData.AsArray(), 0, 0, length, 3);
+            colliderMesh.SetVertexBufferParams(verticesLength, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0));
+            colliderMesh.SetVertexBufferData(vertices.AsArray(), 0, 0, verticesLength);
 
             // set triangles
-            int firstTwoTriCount = triangles.Length + transparentTriangles.Length;
+            colliderMesh.SetIndexBufferParams(trianglesLength, IndexFormat.UInt32);
+            colliderMesh.SetIndexBufferData(triangles.AsArray(), 0, 0, trianglesLength);
+            colliderMesh.subMeshCount = 1;
+            colliderMesh.SetSubMesh(0, new SubMeshDescriptor(0, trianglesLength));
+        }
+
+        void SetPlantColliderMesh()
+        {
+            var plantVerticesLength = plantHitboxVertices.Length;
+            var plantTrianglesLength = plantHitboxTriangles.Length;
+            plantMesh.Clear();
+            plantMesh.SetVertexBufferParams(plantVerticesLength, new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0));
+            plantMesh.SetVertexBufferData(plantHitboxVertices.AsArray(), 0, 0, plantVerticesLength);
+            plantMesh.SetIndexBufferParams(plantTrianglesLength, IndexFormat.UInt32);
+            plantMesh.SetIndexBufferData(plantHitboxTriangles.AsArray(), 0, 0, plantTrianglesLength);
+            plantMesh.subMeshCount = 1;
+            plantMesh.SetSubMesh(0, new SubMeshDescriptor(0, plantTrianglesLength));
+        }
+
+        void SetMainMesh(int verticesLength, int trianglesLength)
+        {
+            // visible mesh
+            mainMesh.Clear();
+
+            // set vertex data
+            mainMesh.SetVertexBufferParams(verticesLength, Constants.VertexAttributes);
+            mainMesh.SetVertexBufferData(vertices.AsArray(), 0, 0, verticesLength, 0);
+            mainMesh.SetVertexBufferData(normals.AsArray(), 0, 0, verticesLength, 1);
+            mainMesh.SetVertexBufferData(colours.AsArray(), 0, 0, verticesLength, 2);
+            mainMesh.SetVertexBufferData(uvData.AsArray(), 0, 0, verticesLength, 3);
+
+            // set triangles
+            int firstTwoTriCount = trianglesLength + transparentTriangles.Length;
             int totalTriCount = firstTwoTriCount + plantTriangles.Length;
             mainMesh.SetIndexBufferParams(totalTriCount, IndexFormat.UInt32);
-            mainMesh.SetIndexBufferData(triangles.AsArray(), 0, 0, triangles.Length);
-            mainMesh.SetIndexBufferData(transparentTriangles.AsArray(), 0, triangles.Length, transparentTriangles.Length);
+            mainMesh.SetIndexBufferData(triangles.AsArray(), 0, 0, trianglesLength);
+            mainMesh.SetIndexBufferData(transparentTriangles.AsArray(), 0, trianglesLength, transparentTriangles.Length);
             mainMesh.SetIndexBufferData(plantTriangles.AsArray(), 0, firstTwoTriCount, plantTriangles.Length);
             mainMesh.subMeshCount = 3;
-            mainMesh.SetSubMesh(0, new SubMeshDescriptor(0, triangles.Length));
-            mainMesh.SetSubMesh(1, new SubMeshDescriptor(triangles.Length, transparentTriangles.Length));
+            mainMesh.SetSubMesh(0, new SubMeshDescriptor(0, trianglesLength));
+            mainMesh.SetSubMesh(1, new SubMeshDescriptor(trianglesLength, transparentTriangles.Length));
             mainMesh.SetSubMesh(2, new SubMeshDescriptor(firstTwoTriCount, plantTriangles.Length));
 
             mainMesh.bounds = Constants.ChunkBounds;
             meshFilter.mesh = mainMesh;
+        }
 
-            // plants collider mesh
-            var plantVertArray = plantHitboxVertices.ToArray(Allocator.Temp);
-            Mesh plantMesh = new();
-            plantMesh.SetVertices(plantVertArray);
-            plantMesh.SetTriangles(plantHitboxTriangles.ToArray(), 0);
+        public void BakeCollider()
+        {
+            meshCollider.sharedMesh = colliderMesh;
             plantMeshCollider.sharedMesh = plantMesh;
             plantMeshCollider.excludeLayers = 1 << 3; // player
 
-            bakeMeshHandle.Complete();
-            meshCollider.sharedMesh = colliderMesh;
-            meshID.Dispose();
+            ClearMeshData();
+        }
+
+        void ClearMeshData()
+        {
+            triangles.Clear();
+            transparentTriangles.Clear();
+            plantTriangles.Clear();
+            vertices.Clear();
+            normals.Clear();
+            colours.Clear();
+            uvData.Clear();
+            plantHitboxVertices.Clear();
+            plantHitboxTriangles.Clear();
         }
 
         /// <summary>

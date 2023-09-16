@@ -8,6 +8,7 @@ using minescape.block;
 using minescape.world;
 using minescape.biome;
 using minescape.world.chunk;
+using UnityEngine.UIElements;
 
 namespace minescape.jobs
 {
@@ -56,16 +57,6 @@ namespace minescape.jobs
         {
             if (!isDirty.Value)
                 return;
-
-            triangles.Clear();
-            transparentTriangles.Clear();
-            plantTriangles.Clear();
-            vertices.Clear();
-            normals.Clear();
-            colours.Clear();
-            uvData.Clear();
-            plantHitboxVertices.Clear();
-            plantHitboxTriangles.Clear();
 
             int index = 0;
             int3 index3 = new(0, 0, 0);

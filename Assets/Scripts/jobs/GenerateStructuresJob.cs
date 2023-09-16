@@ -4,7 +4,6 @@ using Unity.Mathematics;
 using Unity.Collections;
 using minescape.init;
 using minescape.structures;
-using minescape.world.chunk;
 
 namespace minescape.jobs
 {

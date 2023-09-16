@@ -8,11 +8,11 @@ namespace minescape.jobs
     [BurstCompile]
     public struct BakeMeshJob : IJob
     {
-        public NativeReference<int> meshID;
+        public int meshID;
 
         public void Execute()
         {
-            Physics.BakeMesh(meshID.Value, false);
+            Physics.BakeMesh(meshID, false);
         }
     }
 }

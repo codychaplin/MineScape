@@ -8,9 +8,6 @@ using Unity.Mathematics;
 using minescape.jobs;
 using minescape.lighting;
 using minescape.scriptableobjects;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
-using System.Drawing;
-using UnityEditor.Rendering;
 
 namespace minescape.world.chunk
 {
@@ -588,7 +585,7 @@ namespace minescape.world.chunk
                 // render chunk
                 GenerateMeshDataHandle = generateMeshDataJob.Schedule(previousHandle);
                 GenerateMeshDataHandles.Add(GenerateMeshDataHandle);
-                StartCoroutine(RenderChunk(GenerateMeshDataHandle, chunk));
+                StartCoroutine(ApplyMeshDataChunk(GenerateMeshDataHandle, chunk));
                 GenerateMeshDataQueue.Dequeue();
             }
 
@@ -602,7 +599,7 @@ namespace minescape.world.chunk
             return chunk;
         }
 
-        IEnumerator RenderChunk(JobHandle dependency, Chunk chunk)
+        IEnumerator ApplyMeshDataChunk(JobHandle dependency, Chunk chunk)
         {
             while (!dependency.IsCompleted)
             {
@@ -610,12 +607,19 @@ namespace minescape.world.chunk
             }
 
             dependency.Complete();
-            chunk.RenderChunk();
+            var handle = chunk.RenderChunk();
+            StartCoroutine(GenerateCollider(handle, chunk));
+        }
 
-            if (chunk.coord.x - world.playerChunkCoord.x >= Constants.ViewDistance || chunk.coord.z - world.playerChunkCoord.z >= Constants.ViewDistance)
+        IEnumerator GenerateCollider(JobHandle dependency, Chunk chunk)
+        {
+            while (!dependency.IsCompleted)
             {
-                chunk.IsActive = false;
+                yield return null;
             }
+
+            dependency.Complete();
+            chunk.BakeCollider();
         }
 
         public void Dispose()
