@@ -1171,9 +1171,6 @@ MonoBehaviour:
   characterController: {fileID: 730674621}
   world: {fileID: 1389480423}
   ceilingCheck: {fileID: 1949374016}
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
   defaultFOV: 90
   sprintFOVMultiplier: 1.2
   FOVChangeSharpness: 5
@@ -1481,10 +1478,12 @@ MonoBehaviour:
   world: {fileID: 1389480423}
   renderMap: 0
   renderChunks: 1
+  calculateLight: 1
   elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
   relief: {fileID: 11400000, guid: 085529e741670604680c7b815396597b, type: 2}
   temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}
   humidity: {fileID: 11400000, guid: edcb034472b8c6942b7bf21508f0e37d, type: 2}
+  caves: {fileID: 11400000, guid: 20794cc41e240f641a9e3b80fc71bed7, type: 2}
 --- !u!1 &1405992172
 GameObject:
   m_ObjectHideFlags: 0

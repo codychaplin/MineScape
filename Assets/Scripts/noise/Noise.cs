@@ -1,5 +1,4 @@
 using Unity.Mathematics;
-using UnityEngine.UIElements;
 
 public class Noise
 {
@@ -7,6 +6,26 @@ public class Noise
     {
         pos = new float2((pos.x + 0.1f) / 16 * scale + offset, (pos.y + 0.1f) / 16 * scale + offset);
         return noise.cnoise(pos);
+    }
+
+    public static float Get3DPerlin(float3 pos, float offset, float scale)
+    {
+        pos = new float3((pos.x / 100) * scale + offset, (pos.y / 100) * scale + offset, (pos.z / 100) * scale + offset);
+        float totalNoise = 0f;
+        float amplitude = 1f;
+        float frequency = 1f;
+
+        // calculate noise with octaves
+        for (int oct = 0; oct < 2; oct++)
+        {
+            var noiseValue = noise.cnoise(pos * frequency);
+            totalNoise += noiseValue * amplitude;
+            amplitude *= 0.5f;
+            frequency *= 2;
+        }
+
+        float normalizedValue = totalNoise / 2;
+        return normalizedValue;
     }
 
     public static float GetSimplex(float2 pos, float offset, float scale)

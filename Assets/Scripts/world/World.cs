@@ -90,6 +90,13 @@ namespace minescape.world
                    pos.z >= 0 && pos.z < Constants.WorldSizeInBlocks;
         }
 
+        public static bool IsPosInWorld(Vector3 pos)
+        {
+            return pos.x >= 0 && pos.x < Constants.WorldSizeInBlocks &&
+                   pos.y >= 0 && pos.y < Constants.ChunkHeight &&
+                   pos.z >= 0 && pos.z < Constants.WorldSizeInBlocks;
+        }
+
         public static bool IsChunkInWorld(int x, int z)
         {
             return x >= 0 && x < Constants.WorldSizeInChunks &&

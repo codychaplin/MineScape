@@ -2,6 +2,9 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.structures;
+using minescape.jobs;
+using Unity.Jobs;
+using UnityEngine.Rendering;
 
 namespace minescape.world.chunk
 {
@@ -30,16 +33,17 @@ namespace minescape.world.chunk
         GameObject chunkObject;
         public MeshFilter meshFilter;
         MeshRenderer meshRenderer;
+        Mesh mainMesh;
         MeshCollider meshCollider;
         MeshCollider plantMeshCollider;
 
         // mesh data
-        public NativeList<float3> vertices;
         public NativeList<int> triangles;
         public NativeList<int> transparentTriangles;
         public NativeList<int> plantTriangles;
-        public NativeList<Color32> colours;
+        public NativeList<float3> vertices;
         public NativeList<float3> normals;
+        public NativeList<Color32> colours;
         public NativeList<float2> uvs;
         public NativeList<float2> lightUvs;
         public NativeList<float3> plantHitboxVertices;
@@ -107,6 +111,8 @@ namespace minescape.world.chunk
             if (!generated)
             {
                 chunkObject = new() { layer = 6 }; // chunk layer
+                mainMesh = new();
+                mainMesh.MarkDynamic();
                 meshFilter = chunkObject.AddComponent<MeshFilter>();
                 meshRenderer = chunkObject.AddComponent<MeshRenderer>();
                 meshCollider = chunkObject.AddComponent<MeshCollider>();
@@ -134,12 +140,12 @@ namespace minescape.world.chunk
         public void InitializeMeshCollections()
         {
             if (!vertices.IsCreated) vertices = new(Allocator.Persistent);
-            if (!triangles.IsCreated) triangles = new(Allocator.Persistent);
-            if (!transparentTriangles.IsCreated) transparentTriangles = new(Allocator.Persistent);
-            if (!colours.IsCreated) colours = new(Allocator.Persistent);
             if (!normals.IsCreated) normals = new(Allocator.Persistent);
+            if (!colours.IsCreated) colours = new(Allocator.Persistent);
             if (!uvs.IsCreated) uvs = new(Allocator.Persistent);
             if (!lightUvs.IsCreated) lightUvs = new(Allocator.Persistent);
+            if (!triangles.IsCreated) triangles = new(Allocator.Persistent);
+            if (!transparentTriangles.IsCreated) transparentTriangles = new(Allocator.Persistent);
             if (!plantTriangles.IsCreated) plantTriangles = new(Allocator.Persistent);
             if (!plantHitboxVertices.IsCreated) plantHitboxVertices = new(Allocator.Persistent);
             if (!plantHitboxTriangles.IsCreated) plantHitboxTriangles = new(Allocator.Persistent);
@@ -150,25 +156,27 @@ namespace minescape.world.chunk
         /// </summary>
         void CreateMesh()
         {
-            // visible mesh
-            Mesh filterMesh = new() { subMeshCount = 3 };
-            filterMesh.SetVertices(vertices.AsArray());
-            filterMesh.SetTriangles(triangles.ToArray(), 0);
-            filterMesh.SetTriangles(transparentTriangles.ToArray(), 1);
-            filterMesh.SetTriangles(plantTriangles.ToArray(), 2);
-            filterMesh.SetUVs(0, uvs.AsArray());
-            filterMesh.SetUVs(1, lightUvs.AsArray());
-            filterMesh.SetNormals(normals.AsArray());
-            filterMesh.SetColors(colours.AsArray());
-
-            meshFilter.mesh.Clear();
-            meshFilter.mesh = filterMesh;
-
             // collider mesh
             Mesh colliderMesh = new();
             colliderMesh.SetVertices(vertices.AsArray());
             colliderMesh.SetTriangles(triangles.ToArray(), 0);
-            meshCollider.sharedMesh = colliderMesh;
+
+            var meshID = new NativeReference<int>(Allocator.TempJob) { Value = colliderMesh.GetInstanceID() };
+            BakeMeshJob bakeMeshJob = new() { meshID = meshID };
+            var bakeMeshHandle = bakeMeshJob.Schedule();
+
+            // visible mesh
+            mainMesh.Clear();
+            mainMesh.subMeshCount = 3;
+            mainMesh.SetVertices(vertices.AsArray());
+            mainMesh.SetNormals(normals.AsArray());
+            mainMesh.SetColors(colours.AsArray());
+            mainMesh.SetUVs(0, uvs.AsArray());
+            mainMesh.SetUVs(1, lightUvs.AsArray());
+            mainMesh.SetTriangles(triangles.ToArray(), 0);
+            mainMesh.SetTriangles(transparentTriangles.ToArray(), 1);
+            mainMesh.SetTriangles(plantTriangles.ToArray(), 2);
+            meshFilter.mesh = mainMesh;
 
             // plants collider mesh
             var plantVertArray = plantHitboxVertices.ToArray(Allocator.Temp);
@@ -177,6 +185,10 @@ namespace minescape.world.chunk
             plantMesh.SetTriangles(plantHitboxTriangles.ToArray(), 0);
             plantMeshCollider.sharedMesh = plantMesh;
             plantMeshCollider.excludeLayers = 1 << 3; // player
+
+            bakeMeshHandle.Complete();
+            meshCollider.sharedMesh = colliderMesh;
+            meshID.Dispose();
         }
 
         /// <summary>
@@ -194,12 +206,12 @@ namespace minescape.world.chunk
 
             if (vertices.IsCreated) vertices.Dispose();
             if (normals.IsCreated) normals.Dispose();
-            if (triangles.IsCreated) triangles.Dispose();
-            if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
-            if (plantTriangles.IsCreated) plantTriangles.Dispose();
             if (colours.IsCreated) colours.Dispose();
             if (uvs.IsCreated) uvs.Dispose();
             if (lightUvs.IsCreated) lightUvs.Dispose();
+            if (triangles.IsCreated) triangles.Dispose();
+            if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
+            if (plantTriangles.IsCreated) plantTriangles.Dispose();
             if (plantHitboxVertices.IsCreated) plantHitboxVertices.Dispose();
             if (plantHitboxTriangles.IsCreated) plantHitboxTriangles.Dispose();
         }

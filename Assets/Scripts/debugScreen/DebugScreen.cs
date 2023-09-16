@@ -26,6 +26,9 @@ namespace minescape.debugScreen
 
         void Update()
         {
+            if (!World.IsPosInWorld(world.player.position))
+                return;
+
             GetData();
 
             // FPS

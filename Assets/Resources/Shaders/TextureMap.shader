@@ -55,6 +55,12 @@ Shader "Universal Render Pipeline/TextureMap"
                     shade = 0.0947;             
                 if (v.normal.x != 0) // east/west
                     shade = 0.03;
+                // if (v.normal.y == -1) // bottom 
+                //     shade = 0.6;
+                // if (v.normal.z != 0) // north/south
+                //     shade = 0.4;             
+                // if (v.normal.x != 0) // east/west
+                //     shade = 0.2;
 
                 float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 15);
                 o.light.x = clamp(1 - lightLevel + shade, 0, 1 - minLightLevel);

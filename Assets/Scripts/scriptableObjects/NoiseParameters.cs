@@ -10,7 +10,5 @@ namespace minescape.scriptableobjects
         public int octaves;
         public float persistance;
         public float lacunarity;
-        public int minTerrainHeight;
-        public int maxTerrainHeight;
     }
 }

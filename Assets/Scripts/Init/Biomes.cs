@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
-using minescape.biomes;
+using minescape.biome;
 
 namespace minescape.init
 {

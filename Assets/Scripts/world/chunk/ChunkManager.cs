@@ -8,6 +8,9 @@ using Unity.Mathematics;
 using minescape.jobs;
 using minescape.lighting;
 using minescape.scriptableobjects;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using System.Drawing;
+using UnityEditor.Rendering;
 
 namespace minescape.world.chunk
 {
@@ -16,11 +19,13 @@ namespace minescape.world.chunk
         public World world;
         public bool renderMap;
         public bool renderChunks;
+        public bool calculateLight;
 
         public NoiseParameters elevation;
         public NoiseParameters relief;
         public NoiseParameters temperature;
         public NoiseParameters humidity;
+        public NoiseParameters caves;
 
         public Dictionary<ChunkCoord, Chunk> Chunks = new();
 
@@ -32,7 +37,7 @@ namespace minescape.world.chunk
         Queue<ChunkCoord> RemoveSunlightQueue = new();
         Queue<ChunkCoord> CalculateSunlightQueue = new();
         Queue<ChunkCoord> PropagateSunlightQueue = new();
-        Queue<ChunkCoord> RenderQueue = new();
+        Queue<ChunkCoord> GenerateMeshDataQueue = new();
 
         JobHandle previousSetBlocksInChunksHandle = new();
         JobHandle previousGenerateStructuresHandle = new();
@@ -59,7 +64,7 @@ namespace minescape.world.chunk
             if (renderMap)
                 return;
 
-            if (CreateChunksQueue.Count > 0 || CreateStructuresQueue.Count > 0 || CalculateSunlightQueue.Count > 0 || PropagateSunlightQueue.Count > 0 || RenderQueue.Count > 0)
+            if (CreateChunksQueue.Count > 0 || CreateStructuresQueue.Count > 0 || CalculateSunlightQueue.Count > 0 || PropagateSunlightQueue.Count > 0 || GenerateMeshDataQueue.Count > 0)
                 CreateChunks();
         }
 
@@ -84,6 +89,8 @@ namespace minescape.world.chunk
             Chunks.Add(coord, chunk);
             SetBlockDataJob job = new()
             {
+                caveScale = caves.scale,
+                caveThreshold = caves.lacunarity,
                 seed = world.Seed,
                 biomes = world.Biomes.biomes,
                 structures = world.Structures.structures,
@@ -94,8 +101,6 @@ namespace minescape.world.chunk
                 reliefOctaves = relief.octaves,
                 persistance = elevation.persistance,
                 lacunarity = elevation.lacunarity,
-                minTerrainheight = elevation.minTerrainHeight,
-                maxTerrainheight = elevation.maxTerrainHeight,
                 position = new int3(chunk.position.x, 0, chunk.position.z),
                 blockMap = chunk.BlockMap,
                 biomeMap = chunk.BiomeMap,
@@ -145,7 +150,7 @@ namespace minescape.world.chunk
             PropagateSunlightHandles.Dispose();
             previousPropagateSunlightHandle = PropagateSunlightHandle;
 
-            // set mesh data
+            // generate mesh data
             previousGenerateMeshDataHandle = GenerateMeshData(GenerateMeshDataHandles, ref GenerateMeshDataHandle, ref PropagateSunlightHandle, ref neighbourhood);
             GenerateMeshDataHandles.Dispose();
         }
@@ -190,7 +195,7 @@ namespace minescape.world.chunk
             chunk.isDirty.Value = true;
             neighbourhood.SetCenter(chunk.coord.x, chunk.coord.z);
             neighbourhood.SetAllNeighbours();
-            neighbourhood.AddNeighboursToQueue(ref RenderQueue);
+            neighbourhood.AddNeighboursToQueue(ref GenerateMeshDataQueue);
 
             if (!Utils.IsBlockInChunk(x, y, z + 1)) // north
             {
@@ -289,14 +294,14 @@ namespace minescape.world.chunk
         {
             JobHandle previousDependency = previousHandle;
 
-            NativeArray<byte> tempNorth = new(0, Allocator.TempJob);
-            NativeArray<byte> tempNorthEast = new(0, Allocator.TempJob);
-            NativeArray<byte> tempEast = new(0, Allocator.TempJob);
-            NativeArray<byte> tempSouthEast = new(0, Allocator.TempJob);
-            NativeArray<byte> tempSouth = new(0, Allocator.TempJob);
-            NativeArray<byte> tempSouthWest = new(0, Allocator.TempJob);
-            NativeArray<byte> tempWest = new(0, Allocator.TempJob);
-            NativeArray<byte> tempNorthWest = new(0, Allocator.TempJob);
+            NativeArray<byte> tempNorth = new(0, Allocator.Persistent);
+            NativeArray<byte> tempNorthEast = new(0, Allocator.Persistent);
+            NativeArray<byte> tempEast = new(0, Allocator.Persistent);
+            NativeArray<byte> tempSouthEast = new(0, Allocator.Persistent);
+            NativeArray<byte> tempSouth = new(0, Allocator.Persistent);
+            NativeArray<byte> tempSouthWest = new(0, Allocator.Persistent);
+            NativeArray<byte> tempWest = new(0, Allocator.Persistent);
+            NativeArray<byte> tempNorthWest = new(0, Allocator.Persistent);
 
             while (CreateStructuresQueue.Count > 0)
             {
@@ -372,6 +377,7 @@ namespace minescape.world.chunk
 
                 CalculateSunlightJob calculateSunlightJob = new()
                 {
+                    run = calculateLight,
                     blockMap = chunk.BlockMap,
                     lightMap = chunk.LightMap
                 };
@@ -407,6 +413,7 @@ namespace minescape.world.chunk
                 {
                     PropagateSunlightOnStartJob propagateSunlightOnStartJob = new()
                     {
+                        run = calculateLight,
                         coord = coord,
                         blockMap = chunk.BlockMap,
                         lightMap = chunk.LightMap,
@@ -432,13 +439,14 @@ namespace minescape.world.chunk
                     PropagateSunlightHandle = propagateSunlightOnStartJob.Schedule(PropagateSunlightHandle);
                     PropagateSunlightHandles.Add(PropagateSunlightHandle);
 
-                    RenderQueue.Enqueue(coord);
+                    GenerateMeshDataQueue.Enqueue(coord);
                     PropagateSunlightQueue.Dequeue();
                 }
                 else
                 {
                     PropagateSunlightJob propagateSunlightJob = new()
                     {
+                        run = calculateLight,
                         coord = coord,
                         blockMap = chunk.BlockMap,
                         lightMap = chunk.LightMap,
@@ -472,7 +480,7 @@ namespace minescape.world.chunk
                     PropagateSunlightHandle = propagateSunlightJob.Schedule(PropagateSunlightHandle);
                     PropagateSunlightHandles.Add(PropagateSunlightHandle);
 
-                    RenderQueue.Enqueue(coord);
+                    GenerateMeshDataQueue.Enqueue(coord);
                     PropagateSunlightQueue.Dequeue();
                 }
             }
@@ -499,6 +507,7 @@ namespace minescape.world.chunk
 
                 RemoveLightJob removeLightJob = new()
                 {
+                    run = calculateLight,
                     position = position,
                     blockMap = chunk.BlockMap,
                     lightMap = chunk.LightMap,
@@ -533,9 +542,9 @@ namespace minescape.world.chunk
         JobHandle GenerateMeshData(NativeList<JobHandle> GenerateMeshDataHandles, ref JobHandle GenerateMeshDataHandle,
             ref JobHandle previousHandle, ref ChunkCoordNeighbourhood neighbourhood)
         {
-            while (RenderQueue.Count > 0)
+            while (GenerateMeshDataQueue.Count > 0)
             {
-                var coord = RenderQueue.Peek();
+                var coord = GenerateMeshDataQueue.Peek();
                 var chunk = GetChunkForMeshGen(coord);
                 neighbourhood.SetCenter(coord.x, coord.z);
                 neighbourhood.SetAdjacentNeighbours();
@@ -546,6 +555,7 @@ namespace minescape.world.chunk
 
                 GenerateMeshDataJob generateMeshDataJob = new()
                 {
+                    useLight = calculateLight,
                     coord = chunk.coord,
                     position = new int3(chunk.position.x, 0, chunk.position.z),
                     blocks = world.Blocks.blocks,
@@ -561,10 +571,10 @@ namespace minescape.world.chunk
                     eastLightMap = eastChunk.LightMap,
                     southLightMap = southChunk.LightMap,
                     westLightMap = westChunk.LightMap,
-                    vertices = chunk.vertices,
                     triangles = chunk.triangles,
                     transparentTriangles = chunk.transparentTriangles,
                     plantTriangles = chunk.plantTriangles,
+                    vertices = chunk.vertices,
                     normals = chunk.normals,
                     colours = chunk.colours,
                     uvs = chunk.uvs,
@@ -580,7 +590,7 @@ namespace minescape.world.chunk
                 GenerateMeshDataHandle = generateMeshDataJob.Schedule(previousHandle);
                 GenerateMeshDataHandles.Add(GenerateMeshDataHandle);
                 StartCoroutine(RenderChunk(GenerateMeshDataHandle, chunk));
-                RenderQueue.Dequeue();
+                GenerateMeshDataQueue.Dequeue();
             }
 
             return JobHandle.CombineDependencies(GenerateMeshDataHandles);

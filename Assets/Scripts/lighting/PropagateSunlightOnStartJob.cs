@@ -11,6 +11,8 @@ namespace minescape.lighting
     [BurstCompile]
     public struct PropagateSunlightOnStartJob : IJob
     {
+        [ReadOnly] public bool run;
+
         [ReadOnly] public ChunkCoord coord;
 
         [ReadOnly] public NativeArray<byte> blockMap;
@@ -39,6 +41,9 @@ namespace minescape.lighting
 
         public void Execute()
         {
+            if (!run)
+                return;
+
             if (onGenerate)
             {
                 for (int x = 0; x < Constants.ChunkWidth; x++)

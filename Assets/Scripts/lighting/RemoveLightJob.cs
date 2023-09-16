@@ -10,6 +10,8 @@ namespace minescape.lighting
     [BurstCompile]
     public struct RemoveLightJob : IJob
     {
+        [ReadOnly] public bool run;
+
         [ReadOnly] public int3 position;
         [ReadOnly] public NativeArray<byte> blockMap;
 
@@ -37,6 +39,9 @@ namespace minescape.lighting
 
         public void Execute()
         {
+            if (!run)
+                return;
+
             // add initial node
             int index = Utils.ConvertToIndex(position);
             byte lightLevel = lightMap[index];

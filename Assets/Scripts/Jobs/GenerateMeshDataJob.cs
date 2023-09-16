@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.block;
 using minescape.world;
-using minescape.biomes;
+using minescape.biome;
 using minescape.world.chunk;
 
 namespace minescape.jobs
@@ -14,6 +14,8 @@ namespace minescape.jobs
     [BurstCompile]
     public struct GenerateMeshDataJob : IJob
     {
+        [ReadOnly] public bool useLight;
+
         [ReadOnly] public ChunkCoord coord;
 
         [ReadOnly] public int3 position;
@@ -35,14 +37,14 @@ namespace minescape.jobs
         [ReadOnly] public NativeArray<byte> southLightMap;
         [ReadOnly] public NativeArray<byte> westLightMap;
 
-        [WriteOnly] public NativeList<float3> vertices;
         [WriteOnly] public NativeList<int> triangles;
         [WriteOnly] public NativeList<int> transparentTriangles;
         [WriteOnly] public NativeList<int> plantTriangles;
+        [WriteOnly] public NativeList<float3> vertices;
+        [WriteOnly] public NativeList<float3> normals;
         [WriteOnly] public NativeList<Color32> colours;
         [WriteOnly] public NativeList<float2> uvs;
         [WriteOnly] public NativeList<float2> lightUvs;
-        [WriteOnly] public NativeList<float3> normals;
         [WriteOnly] public NativeList<float3> plantHitboxVertices;
         [WriteOnly] public NativeList<int> plantHitboxTriangles;
 
@@ -56,14 +58,14 @@ namespace minescape.jobs
             if (!isDirty.Value)
                 return;
 
-            vertices.Clear();
             triangles.Clear();
             transparentTriangles.Clear();
             plantTriangles.Clear();
+            vertices.Clear();
+            normals.Clear();
             colours.Clear();
             uvs.Clear();
             lightUvs.Clear();
-            normals.Clear();
             plantHitboxVertices.Clear();
             plantHitboxTriangles.Clear();
 
@@ -111,33 +113,6 @@ namespace minescape.jobs
                 if (dontRender)
                     continue;
 
-                // sets sunlight level
-                var lightLevel = new float2(15f, 0f);
-                if (Utils.IsBlockInChunk(adjacentIndex.x, adjacentIndex.y, adjacentIndex.z))
-                    lightLevel.x = lightMap[Utils.ConvertToIndex(adjacentIndex)];
-                else
-                    lightLevel.x = GetAdjacentLightLevel(adjacentIndex);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-
-                if (tintToBiome)
-                {
-                    Color biomeColour = (Color)biomes[biome].GrassTint;
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                }
-                else
-                {
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                }
-
                 // set vertices
                 float3 v0 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]];
                 float3 v1 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 1]];
@@ -154,7 +129,26 @@ namespace minescape.jobs
                 normals.Add(direction);
                 normals.Add(direction);
 
+                // set vertex colours
+                Color colour = tintToBiome ? (Color)biomes[biome].GrassTint : Color.clear;
+                colours.Add(colour);
+                colours.Add(colour);
+                colours.Add(colour);
+                colours.Add(colour);
+
+                // set uvs
                 AddTexture(blocks[blockID].GetFace(i));
+
+                // sets sunlight level
+                var lightLevel = new float2(15f, 0f);
+                    if (Utils.IsBlockInChunk(adjacentIndex.x, adjacentIndex.y, adjacentIndex.z))
+                        lightLevel.x = lightMap[Utils.ConvertToIndex(adjacentIndex)];
+                    else
+                        lightLevel.x = GetAdjacentLightLevel(adjacentIndex);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
 
                 // set triangles
                 if (isTransparent)
@@ -195,37 +189,29 @@ namespace minescape.jobs
                 vertices.Add(v2);
                 vertices.Add(v3);
 
-                // set light level
-                var lightLevel = new float2(15f, 0f);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-
-                if (tintToBiome)
-                {
-                    Color biomeColour = (Color)biomes[biome].GrassTint;
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                    colours.Add(biomeColour);
-                }
-                else
-                {
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                    colours.Add(Color.clear);
-                }
-
-                // set normals
+                // set normal
                 int3 normal = pos + VoxelData.plantFaceCheck[i];
                 normals.Add(normal);
                 normals.Add(normal);
                 normals.Add(normal);
                 normals.Add(normal);
 
+                // set colour
+                Color colour = tintToBiome ? (Color)biomes[biome].GrassTint : Color.clear;
+                colours.Add(colour);
+                colours.Add(colour);
+                colours.Add(colour);
+                colours.Add(colour);
+
+                // set uvs
                 AddTexture(blocks[blockID].GetFace(i));
+
+                // set sunlight level
+                var lightLevel = new float2(15f, 0f);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
+                lightUvs.Add(lightLevel);
 
                 // set triangles
                 plantTriangles.Add(vertexIndex);

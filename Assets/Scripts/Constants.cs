@@ -1,3 +1,6 @@
+using UnityEngine;
+using UnityEngine.Rendering;
+
 namespace minescape
 {
     public static class Constants
