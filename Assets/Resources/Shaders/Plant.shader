@@ -24,15 +24,17 @@ Shader "Universal Render Pipeline/Plant"
             {
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
-                float2 uv : TEXCOORD0;
                 float4 colour : COLOR;
+                float2 uv : TEXCOORD0;
+                float2 light : TEXCOORD1;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 colour : COLOR;
+                float2 uv : TEXCOORD0;
+                float2 light : TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -44,6 +46,13 @@ Shader "Universal Render Pipeline/Plant"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.colour = v.colour;
+
+                float minLightLevel = 0.03;
+                float shade = 0;
+                float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 15);
+                o.light.x = clamp(1 - lightLevel + shade, 0, 1 - minLightLevel);
+                o.light.y = 0;
+
                 return o;
             }
 
@@ -51,7 +60,10 @@ Shader "Universal Render Pipeline/Plant"
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
                 clip(col.a - 0.5);
+
                 col *= i.colour - fixed4(0.2,0.2,0.2,1); // slightly darker than grass
+                col = lerp(col, float4(0, 0, 0, 1), i.light.x);
+
                 return col;
             }
             ENDCG

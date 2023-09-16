@@ -72,9 +72,12 @@ Shader "Universal Render Pipeline/TextureMap"
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
+
                 if (i.colour.a != 0)
                     col = col * i.colour;
+
                 col = lerp(col, float4(0, 0, 0, 1), i.light.x);
+                
                 return col;
             }
             ENDCG

@@ -43,8 +43,7 @@ namespace minescape.jobs
         [WriteOnly] public NativeList<float3> vertices;
         [WriteOnly] public NativeList<float3> normals;
         [WriteOnly] public NativeList<Color32> colours;
-        [WriteOnly] public NativeList<float2> uvs;
-        [WriteOnly] public NativeList<float2> lightUvs;
+        [WriteOnly] public NativeList<UVData> uvData;
         [WriteOnly] public NativeList<float3> plantHitboxVertices;
         [WriteOnly] public NativeList<int> plantHitboxTriangles;
 
@@ -64,8 +63,7 @@ namespace minescape.jobs
             vertices.Clear();
             normals.Clear();
             colours.Clear();
-            uvs.Clear();
-            lightUvs.Clear();
+            uvData.Clear();
             plantHitboxVertices.Clear();
             plantHitboxTriangles.Clear();
 
@@ -137,7 +135,7 @@ namespace minescape.jobs
                 colours.Add(colour);
 
                 // set uvs
-                AddTexture(blocks[blockID].GetFace(i));
+                var uvs = AddTexture(blocks[blockID].GetFace(i));
 
                 // sets sunlight level
                 var lightLevel = new float2(15f, 0f);
@@ -145,10 +143,13 @@ namespace minescape.jobs
                         lightLevel.x = lightMap[Utils.ConvertToIndex(adjacentIndex)];
                     else
                         lightLevel.x = GetAdjacentLightLevel(adjacentIndex);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
+
+                uvData.Add(new UVData(uvs[0], lightLevel));
+                uvData.Add(new UVData(uvs[1], lightLevel));
+                uvData.Add(new UVData(uvs[2], lightLevel));
+                uvData.Add(new UVData(uvs[3], lightLevel));
+
+                uvs.Dispose();
 
                 // set triangles
                 if (isTransparent)
@@ -204,14 +205,17 @@ namespace minescape.jobs
                 colours.Add(colour);
 
                 // set uvs
-                AddTexture(blocks[blockID].GetFace(i));
+                var uvs = AddTexture(blocks[blockID].GetFace(i));
 
                 // set sunlight level
-                var lightLevel = new float2(15f, 0f);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
-                lightUvs.Add(lightLevel);
+                var lightLevel = new float2(lightMap[Utils.ConvertToIndex(pos)], 0f);
+
+                uvData.Add(new UVData(uvs[0], lightLevel));
+                uvData.Add(new UVData(uvs[1], lightLevel));
+                uvData.Add(new UVData(uvs[2], lightLevel));
+                uvData.Add(new UVData(uvs[3], lightLevel));
+
+                uvs.Dispose();
 
                 // set triangles
                 plantTriangles.Add(vertexIndex);
@@ -319,7 +323,7 @@ namespace minescape.jobs
 
         }
 
-        void AddTexture(int textureId)
+        NativeArray<float2> AddTexture(int textureId)
         {
             // get normalized texture coordinates
             float y = textureId / Constants.TextureAtlasSize;
@@ -328,10 +332,12 @@ namespace minescape.jobs
             y *= Constants.NormalizedTextureSize;
 
             // set uvs
-            uvs.Add(new float2(x, y));
-            uvs.Add(new float2(x, y + Constants.NormalizedTextureSize));
-            uvs.Add(new float2(x + Constants.NormalizedTextureSize, y));
-            uvs.Add(new float2(x + Constants.NormalizedTextureSize, y + Constants.NormalizedTextureSize));
+            var uvs = new NativeArray<float2>(4, Allocator.Temp);
+            uvs[0] = new float2(x, y);
+            uvs[1] = new float2(x, y + Constants.NormalizedTextureSize);
+            uvs[2] = new float2(x + Constants.NormalizedTextureSize, y);
+            uvs[3] = new float2(x + Constants.NormalizedTextureSize, y + Constants.NormalizedTextureSize);
+            return uvs;
         }
     }
 }

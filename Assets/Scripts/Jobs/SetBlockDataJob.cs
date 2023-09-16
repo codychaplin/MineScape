@@ -100,13 +100,13 @@ namespace minescape.jobs
                         else
                             break;
 
-                        if (y <= terrainHeight)
+                        /*if (y <= terrainHeight)
                         {
                             var pos3D = new float3(position.x + x, position.y + y, position.z + z);
                             float caves = Noise.Get3DPerlin(pos3D, 0, caveScale);
                             if (caves > caveThreshold)
                                 blockMap[index] = BlockIDs.AIR;
-                        }
+                        }*/
                     }
 
                     var treeMap = Noise.TreeNoise(pos, 15f);

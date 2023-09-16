@@ -1,9 +1,10 @@
 using UnityEngine;
+using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
-using minescape.structures;
 using minescape.jobs;
-using Unity.Jobs;
+using minescape.structures;
+using UnityEngine.UIElements;
 using UnityEngine.Rendering;
 
 namespace minescape.world.chunk
@@ -44,8 +45,7 @@ namespace minescape.world.chunk
         public NativeList<float3> vertices;
         public NativeList<float3> normals;
         public NativeList<Color32> colours;
-        public NativeList<float2> uvs;
-        public NativeList<float2> lightUvs;
+        public NativeList<UVData> uvData;
         public NativeList<float3> plantHitboxVertices;
         public NativeList<int> plantHitboxTriangles;
 
@@ -142,8 +142,7 @@ namespace minescape.world.chunk
             if (!vertices.IsCreated) vertices = new(Allocator.Persistent);
             if (!normals.IsCreated) normals = new(Allocator.Persistent);
             if (!colours.IsCreated) colours = new(Allocator.Persistent);
-            if (!uvs.IsCreated) uvs = new(Allocator.Persistent);
-            if (!lightUvs.IsCreated) lightUvs = new(Allocator.Persistent);
+            if (!uvData.IsCreated) uvData = new(Allocator.Persistent);
             if (!triangles.IsCreated) triangles = new(Allocator.Persistent);
             if (!transparentTriangles.IsCreated) transparentTriangles = new(Allocator.Persistent);
             if (!plantTriangles.IsCreated) plantTriangles = new(Allocator.Persistent);
@@ -167,15 +166,28 @@ namespace minescape.world.chunk
 
             // visible mesh
             mainMesh.Clear();
+            int length = vertices.Length;
+
+            // set vertex data
+            mainMesh.SetVertexBufferParams(length, Constants.VertexAttributes);
+            mainMesh.SetVertexBufferData(vertices.AsArray(), 0, 0, length, 0);
+            mainMesh.SetVertexBufferData(normals.AsArray(), 0, 0, length, 1);
+            mainMesh.SetVertexBufferData(colours.AsArray(), 0, 0, length, 2);
+            mainMesh.SetVertexBufferData(uvData.AsArray(), 0, 0, length, 3);
+
+            // set triangles
+            int firstTwoTriCount = triangles.Length + transparentTriangles.Length;
+            int totalTriCount = firstTwoTriCount + plantTriangles.Length;
+            mainMesh.SetIndexBufferParams(totalTriCount, IndexFormat.UInt32);
+            mainMesh.SetIndexBufferData(triangles.AsArray(), 0, 0, triangles.Length);
+            mainMesh.SetIndexBufferData(transparentTriangles.AsArray(), 0, triangles.Length, transparentTriangles.Length);
+            mainMesh.SetIndexBufferData(plantTriangles.AsArray(), 0, firstTwoTriCount, plantTriangles.Length);
             mainMesh.subMeshCount = 3;
-            mainMesh.SetVertices(vertices.AsArray());
-            mainMesh.SetNormals(normals.AsArray());
-            mainMesh.SetColors(colours.AsArray());
-            mainMesh.SetUVs(0, uvs.AsArray());
-            mainMesh.SetUVs(1, lightUvs.AsArray());
-            mainMesh.SetTriangles(triangles.ToArray(), 0);
-            mainMesh.SetTriangles(transparentTriangles.ToArray(), 1);
-            mainMesh.SetTriangles(plantTriangles.ToArray(), 2);
+            mainMesh.SetSubMesh(0, new SubMeshDescriptor(0, triangles.Length));
+            mainMesh.SetSubMesh(1, new SubMeshDescriptor(triangles.Length, transparentTriangles.Length));
+            mainMesh.SetSubMesh(2, new SubMeshDescriptor(firstTwoTriCount, plantTriangles.Length));
+
+            mainMesh.bounds = Constants.ChunkBounds;
             meshFilter.mesh = mainMesh;
 
             // plants collider mesh
@@ -207,8 +219,7 @@ namespace minescape.world.chunk
             if (vertices.IsCreated) vertices.Dispose();
             if (normals.IsCreated) normals.Dispose();
             if (colours.IsCreated) colours.Dispose();
-            if (uvs.IsCreated) uvs.Dispose();
-            if (lightUvs.IsCreated) lightUvs.Dispose();
+            if (uvData.IsCreated) uvData.Dispose();
             if (triangles.IsCreated) triangles.Dispose();
             if (transparentTriangles.IsCreated) transparentTriangles.Dispose();
             if (plantTriangles.IsCreated) plantTriangles.Dispose();
