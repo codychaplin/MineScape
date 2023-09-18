@@ -241,21 +241,6 @@ namespace minescape.world.chunk
             meshCollider.sharedMesh = colliderMesh;
             plantMeshCollider.sharedMesh = plantMesh;
             plantMeshCollider.excludeLayers = 1 << 3; // player
-
-            ClearMeshData();
-        }
-
-        void ClearMeshData()
-        {
-            triangles.Clear();
-            transparentTriangles.Clear();
-            plantTriangles.Clear();
-            vertices.Clear();
-            normals.Clear();
-            colours.Clear();
-            uvData.Clear();
-            plantHitboxVertices.Clear();
-            plantHitboxTriangles.Clear();
         }
 
         /// <summary>

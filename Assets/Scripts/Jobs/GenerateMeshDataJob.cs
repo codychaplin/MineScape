@@ -58,6 +58,16 @@ namespace minescape.jobs
             if (!isDirty.Value)
                 return;
 
+            triangles.Clear();
+            transparentTriangles.Clear();
+            plantTriangles.Clear();
+            vertices.Clear();
+            normals.Clear();
+            colours.Clear();
+            uvData.Clear();
+            plantHitboxVertices.Clear();
+            plantHitboxTriangles.Clear();
+
             int index = 0;
             int3 index3 = new(0, 0, 0);
             for (int x = 0; x < Constants.ChunkWidth; x++)
