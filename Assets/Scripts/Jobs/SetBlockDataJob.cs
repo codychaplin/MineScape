@@ -87,34 +87,44 @@ namespace minescape.jobs
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
                         index = Utils.ConvertToIndex(x, y, z);
+                        byte setBlock = 0;
                         if (y == 0)
-                            blockMap[index] = BlockIDs.BEDROCK;
+                            setBlock = BlockIDs.BEDROCK;
                         else if (y < terrainHeight - 4)
-                            blockMap[index] = BlockIDs.STONE;
+                            setBlock = BlockIDs.STONE;
                         else if (y < terrainHeight)
-                            blockMap[index] = biome.FillerBlock;
+                            setBlock = biome.FillerBlock;
                         else if (y == terrainHeight)
-                            blockMap[index] = biome.SurfaceBlock;
+                            setBlock = biome.SurfaceBlock;
                         else if (y > terrainHeight && y <= Constants.WaterLevel)
-                            blockMap[index] = BlockIDs.WATER;
+                            setBlock = BlockIDs.WATER;
                         else
                             break;
 
                         // caves
+                        var pos3D = new float3(position.x + x, position.y + y, position.z + z);
                         int maxHeight = math.min(terrainHeight, terrainHeight - 5 + (int)((elevationX + elevationY * 3) * 5));
                         int minHeight = math.max(3, 3 + (int)(elevationY * 10));
                         if (y >= minHeight && y <= maxHeight)
                         {
-                            index = Utils.ConvertToIndex(x, y, z);
-                            var pos3D = new float3(position.x + x, position.y + y, position.z + z);
+                            // caves are the intersections of two 3D noise maps
                             float value1 = Noise.GetCaveNoise(pos3D, seed, 0, caveScale, caveOctaves);
-                            if (value1 >= caveThreshold) continue; // if first value is above, skip before calculating second
-                            float value2 = Noise.GetCaveNoise(pos3D, seed, 10000, caveScale, caveOctaves);
-                            if (value2 < caveThreshold)
-                                blockMap[index] = BlockIDs.AIR;
+                            if (value1 < caveThreshold)
+                            {
+                                float value2 = Noise.GetCaveNoise(pos3D, seed, 10000, caveScale, caveOctaves);
+                                if (value2 < caveThreshold)
+                                    setBlock = BlockIDs.AIR;
+                            }
                         }
+
+                        blockMap[index] = setBlock;
+
+                        // ores
+                        if (setBlock == BlockIDs.STONE && y < terrainHeight - 4 && y > 4)
+                            SetOres(pos3D, y, index);
                     }
 
+                    // foliage
                     var treeMap = Noise.FoliageNoise(pos, 15f);
                     var grassMap = Noise.FoliageNoise(pos, 14f);
                     bool render = blockMap[Utils.ConvertToIndex(x, terrainHeight, z)] != BlockIDs.AIR;
@@ -216,6 +226,88 @@ namespace minescape.jobs
                 return BiomesIDs.TROPICAL_FOREST;
 
             return BiomesIDs.PLAINS;
+        }
+
+        void SetOres(float3 pos3D, int y, int index)
+        {
+            var coal = Noise.GetOreVeinNoise(pos3D, seed, 0, 26f);
+            if (coal > 0.42f)
+            {
+                blockMap[index] = BlockIDs.COAL_ORE;
+                return;
+            }
+
+            var iron = Noise.GetOreVeinNoise(pos3D, seed, 1000, 24f);
+            if (iron > 0.44f)
+            {
+                blockMap[index] = BlockIDs.IRON_ORE;
+                return;
+            }
+
+            var copper = Noise.GetOreVeinNoise(pos3D, seed, 2000, 22f);
+            if (copper > 0.43f)
+            {
+                blockMap[index] = BlockIDs.COPPER_ORE;
+                return;
+            }
+
+            var zinc = Noise.GetOreVeinNoise(pos3D, seed, 3000, 23f);
+            if (zinc > 0.46f)
+            {
+                blockMap[index] = BlockIDs.ZINC_ORE;
+                return;
+            }
+
+            var tin = Noise.GetOreVeinNoise(pos3D, seed, 4000, 24f);
+            if (tin > 0.43f)
+            {
+                blockMap[index] = BlockIDs.TIN_ORE;
+                return;
+            }
+
+            var silver = Noise.GetOreVeinNoise(pos3D, seed, 5000, 24f);
+            if (silver > 0.45f)
+            {
+                blockMap[index] = BlockIDs.SILVER_ORE;
+                return;
+            }
+
+            if (y < 42)
+            {
+                var titanium = Noise.GetOreVeinNoise(pos3D, seed, 6000, 20f);
+                if (titanium > 0.47f)
+                {
+                    blockMap[index] = BlockIDs.TITANIUM_ORE;
+                    return;
+                }
+
+                if (y < 36)
+                {
+                    var gold = Noise.GetOreVeinNoise(pos3D, seed, 7000, 22f);
+                    if (gold > 0.47f)
+                    {
+                        blockMap[index] = BlockIDs.GOLD_ORE;
+                        return;
+                    }
+
+                    if (y < 32)
+                    {
+                        var tungsten = Noise.GetOreVeinNoise(pos3D, seed, 8000, 21f);
+                        if (tungsten > 0.5f)
+                        {
+                            blockMap[index] = BlockIDs.TUNGSTEN_ORE;
+                            return;
+                        }
+
+                        var diamond = Noise.GetOreVeinNoise(pos3D, seed, 9000, 21f);
+                        if (diamond > 0.49f)
+                        {
+                            blockMap[index] = BlockIDs.DIAMOND_ORE;
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 }
