@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: caves
   m_EditorClassIdentifier: 
   offset: 0
-  scale: 4
-  octaves: 0
+  scale: 1.1
+  octaves: 3
   persistance: 0
-  lacunarity: 0.2
+  lacunarity: 0.018

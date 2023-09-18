@@ -87,6 +87,7 @@ namespace minescape.world.chunk
             SetBlockDataJob job = new()
             {
                 caveScale = caves.scale,
+                caveOctaves = caves.octaves,
                 caveThreshold = caves.lacunarity,
                 seed = world.Seed,
                 biomes = world.Biomes.biomes,

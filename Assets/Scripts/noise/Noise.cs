@@ -2,59 +2,6 @@ using Unity.Mathematics;
 
 public class Noise
 {
-    public static float GetPerlin(float2 pos, float offset, float scale)
-    {
-        pos = new float2((pos.x + 0.1f) / 16 * scale + offset, (pos.y + 0.1f) / 16 * scale + offset);
-        return noise.cnoise(pos);
-    }
-
-    public static float Get3DPerlin(float3 pos, float offset, float scale)
-    {
-        pos = new float3((pos.x / 100) * scale + offset, (pos.y / 100) * scale + offset, (pos.z / 100) * scale + offset);
-        float totalNoise = 0f;
-        float amplitude = 1f;
-        float frequency = 1f;
-
-        // calculate noise with octaves
-        for (int oct = 0; oct < 2; oct++)
-        {
-            var noiseValue = noise.cnoise(pos * frequency);
-            totalNoise += noiseValue * amplitude;
-            amplitude *= 0.5f;
-            frequency *= 2;
-        }
-
-        float normalizedValue = totalNoise / 2;
-        return normalizedValue;
-    }
-
-    public static float GetSimplex(float2 pos, float offset, float scale)
-    {
-        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
-        return noise.snoise(pos);
-    }
-
-    public static float GetPerlinNoiseOctaves(float2 pos, float offset, float scale, int octaves, float persistance, float lacunarity)
-    {
-        // init position and multipliers
-        pos = new float2(pos.x / 100 * scale + offset, pos.y / 100 * scale + offset);
-        float totalNoise = 0f;
-        float amplitude = 1f;
-        float frequency = 1f;
-
-        // calculate noise with octaves
-        for (int oct = 0; oct < octaves; oct++)
-        {
-            var noiseValue = noise.cnoise(pos * frequency);
-            totalNoise += noiseValue * amplitude;
-            amplitude *= persistance;
-            frequency *= lacunarity;
-        }
-
-        float normalizedValue = totalNoise / octaves;
-        return normalizedValue;
-    }
-
     public static float GetTerrainNoise(float2 pos, int seed, float offset, float scale, int octaves, float persistance, float lacunarity, int fuzziness, float normalizeFactor)
     {
         // init position and multipliers
@@ -110,13 +57,27 @@ public class Noise
         return normalized;
     }
 
-    public static float TreeNoise(float2 pos, float scale)
+    public static float GetCaveNoise(float3 pos, int seed, float offset, float scale, int octaves)
     {
-        pos = new float2(pos.x / 32 * scale, pos.y / 32 * scale);
-        return noise.snoise(pos);
+        pos = new float3((pos.x + seed) / 100 * scale + offset, (pos.y + seed) / 100 * scale + offset, (pos.z + seed) / 100 * scale + offset);
+        float totalNoise = 0f;
+        float amplitude = 1f;
+        float frequency = 1f;
+
+        // calculate noise with octaves
+        for (int oct = 0; oct < octaves; oct++)
+        {
+            var noiseValue = noise.cnoise(pos * frequency);
+            totalNoise += noiseValue * amplitude;
+            amplitude *= 0.5f;
+            frequency *= 2;
+        }
+
+        float normalizedValue = totalNoise / octaves;
+        return math.abs(normalizedValue);
     }
 
-    public static float GrassNoise(float2 pos, float scale)
+    public static float FoliageNoise(float2 pos, float scale)
     {
         pos = new float2(pos.x / 32 * scale, pos.y / 32 * scale);
         return noise.snoise(pos);

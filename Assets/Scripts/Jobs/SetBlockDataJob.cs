@@ -5,7 +5,6 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.biome;
 using minescape.structures;
-using minescape.world.chunk;
 
 namespace minescape.jobs
 {
@@ -13,6 +12,7 @@ namespace minescape.jobs
     public struct SetBlockDataJob : IJob
     {
         [ReadOnly] public float caveScale;
+        [ReadOnly] public int caveOctaves;
         [ReadOnly] public float caveThreshold;
 
         [ReadOnly] public int seed;
@@ -100,17 +100,23 @@ namespace minescape.jobs
                         else
                             break;
 
-                        if (y <= terrainHeight)
+                        // caves
+                        int maxHeight = math.min(terrainHeight, terrainHeight - 5 + (int)((elevationX + elevationY * 3) * 5));
+                        int minHeight = math.max(3, 3 + (int)(elevationY * 10));
+                        if (y >= minHeight && y <= maxHeight)
                         {
+                            index = Utils.ConvertToIndex(x, y, z);
                             var pos3D = new float3(position.x + x, position.y + y, position.z + z);
-                            float caves = Noise.Get3DPerlin(pos3D, 0, caveScale);
-                            if (caves > caveThreshold)
+                            float value1 = Noise.GetCaveNoise(pos3D, seed, 0, caveScale, caveOctaves);
+                            if (value1 >= caveThreshold) continue; // if first value is above, skip before calculating second
+                            float value2 = Noise.GetCaveNoise(pos3D, seed, 10000, caveScale, caveOctaves);
+                            if (value2 < caveThreshold)
                                 blockMap[index] = BlockIDs.AIR;
                         }
                     }
 
-                    var treeMap = Noise.TreeNoise(pos, 15f);
-                    var grassMap = Noise.GrassNoise(pos, 14f);
+                    var treeMap = Noise.FoliageNoise(pos, 15f);
+                    var grassMap = Noise.FoliageNoise(pos, 14f);
                     bool render = blockMap[Utils.ConvertToIndex(x, terrainHeight, z)] != BlockIDs.AIR;
                     if (render && terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // not a beach/ocean biome
                     {

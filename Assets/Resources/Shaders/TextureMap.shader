@@ -30,10 +30,10 @@ Shader "Universal Render Pipeline/TextureMap"
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
-                float2 light : TEXCOORD1;
                 float4 vertex : SV_POSITION;
                 float4 colour : COLOR;
+                float2 uv : TEXCOORD0;
+                float2 light : TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -55,16 +55,17 @@ Shader "Universal Render Pipeline/TextureMap"
                     shade = 0.0947;             
                 if (v.normal.x != 0) // east/west
                     shade = 0.03;
+
+                float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 15);
+                o.light.x = clamp(1 - lightLevel + shade, 0, 1 - minLightLevel);
+                o.light.y = 0;
                 // if (v.normal.y == -1) // bottom 
                 //     shade = 0.6;
                 // if (v.normal.z != 0) // north/south
                 //     shade = 0.4;             
                 // if (v.normal.x != 0) // east/west
                 //     shade = 0.2;
-
-                float lightLevel = minLightLevel + (1 - minLightLevel) * (v.light.x / 15);
-                o.light.x = clamp(1 - lightLevel + shade, 0, 1 - minLightLevel);
-                o.light.y = 0;
+                // o.light.x = shade;
 
                 return o;
             }
@@ -77,7 +78,7 @@ Shader "Universal Render Pipeline/TextureMap"
                     col = col * i.colour;
 
                 col = lerp(col, float4(0, 0, 0, 1), i.light.x);
-                
+
                 return col;
             }
             ENDCG

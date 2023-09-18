@@ -11,8 +11,8 @@ namespace minescape.init
         public Block STONE = new(2, 1, 1, 1, 1, 1, 1 );
         public Block COBBLESTONE = new(3, 2, 2, 2, 2, 2, 2 );
         public Block STONE_BRICKS = new(4, 3, 3, 3, 3, 3, 3);
-        public Block GRASS = new(5, 4, 4, 4, 4, 4, 4, true);
-        public Block DIRT = new(6, 5, 5, 5, 5, 5, 5 );
+        public Block GRASS = new(5, 20, 20, 4, 5, 20, 20, true);
+        public Block DIRT = new(6, 5, 5, 5, 5, 5, 5, true );
         public Block SAND = new(7, 6, 6, 6, 6, 6, 6 );
         public Block SAND_DESERT = new(8, 7, 7, 7, 7, 7, 7);
         public Block WOOD = new(9, 8, 8, 9, 9, 8, 8);
