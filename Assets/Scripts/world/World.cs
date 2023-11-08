@@ -5,7 +5,8 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.splines;
 using minescape.world.chunk;
-using TMPro;
+using minescape.jobs;
+using Unity.Jobs;
 
 namespace minescape.world
 {
@@ -46,7 +47,7 @@ namespace minescape.world
         {
             Application.targetFrameRate = 75;
 
-            // initialize seed, player position, and classes
+            // initialize seed
             UnityEngine.Random.InitState(Seed);
 
             // set spawn
@@ -56,9 +57,6 @@ namespace minescape.world
 
         void Update()
         {
-            if (chunkManager.renderMap)
-                return;
-
             playerChunkCoord = GetChunkCoord(player.position);
             chunkChanged = !playerChunkCoord.Equals(playerLastChunkCoord); // used by debug screen too
             if (chunkChanged)

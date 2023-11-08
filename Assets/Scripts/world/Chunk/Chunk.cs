@@ -14,10 +14,10 @@ namespace minescape.world.chunk
         public Vector3Int position;
 
         public ChunkCoord coord; // coordinates of chunk
+        public ChunkSection[] ChunkSections;
         public NativeArray<byte> BlockMap; // blocks in chunk
         public NativeArray<byte> LightMap; // Light levels in chunk
         public NativeArray<byte> BiomeMap; // biomes in chunk
-        public NativeArray<byte> HeightMap; // terrain height in chunk
         public NativeList<Structure> Structures; // structures in chunks
 
         // used to decide whether to regenerate chunk mesh
@@ -62,10 +62,11 @@ namespace minescape.world.chunk
             coord = _coord;
             position = new(coord.x * Constants.ChunkWidth, 0, coord.z * Constants.ChunkWidth);
 
+            ChunkSections = new ChunkSection[16]; // contains 16 16x16x16 arrays
+
             BlockMap = new(65536, Allocator.Persistent); // 65536 = 16x16x256 (x,z,y)
             LightMap = new(65536, Allocator.Persistent);
             BiomeMap = new(256, Allocator.Persistent); // 256 = 16x16 (x,z)
-            HeightMap = new(256, Allocator.Persistent);
 
             Structures = new(Allocator.Persistent);
 
@@ -250,8 +251,11 @@ namespace minescape.world.chunk
             if (BlockMap.IsCreated) BlockMap.Dispose();
             if (LightMap.IsCreated) LightMap.Dispose();
             if (BiomeMap.IsCreated) BiomeMap.Dispose();
-            if (HeightMap.IsCreated) HeightMap.Dispose();
             if (Structures.IsCreated) Structures.Dispose();
+
+            foreach (var section in ChunkSections)
+                if (section.blocks.IsCreated)
+                    section.blocks.Dispose();
 
             if (isDirty.IsCreated) isDirty.Dispose();
 

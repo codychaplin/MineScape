@@ -1478,7 +1478,7 @@ MonoBehaviour:
   world: {fileID: 1389480423}
   renderMap: 0
   renderChunks: 1
-  calculateLight: 0
+  calculateLight: 1
   elevation: {fileID: 11400000, guid: b5f0fdf817dfc0e46a22338b983fc784, type: 2}
   relief: {fileID: 11400000, guid: 085529e741670604680c7b815396597b, type: 2}
   temperature: {fileID: 11400000, guid: 4fc6c3bf0da1d7342a7e433ec1d4285b, type: 2}

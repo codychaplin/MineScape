@@ -3,60 +3,76 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.init;
+using minescape.block;
 using minescape.biome;
 using minescape.structures;
 
 namespace minescape.jobs
 {
     [BurstCompile]
-    public struct SetBlockDataJob : IJob
+    public struct GenerateChunkJob : IJob
     {
-        [ReadOnly] public float caveScale;
-        [ReadOnly] public int caveOctaves;
-        [ReadOnly] public float caveThreshold;
-
+        // info
         [ReadOnly] public int seed;
+        [ReadOnly] public int3 position;
+
+        // output
+        public NativeArray<byte> blockMap;
+        public NativeArray<byte> biomeMap;
+        public NativeList<Structure> structureMap;
+
+        // 00000000 00000000 00000000 11111 111111 11111 111111 111111 111111 111111
+        //                            r     g      b     normal x      y      z
+        //                            5     6      5     6      6      6      6
+        NativeList<ulong> vertexData;
+        NativeList<int> triangles;
+
+        // references
+        [ReadOnly] public NativeHashMap<byte, Block> blocks;
         [ReadOnly] public NativeHashMap<byte, Biome> biomes;
         [ReadOnly] public NativeHashMap<byte, Structure> structures;
         [ReadOnly] public NativeArray<float2> elevation;
 
+        // noise
         [ReadOnly] public float elevationScale;
         [ReadOnly] public int elevationOctaves;
+
         [ReadOnly] public float reliefScale;
         [ReadOnly] public int reliefOctaves;
+
         [ReadOnly] public float persistance;
         [ReadOnly] public float lacunarity;
 
-        [ReadOnly] public int3 position;
-
-        public NativeArray<byte> blockMap;
-        [WriteOnly] public NativeArray<byte> biomeMap;
-        [WriteOnly] public NativeList<Structure> structureMap;
-
-        [WriteOnly] public NativeReference<bool> isDirty;
+        [ReadOnly] public float caveScale;
+        [ReadOnly] public int caveOctaves;
+        [ReadOnly] public float caveThreshold;
 
         public void Execute()
         {
+            SetBlockData();
+            SetStructures();
+        }
+
+        /*
+         * main functions
+         */
+
+        void SetBlockData()
+        {
             seed *= 7919; // makes seed more unique
 
-            for (int x = 0; x < Constants.ChunkWidth; x++)
-            {
-                for (int z = 0; z < Constants.ChunkWidth; z++)
+            // -1/+1 to get cross chunk data
+            for (int x = -1; x < Constants.ChunkWidth + 1; x++)
+                for (int z = -1; z < Constants.ChunkWidth + 1; z++)
                 {
-                    // offset
-                    var pos = new float2(position.x + x, position.z + z);
+                    var pos = new float2(position.x + x, position.z + z); // offset
 
-                    // elevation
                     int terrainHeight = 0;
-
-                    // base terrain height
-                    float elevationX = Noise.GetTerrainNoise(pos, seed, 1, elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f);
-
-                    // secondary terrain height with higher frequency
-                    float elevationY = Noise.GetTerrainNoise(pos, seed, 1, elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f);
-
-                    // scales down elevationY close to water level
-                    float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1));
+                    float elevationX = Noise.GetTerrainNoise(pos, seed, 1,
+                        elevationScale, elevationOctaves, persistance, lacunarity, 15, 2.4f); // base terrain height
+                    float elevationY = Noise.GetTerrainNoise(pos, seed, 1,
+                        elevationScale * 10, elevationOctaves, persistance, lacunarity, 10, 1f); // secondary terrain height with higher frequency
+                    float smooth = math.lerp(elevationX, elevationY, math.clamp(elevationX * 10, -1, 1)); // scales down elevationY close to water level
 
                     if (elevationX < 0f) // ocean
                     {
@@ -67,15 +83,14 @@ namespace minescape.jobs
                     {
                         float relief = Noise.GetTerrainNoise(pos, seed, -10000, reliefScale, reliefOctaves, persistance, lacunarity, 12, 3f);
                         float normalizedRelief = (relief + 1f) / 2f;
-
                         terrainHeight = 63 + (int)math.floor((elevationX * normalizedRelief * 96) + smooth * 16);
                     }
 
-                    // set biome
+                    // biome
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int Index2D = Utils.ConvertToIndex(x, z);
+                    int Index2D = Utils.ConvertToIndex(x + 1, z + 1);
                     biomeMap[Index2D] = biomeID;
                     var biome = biomes[biomeID];
 
@@ -83,7 +98,7 @@ namespace minescape.jobs
                     int index = 0;
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
-                        index = Utils.ConvertToIndex(x, y, z);
+                        index = Utils.ConvertToIndex(x + 1, y, z + 1);
                         byte setBlock = 0;
                         if (y == 0)
                             setBlock = BlockIDs.BEDROCK;
@@ -121,38 +136,54 @@ namespace minescape.jobs
                             SetOres(pos3D, y, index);
                     }
 
-                    // foliage
+                    // set trees
                     var treeMap = Noise.FoliageNoise(pos, 15f);
-                    var grassMap = Noise.FoliageNoise(pos, 14f);
-                    bool render = blockMap[Utils.ConvertToIndex(x, terrainHeight, z)] != BlockIDs.AIR;
-                    if (render && terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // not a beach/ocean biome
+                    if (treeMap > biome.TreeFrequency)
                     {
-                        // set trees
-                        if (treeMap > biome.TreeFrequency)
+                        if (biome.ID == BiomesIDs.DESERT)
                         {
-                            if (biome.ID == BiomesIDs.DESERT)
-                            {
-                                var cactus = structures[StructureIDs.CACTUS];
-                                structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
-                            }
-                            else
-                            {
-                                var tree = structures[StructureIDs.TREE];
-                                structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
-                            }
+                            var cactus = structures[StructureIDs.CACTUS];
+                            structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
                         }
-
-                        // set grass
-                        if (grassMap > biome.GrassDensity)
-                            blockMap[Utils.ConvertToIndex(x, terrainHeight + 1, z)] = BlockIDs.GRASS_PLANT;
+                        else
+                        {
+                            var tree = structures[StructureIDs.TREE];
+                            structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                        }
                     }
-                }
-            }
 
-            isDirty.Value = true;
+                }
         }
 
-        static int GetY(NativeArray<float2> spline, float elevationX)
+        void SetStructures()
+        {
+            foreach (Structure structure in structureMap)
+            {
+                int x = structure.LocalPosition.x + 1;
+                int y = structure.LocalPosition.y;
+                int z = structure.LocalPosition.z + 1;
+                var rand = new Random((uint)(x * 79 + y * 557 + z * 991));
+                byte radius = structure.Radius;
+
+                switch (structure.Type)
+                {
+                    case Type.Tree:
+                        GenerateTree(x, y, z, rand, radius);
+                        break;
+                    case Type.Cactus:
+                        GenerateCactus(x, y, z, rand);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        /*
+         * Initializing block map
+         */
+
+        int GetY(NativeArray<float2> spline, float elevationX)
         {
             int lowerIndex = 0;
             int upperIndex = 1;
@@ -174,7 +205,7 @@ namespace minescape.jobs
             return (int)interpolatedHeight;
         }
 
-        static float CubicInterpolate(float x0, float y0, float x1, float y1, float t)
+        float CubicInterpolate(float x0, float y0, float x1, float y1, float t)
         {
             float t2 = t * t;
             float t3 = t2 * t;
@@ -304,6 +335,60 @@ namespace minescape.jobs
                         }
                     }
                 }
+            }
+        }
+
+        /*
+         * Placing structures
+         */
+
+        void PlaceBlock(int x, int y, int z, byte blockID)
+        {
+            if (x < 0 || x >= Constants.ChunkWidth + 2 ||
+                y < 0 || y >= Constants.ChunkHeight ||
+                z < 0 || z >= Constants.ChunkWidth + 2)
+                return;
+
+            int index = Utils.ConvertToIndex(x, y, z);
+            if (blockMap[index] == BlockIDs.AIR)
+                blockMap[index] = blockID;
+        }
+
+        void GenerateTree(int x, int y, int z, Random rand, byte radius)
+        {
+            int height = rand.NextInt(4, 7);
+
+            blockMap[Utils.ConvertToIndex(x, y - 1, z)] = BlockIDs.DIRT;
+            for (int yy = y; yy < y + height; yy++)
+                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.WOOD;
+
+            bool flag = false;
+            for (int yy = y + height - 2; yy <= y + height + 1; yy++)
+            {
+                for (int xx = x - radius; xx <= x + radius; xx++)
+                    for (int zz = z - radius; zz <= z + radius; zz++)
+                        PlaceBlock(xx, yy, zz, BlockIDs.LEAVES);
+
+                if (flag)
+                    radius -= 1;
+                flag = !flag;
+                if (radius < 0)
+                    break;
+            }
+        }
+
+        void GenerateCactus(int x, int y, int z, Random rand)
+        {
+            int height = rand.NextInt(2, 6);
+            for (int yy = y; yy <= y + height; yy++)
+            {
+                if (blockMap[Utils.ConvertToIndex(x + 1, yy, z)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndex(x - 1, yy, z)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndex(x, yy, z + 1)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndex(x, yy, z - 1)] != BlockIDs.AIR)
+                    break;
+
+                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.CACTUS;
             }
         }
     }
