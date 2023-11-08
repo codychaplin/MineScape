@@ -8,7 +8,6 @@ using minescape.block;
 using minescape.world;
 using minescape.biome;
 using minescape.world.chunk;
-using UnityEngine.UIElements;
 
 namespace minescape.jobs
 {

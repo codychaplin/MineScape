@@ -12,5 +12,10 @@ namespace minescape.world.chunk
             uv0 = _uv0;
             uv1 = _uv1;
         }
+
+        public override string ToString()
+        {
+            return $"uv0:{uv0}, uv1:{uv1}";
+        }
     }
 }

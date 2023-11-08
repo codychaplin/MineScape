@@ -1,11 +1,10 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using minescape.jobs;
 using minescape.structures;
-using UnityEngine.UIElements;
-using UnityEngine.Rendering;
 
 namespace minescape.world.chunk
 {
