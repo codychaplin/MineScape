@@ -52,10 +52,43 @@ namespace minescape.world.chunk
             var coord = CreateChunksQueue.Peek();
             if (!Chunks.TryGetValue(coord, out var chunk))
             {
-                NativeArray<byte> blockMap = new(82944, Allocator.TempJob); // 18x256x18 (16x16 + 1 on sides)
+                chunk = new(world, coord);
+                Chunks.Add(coord, chunk);
             }
 
+            NativeArray<byte> blockMap = new(82944, Allocator.TempJob); // 18x256x18 (16x16 + 1 on sides)
+            NativeArray<byte> biomeMap = new(324, Allocator.TempJob); // 16x16
+            GenerateChunkJob job = new()
+            {
+                seed = world.Seed,
+                position = new int3(chunk.position.x, 0, chunk.position.z),
+                blockMap = blockMap,
+                biomeMap = biomeMap,
+                structureMap = chunk.StructureMap,
+                vertexData = chunk.vertexData,
+                triangles = chunk.triangles,
+                blocks = world.Blocks.blocks,
+                biomes = world.Biomes.biomes,
+                structures = world.Structures.structures,
+                elevation = world.Splines.Elevation,
+                elevationScale = elevation.scale,
+                elevationOctaves = elevation.octaves,
+                reliefScale = relief.scale,
+                reliefOctaves = relief.octaves,
+                persistance = elevation.persistance,
+                lacunarity = elevation.lacunarity,
+                caveScale = caves.scale,
+                caveOctaves = caves.octaves,
+                caveThreshold = caves.lacunarity,
+                vertexIndex = 0
+            };
+            job.Schedule().Complete();
+            blockMap.Dispose();
+            biomeMap.Dispose();
+
             CreateChunksQueue.Dequeue();
+
+            chunk.RenderChunk();
             return;
         }
 

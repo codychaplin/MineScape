@@ -38,6 +38,16 @@ namespace minescape.block
         { 0, 3, 5, 6,
           4, 7, 1, 2 };
 
+        public static readonly int[] packedNormals = new int[6]
+       {
+            3, // back 00 00 11 (0,0,-1)
+            1, // front 00 00 01 (0,0,1)
+            4, // top 00 01 00 (0,1,0)
+            12, // bottom 00 11 00 (0,-1,0)
+            48, // left 11 00 00 (-1,0,0)
+            16, // right 01 00 00 (1,0,0)
+       };
+
         /// <summary>
         /// Stores array representing the direction UVs are created on a block face.
         /// </summary>

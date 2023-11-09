@@ -53,14 +53,19 @@ namespace minescape.world
             // set spawn
             spawnpoint = new Vector3(Constants.WorldSizeInBlocks / 2f, 128f, Constants.WorldSizeInBlocks / 2f);
             player.position = spawnpoint;
+
+            chunkManager.CreateChunksQueue.Enqueue(new ChunkCoord(0, 0));
+            chunkManager.CreateChunksQueue.Enqueue(new ChunkCoord(0, 1));
+            chunkManager.CreateChunksQueue.Enqueue(new ChunkCoord(1, 0));
+            chunkManager.CreateChunksQueue.Enqueue(new ChunkCoord(1, 1));
         }
 
         void Update()
         {
-            playerChunkCoord = GetChunkCoord(player.position);
+            /*playerChunkCoord = GetChunkCoord(player.position);
             chunkChanged = !playerChunkCoord.Equals(playerLastChunkCoord); // used by debug screen too
             if (chunkChanged)
-                CheckViewDistance();
+                CheckViewDistance();*/
         }
 
         void OnApplicationQuit()

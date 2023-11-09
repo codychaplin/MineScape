@@ -1,4 +1,3 @@
-using UnityEngine;
 
 namespace minescape.biome
 {
@@ -9,16 +8,16 @@ namespace minescape.biome
         public byte FillerBlock { get; }
         public float TreeFrequency { get; }
         public float GrassDensity { get; }
-        public Color32 GrassTint { get; }
+        public ushort GrassTint { get; }
 
-        public Biome(byte id, byte surfaceBlock, byte fillerBlock, Color32 grassTint, float treeFrequency, float grassDensity)
+        public Biome(byte id, byte surfaceBlock, byte fillerBlock, float treeFrequency, float grassDensity, ushort grassTint)
         {
             ID = id;
             SurfaceBlock = surfaceBlock;
             FillerBlock = fillerBlock;
-            GrassTint = grassTint;
             TreeFrequency = treeFrequency;
             GrassDensity = grassDensity;
+            GrassTint = grassTint;
         }
     }
 }

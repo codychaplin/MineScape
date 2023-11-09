@@ -11,11 +11,7 @@ namespace minescape
         public static readonly Bounds ChunkBounds = new(new Vector3(8f, 128f, 6f), new Vector3(16f, 256f, 16f));
         public static readonly VertexAttributeDescriptor[] VertexAttributes = new VertexAttributeDescriptor[]
         {
-            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0),
-            new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3, 1),
-            new VertexAttributeDescriptor(VertexAttribute.Color, VertexAttributeFormat.UNorm8, 4, 2),
-            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, 3),
-            new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float32, 2, 3)
+            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.UInt32, 2, 0)
         };
 
         // world data

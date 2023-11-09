@@ -45,8 +45,8 @@ namespace minescape.player
         [Header("Misc")]
         public float reach = 5f;
 
-        float blockCooldownTimer = 0f;
-        const float blockCooldown = 0.03f;
+        //float blockCooldownTimer = 0f;
+        //const float blockCooldown = 0.03f;
 
         float gravity => -9.81f * 3f;
 
@@ -108,7 +108,7 @@ namespace minescape.player
             MovementInput();
             MoveCamera();
             var chunk = GetBlockInView();
-            HitBlock(chunk);
+            //HitBlock(chunk);
 
             if (CreativeMode)
             {
@@ -304,7 +304,7 @@ namespace minescape.player
             return null;
         }
 
-        void HitBlock(Chunk chunk)
+        /*void HitBlock(Chunk chunk)
         {
             if (chunk == null)
                 return;
@@ -359,7 +359,7 @@ namespace minescape.player
                 // update Chunk
                 world.chunkManager.AlterBlock(chunk, blockInView.x, selectedBlockPosition.y, blockInView.z);
             }
-        }
+        }*/
     }
 
     struct BlockInView

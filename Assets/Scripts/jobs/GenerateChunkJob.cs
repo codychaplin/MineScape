@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using minescape.init;
 using minescape.block;
 using minescape.biome;
+using minescape.world;
 using minescape.structures;
 
 namespace minescape.jobs
@@ -20,12 +21,9 @@ namespace minescape.jobs
         public NativeArray<byte> blockMap;
         public NativeArray<byte> biomeMap;
         public NativeList<Structure> structureMap;
-
-        // 00000000 00000000 00000000 11111 111111 11111 111111 111111 111111 111111
-        //                            r     g      b     normal x      y      z
-        //                            5     6      5     6      6      6      6
-        NativeList<ulong> vertexData;
-        NativeList<int> triangles;
+        
+        public NativeList<int2> vertexData;
+        public NativeList<int> triangles;
 
         // references
         [ReadOnly] public NativeHashMap<byte, Block> blocks;
@@ -47,25 +45,27 @@ namespace minescape.jobs
         [ReadOnly] public int caveOctaves;
         [ReadOnly] public float caveThreshold;
 
+        public int vertexIndex;
+
         public void Execute()
         {
             SetBlockData();
             SetStructures();
+            GenerateMeshData();
         }
 
         /*
-         * main functions
+         * Initializing block map
          */
 
         void SetBlockData()
         {
             seed *= 7919; // makes seed more unique
 
-            // -1/+1 to get cross chunk data
-            for (int x = -1; x < Constants.ChunkWidth + 1; x++)
-                for (int z = -1; z < Constants.ChunkWidth + 1; z++)
+            for (int x = 0; x < Constants.ChunkWidth + 2; x++)
+                for (int z = 0; z < Constants.ChunkWidth + 2; z++)
                 {
-                    var pos = new float2(position.x + x, position.z + z); // offset
+                    var pos = new float2(position.x + x - 1, position.z + z - 1); //  offset
 
                     int terrainHeight = 0;
                     float elevationX = Noise.GetTerrainNoise(pos, seed, 1,
@@ -90,7 +90,7 @@ namespace minescape.jobs
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int Index2D = Utils.ConvertToIndex(x + 1, z + 1);
+                    int Index2D = Utils.ConvertToIndex(x, z);
                     biomeMap[Index2D] = biomeID;
                     var biome = biomes[biomeID];
 
@@ -98,7 +98,7 @@ namespace minescape.jobs
                     int index = 0;
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
-                        index = Utils.ConvertToIndex(x + 1, y, z + 1);
+                        index = Utils.ConvertToIndex(x, y, z);
                         byte setBlock = 0;
                         if (y == 0)
                             setBlock = BlockIDs.BEDROCK;
@@ -113,8 +113,10 @@ namespace minescape.jobs
                         else
                             break;
 
+                        blockMap[index] = setBlock;
+
                         // caves
-                        var pos3D = new float3(position.x + x, position.y + y, position.z + z);
+                        /*var pos3D = new float3(position.x + x, position.y + y, position.z + z);
                         int maxHeight = math.min(terrainHeight, terrainHeight - 5 + (int)((elevationX + elevationY * 3) * 5));
                         int minHeight = math.max(3, 3 + (int)(elevationY * 10));
                         if (y >= minHeight && y <= maxHeight)
@@ -133,7 +135,7 @@ namespace minescape.jobs
 
                         // ores
                         if (setBlock == BlockIDs.STONE && y < terrainHeight - 4 && y > 4)
-                            SetOres(pos3D, y, index);
+                            SetOres(pos3D, y, index);*/
                     }
 
                     // set trees
@@ -154,34 +156,6 @@ namespace minescape.jobs
 
                 }
         }
-
-        void SetStructures()
-        {
-            foreach (Structure structure in structureMap)
-            {
-                int x = structure.LocalPosition.x + 1;
-                int y = structure.LocalPosition.y;
-                int z = structure.LocalPosition.z + 1;
-                var rand = new Random((uint)(x * 79 + y * 557 + z * 991));
-                byte radius = structure.Radius;
-
-                switch (structure.Type)
-                {
-                    case Type.Tree:
-                        GenerateTree(x, y, z, rand, radius);
-                        break;
-                    case Type.Cactus:
-                        GenerateCactus(x, y, z, rand);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        /*
-         * Initializing block map
-         */
 
         int GetY(NativeArray<float2> spline, float elevationX)
         {
@@ -342,6 +316,30 @@ namespace minescape.jobs
          * Placing structures
          */
 
+        void SetStructures()
+        {
+            foreach (Structure structure in structureMap)
+            {
+                int x = structure.LocalPosition.x + 1;
+                int y = structure.LocalPosition.y;
+                int z = structure.LocalPosition.z + 1;
+                var rand = new Random((uint)(x * 79 + y * 557 + z * 991));
+                byte radius = structure.Radius;
+
+                switch (structure.Type)
+                {
+                    case Type.Tree:
+                        GenerateTree(x, y, z, rand, radius);
+                        break;
+                    case Type.Cactus:
+                        GenerateCactus(x, y, z, rand);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
         void PlaceBlock(int x, int y, int z, byte blockID)
         {
             if (x < 0 || x >= Constants.ChunkWidth + 2 ||
@@ -389,6 +387,121 @@ namespace minescape.jobs
                     break;
 
                 blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.CACTUS;
+            }
+        }
+
+        /*
+         * Mesh data
+         */
+
+        void GenerateMeshData()
+        {
+            vertexData.Clear();
+            triangles.Clear();
+
+            int index = 0;
+            int3 index3 = new(0, 0, 0);
+            for (int x = 1; x <= Constants.ChunkWidth; x++)
+                for (int z = 1; z <= Constants.ChunkWidth; z++)
+                    for (int y = 0; y < Constants.ChunkHeight; y++)
+                    {
+                        index3.x = x;
+                        index3.y = y;
+                        index3.z = z;
+                        index = Utils.ConvertToIndex(x, y, z);
+                        if (blockMap[index] != BlockIDs.AIR)
+                            AddBlockToChunk(index3);
+                    }
+        }
+
+        void AddBlockToChunk(int3 pos)
+        {
+            int index = Utils.ConvertToIndex(pos);
+            var blockID = blockMap[index];
+            var block = blocks[blockID];
+            var biome = biomeMap[Utils.ConvertToIndex(pos.x, pos.z)];
+            AddBlock(pos, blockID, block.IsTransparent, biome, block.TintToBiome);
+        }
+
+        void AddBlock(int3 pos, byte blockID, bool isTransparent, byte biome, bool tintToBiome)
+        {
+            float3 pos1 = 0;
+            float3 pos2 = 0;
+            float3 pos3 = 0;
+            float3 pos4 = 0;
+            int normal = 0;
+            ushort colour = 0;
+            byte lightLevel = 0;
+            float2 uv1 = 0;
+            float2 uv2 = 0;
+            float2 uv3 = 0;
+            float2 uv4 = 0;
+            int2 v1 = 0;
+            int2 v2 = 0;
+            int2 v3 = 0;
+            int2 v4 = 0;
+
+            for (int i = 0; i < 6; i++)
+            {
+                int3 direction = VoxelData.faceCheck[i];
+                int3 adjacentIndex = pos + direction;
+
+                // if out of world, skip
+                if (!World.IsBlockInWorld(adjacentIndex + position))
+                    continue;
+
+                // if doesn't meet conditions, skip
+                byte adjBlockID = blockMap[Utils.ConvertToIndex(adjacentIndex)];
+                bool transparent = blocks[adjBlockID].IsTransparent;
+                bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
+                if (!transparent || bothWater)
+                    continue;
+
+                // vertices
+                pos1 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 0]] - 1;
+                pos2 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 1]] - 1;
+                pos3 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 2]] - 1;
+                pos4 = pos + VoxelData.verts[VoxelData.tris[i * 4 + 3]] - 1;
+
+                normal = VoxelData.packedNormals[i];
+                colour = tintToBiome ? biomes[biome].GrassTint : ushort.MinValue;
+                lightLevel = 255;
+
+                // UVs
+                byte textureId = blocks[blockID].GetFace(i);
+                float y = textureId / Constants.TextureAtlasSize;
+                float x = textureId - (y * Constants.TextureAtlasSize);
+                x *= Constants.NormalizedTextureSize;
+                y *= Constants.NormalizedTextureSize;
+                uv1 = new float2(x, y) * 16;
+                uv2 = new float2(x, y + Constants.NormalizedTextureSize) * 16;
+                uv3 = new float2(x + Constants.NormalizedTextureSize, y) * 16;
+                uv4 = new float2(x + Constants.NormalizedTextureSize, y + Constants.NormalizedTextureSize) * 16;
+
+                // pack data
+                v1.x = lightLevel << 24 | normal << 18 | (int)pos1.x << 13 | (int)pos1.y << 5 | (int)pos1.z;
+                v1.y = (int)uv1.x << 21 | (int)uv1.y << 16 | colour;
+                v2.x = lightLevel << 24 | normal << 18 | (int)pos2.x << 13 | (int)pos2.y << 5 | (int)pos2.z;
+                v2.y = (int)uv2.x << 21 | (int)uv2.y << 16 | colour;
+                v3.x = lightLevel << 24 | normal << 18 | (int)pos3.x << 13 | (int)pos3.y << 5 | (int)pos3.z;
+                v3.y = (int)uv3.x << 21 | (int)uv3.y << 16 | colour;
+                v4.x = lightLevel << 24 | normal << 18 | (int)pos4.x << 13 | (int)pos4.y << 5 | (int)pos4.z;
+                v4.y = (int)uv4.x << 21 | (int)uv4.y << 16 | colour;
+
+                vertexData.Add(v1);
+                vertexData.Add(v2);
+                vertexData.Add(v3);
+                vertexData.Add(v4);
+
+                // set triangles
+                triangles.Add(vertexIndex);
+                triangles.Add(vertexIndex + 1);
+                triangles.Add(vertexIndex + 2);
+                triangles.Add(vertexIndex + 2);
+                triangles.Add(vertexIndex + 1);
+                triangles.Add(vertexIndex + 3);
+
+                vertexIndex += 4;
             }
         }
     }
