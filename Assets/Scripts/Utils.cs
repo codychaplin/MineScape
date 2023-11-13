@@ -16,6 +16,11 @@ namespace minescape
             return x + z * Constants.ChunkWidth;
         }
 
+        public static int ConvertToIndexLarge(int x, int z)
+        {
+            return x + z * 18;
+        }
+
         /// <summary>
         /// Converts 3D index into 1D using x, y, and z.
         /// </summary>
@@ -26,6 +31,11 @@ namespace minescape
         public static int ConvertToIndex(int x, int y, int z)
         {
             return x + z * Constants.ChunkWidth + y * Constants.ChunkHeight;
+        }
+        
+        public static int ConvertToIndexLarge(int x, int y, int z)
+        {
+            return x + z * 18 + y * 18 * 18;
         }
 
         /// <summary>
@@ -46,6 +56,11 @@ namespace minescape
         public static int ConvertToIndex(int3 pos)
         {
             return pos.x + pos.z * Constants.ChunkWidth + pos.y * Constants.ChunkHeight;
+        }
+
+        public static int ConvertToIndexLarge(int3 pos)
+        {
+            return pos.x + pos.z * 18 + pos.y * 18 * 18;
         }
 
         /// <summary>

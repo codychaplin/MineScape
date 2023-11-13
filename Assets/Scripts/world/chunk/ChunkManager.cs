@@ -57,7 +57,7 @@ namespace minescape.world.chunk
             }
 
             NativeArray<byte> blockMap = new(82944, Allocator.TempJob); // 18x256x18 (16x16 + 1 on sides)
-            NativeArray<byte> biomeMap = new(324, Allocator.TempJob); // 16x16
+            NativeArray<byte> biomeMap = new(324, Allocator.TempJob); // 18x18
             GenerateChunkJob job = new()
             {
                 seed = world.Seed,
@@ -82,14 +82,25 @@ namespace minescape.world.chunk
                 caveThreshold = caves.lacunarity,
                 vertexIndex = 0
             };
-            job.Schedule().Complete();
-            blockMap.Dispose();
-            biomeMap.Dispose();
+            var handle = job.Schedule();
 
             CreateChunksQueue.Dequeue();
 
-            chunk.RenderChunk();
+            StartCoroutine(ApplyMeshDataChunk(handle, chunk, blockMap, biomeMap));
             return;
+        }
+
+        IEnumerator ApplyMeshDataChunk(JobHandle dependency, Chunk chunk, NativeArray<byte> blockMap, NativeArray<byte> biomeMap)
+        {
+            while (!dependency.IsCompleted)
+            {
+                yield return null;
+            }
+            dependency.Complete();
+
+            chunk.RenderChunk();
+            blockMap.Dispose();
+            biomeMap.Dispose();
         }
 
         /// <summary>

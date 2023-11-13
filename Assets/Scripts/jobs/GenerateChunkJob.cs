@@ -65,7 +65,7 @@ namespace minescape.jobs
             for (int x = 0; x < Constants.ChunkWidth + 2; x++)
                 for (int z = 0; z < Constants.ChunkWidth + 2; z++)
                 {
-                    var pos = new float2(position.x + x - 1, position.z + z - 1); //  offset
+                    var pos = new float2(position.x + x - 1, position.z + z - 1); // offset
 
                     int terrainHeight = 0;
                     float elevationX = Noise.GetTerrainNoise(pos, seed, 1,
@@ -90,7 +90,7 @@ namespace minescape.jobs
                     float temperature = Noise.GetBiomeNoise(pos, seed, 1, 0.06f, true);
                     float humidity = Noise.GetBiomeNoise(pos, seed, 1, 0.15f, true);
                     byte biomeID = GetBiome(elevationX, temperature, humidity);
-                    int Index2D = Utils.ConvertToIndex(x, z);
+                    int Index2D = Utils.ConvertToIndexLarge(x, z);
                     biomeMap[Index2D] = biomeID;
                     var biome = biomes[biomeID];
 
@@ -98,7 +98,7 @@ namespace minescape.jobs
                     int index = 0;
                     for (int y = 0; y < Constants.ChunkHeight; y++)
                     {
-                        index = Utils.ConvertToIndex(x, y, z);
+                        index = Utils.ConvertToIndexLarge(x, y, z);
                         byte setBlock = 0;
                         if (y == 0)
                             setBlock = BlockIDs.BEDROCK;
@@ -116,7 +116,7 @@ namespace minescape.jobs
                         blockMap[index] = setBlock;
 
                         // caves
-                        /*var pos3D = new float3(position.x + x, position.y + y, position.z + z);
+                        var pos3D = new float3(position.x + x, position.y + y, position.z + z);
                         int maxHeight = math.min(terrainHeight, terrainHeight - 5 + (int)((elevationX + elevationY * 3) * 5));
                         int minHeight = math.max(3, 3 + (int)(elevationY * 10));
                         if (y >= minHeight && y <= maxHeight)
@@ -135,25 +135,28 @@ namespace minescape.jobs
 
                         // ores
                         if (setBlock == BlockIDs.STONE && y < terrainHeight - 4 && y > 4)
-                            SetOres(pos3D, y, index);*/
+                            SetOres(pos3D, y, index);
                     }
 
                     // set trees
                     var treeMap = Noise.FoliageNoise(pos, 15f);
-                    if (treeMap > biome.TreeFrequency)
+                    bool render = blockMap[Utils.ConvertToIndexLarge(x, terrainHeight, z)] != BlockIDs.AIR;
+                    if (render && terrainHeight >= Constants.WaterLevel && biome.ID < BiomesIDs.BEACH) // not a beach/ocean biome
                     {
-                        if (biome.ID == BiomesIDs.DESERT)
+                        if (treeMap > biome.TreeFrequency)
                         {
-                            var cactus = structures[StructureIDs.CACTUS];
-                            structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
-                        }
-                        else
-                        {
-                            var tree = structures[StructureIDs.TREE];
-                            structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                            if (biome.ID == BiomesIDs.DESERT)
+                            {
+                                var cactus = structures[StructureIDs.CACTUS];
+                                structureMap.Add(new Structure(cactus.ID, cactus.Radius, Type.Cactus, new int3(x, terrainHeight + 1, z)));
+                            }
+                            else
+                            {
+                                var tree = structures[StructureIDs.TREE];
+                                structureMap.Add(new Structure(tree.ID, tree.Radius, Type.Tree, new int3(x, terrainHeight + 1, z)));
+                            }
                         }
                     }
-
                 }
         }
 
@@ -320,9 +323,9 @@ namespace minescape.jobs
         {
             foreach (Structure structure in structureMap)
             {
-                int x = structure.LocalPosition.x + 1;
+                int x = structure.LocalPosition.x;
                 int y = structure.LocalPosition.y;
-                int z = structure.LocalPosition.z + 1;
+                int z = structure.LocalPosition.z;
                 var rand = new Random((uint)(x * 79 + y * 557 + z * 991));
                 byte radius = structure.Radius;
 
@@ -347,7 +350,7 @@ namespace minescape.jobs
                 z < 0 || z >= Constants.ChunkWidth + 2)
                 return;
 
-            int index = Utils.ConvertToIndex(x, y, z);
+            int index = Utils.ConvertToIndexLarge(x, y, z);
             if (blockMap[index] == BlockIDs.AIR)
                 blockMap[index] = blockID;
         }
@@ -356,9 +359,9 @@ namespace minescape.jobs
         {
             int height = rand.NextInt(4, 7);
 
-            blockMap[Utils.ConvertToIndex(x, y - 1, z)] = BlockIDs.DIRT;
+            blockMap[Utils.ConvertToIndexLarge(x, y - 1, z)] = BlockIDs.DIRT;
             for (int yy = y; yy < y + height; yy++)
-                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.WOOD;
+                blockMap[Utils.ConvertToIndexLarge(x, yy, z)] = BlockIDs.WOOD;
 
             bool flag = false;
             for (int yy = y + height - 2; yy <= y + height + 1; yy++)
@@ -380,13 +383,13 @@ namespace minescape.jobs
             int height = rand.NextInt(2, 6);
             for (int yy = y; yy <= y + height; yy++)
             {
-                if (blockMap[Utils.ConvertToIndex(x + 1, yy, z)] != BlockIDs.AIR ||
-                    blockMap[Utils.ConvertToIndex(x - 1, yy, z)] != BlockIDs.AIR ||
-                    blockMap[Utils.ConvertToIndex(x, yy, z + 1)] != BlockIDs.AIR ||
-                    blockMap[Utils.ConvertToIndex(x, yy, z - 1)] != BlockIDs.AIR)
+                if (blockMap[Utils.ConvertToIndexLarge(x + 1, yy, z)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndexLarge(x - 1, yy, z)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndexLarge(x, yy, z + 1)] != BlockIDs.AIR ||
+                    blockMap[Utils.ConvertToIndexLarge(x, yy, z - 1)] != BlockIDs.AIR)
                     break;
 
-                blockMap[Utils.ConvertToIndex(x, yy, z)] = BlockIDs.CACTUS;
+                blockMap[Utils.ConvertToIndexLarge(x, yy, z)] = BlockIDs.CACTUS;
             }
         }
 
@@ -408,18 +411,17 @@ namespace minescape.jobs
                         index3.x = x;
                         index3.y = y;
                         index3.z = z;
-                        index = Utils.ConvertToIndex(x, y, z);
+                        index = Utils.ConvertToIndexLarge(x, y, z);
                         if (blockMap[index] != BlockIDs.AIR)
-                            AddBlockToChunk(index3);
+                            AddBlockToChunk(index3, index);
                     }
         }
 
-        void AddBlockToChunk(int3 pos)
+        void AddBlockToChunk(int3 pos, int index)
         {
-            int index = Utils.ConvertToIndex(pos);
             var blockID = blockMap[index];
             var block = blocks[blockID];
-            var biome = biomeMap[Utils.ConvertToIndex(pos.x, pos.z)];
+            var biome = biomeMap[Utils.ConvertToIndexLarge(pos.x, pos.z)];
             AddBlock(pos, blockID, block.IsTransparent, biome, block.TintToBiome);
         }
 
@@ -444,14 +446,14 @@ namespace minescape.jobs
             for (int i = 0; i < 6; i++)
             {
                 int3 direction = VoxelData.faceCheck[i];
-                int3 adjacentIndex = pos + direction;
+                int3 adjacentPos = pos + direction;
 
                 // if out of world, skip
-                if (!World.IsBlockInWorld(adjacentIndex + position))
+                if (!World.IsBlockInWorld(adjacentPos + position))
                     continue;
 
                 // if doesn't meet conditions, skip
-                byte adjBlockID = blockMap[Utils.ConvertToIndex(adjacentIndex)];
+                byte adjBlockID = blockMap[Utils.ConvertToIndexLarge(adjacentPos)];
                 bool transparent = blocks[adjBlockID].IsTransparent;
                 bool bothWater = blockID == BlockIDs.WATER && adjBlockID == BlockIDs.WATER;
                 if (!transparent || bothWater)
